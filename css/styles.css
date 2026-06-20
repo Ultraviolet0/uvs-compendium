@@ -1,5 +1,5 @@
 /*
-  Diablo Compendium global stylesheet v0.07
+  UV's Compendium global stylesheet
   Modernized from legacy Diablo calculator colors and sidebar conventions.
 */
 
@@ -243,7 +243,7 @@ button,
 }
 
 .nav-heading {
-  color: var(--color-text-muted);
+  color: var(--color-accent);
   margin: 0;
 }
 
@@ -259,6 +259,7 @@ button,
   gap: var(--space-xs);
 }
 
+.nav-item,
 .nav-menu {
   border-bottom: 1px solid rgb(188 168 108 / 0.12);
   padding-bottom: var(--space-xs);
@@ -282,6 +283,10 @@ button,
   cursor: pointer;
   gap: var(--space-sm);
   justify-content: space-between;
+  padding: 0.55rem 0.5rem;
+}
+
+.nav-page-link {
   padding: 0.55rem 0.5rem;
 }
 
@@ -343,6 +348,9 @@ button,
 .nav-menu-toggle:hover,
 .nav-menu-toggle:focus-visible,
 .nav-menu.is-open > .nav-menu-toggle,
+.nav-page-link:hover,
+.nav-page-link:focus-visible,
+.nav-page-link.is-active,
 .nav-submenu-link:hover,
 .nav-submenu-link:focus-visible,
 .nav-submenu-link.is-active {

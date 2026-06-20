@@ -58,7 +58,7 @@
     });
 
     const currentPath = normalizePath(window.location.href);
-    const navLinks = Array.from(document.querySelectorAll('.nav-submenu-link[href]'));
+    const navLinks = Array.from(document.querySelectorAll('.site-nav a[href]'));
 
     navLinks.forEach((link) => {
       const href = link.getAttribute('href') || '';

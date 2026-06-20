@@ -18,37 +18,29 @@ require_once __DIR__ . '/includes/public_header.php';
 
 <section class="content-grid" aria-label="Site highlights">
   <article class="card flow">
+    <p class="card-label">Reference</p>
+    <h2>Documentation and references</h2>
+    <p>Find official DevilutionX links, classic Diablo documents, hosted PDFs, and community resources for checking mechanics, version differences, and Hellfire-specific details.</p>
+  </article>
+
+  <article class="card flow">
     <p class="card-label">Calculators</p>
-    <h2>Mechanics made usable</h2>
-    <p>Plan character levels, shopping outcomes, affix ranges, item generation, and other calculation-heavy systems without manually cross-checking scattered tables.</p>
+    <h2>Tools for the numbers</h2>
+    <p>Use calculators for shopping, item pricing, affix ranges, qlvls, and other mechanics where Hellfire's hidden math is easier to work with when the formulas are handled for you.</p>
   </article>
 
   <article class="card flow">
     <p class="card-label">Guides</p>
-    <h2>Strategy with context</h2>
-    <p>
-      Build references for classes, quests, bosses, shopping, Hellfire additions, and DevilutionX-specific behavior in a format that is easy to expand over time.
-    </p>
-  </article>
-
-  <article class="card flow">
-    <p class="card-label">Reference</p>
-    <h2>Old-school spirit, modern code</h2>
-    <p>
-      The design keeps the dark Diablo compendium feel while using semantic HTML, responsive layout, accessible navigation, and reusable CSS utilities.
-    </p>
+    <h2>Practical play references</h2>
+    <p>Read and watch focused guides for classes, shopping, quests, bosses, Hellfire additions, and DevilutionX-specific behavior, with an emphasis on useful details and practical implementation.</p>
   </article>
 </section>
 
 <section class="section-panel flow" aria-labelledby="mission-title">
   <p class="eyebrow">Project mission</p>
   <h2 id="mission-title">Preserve the knowledge. Improve the tooling.</h2>
-  <p>
-    Diablo I has decades of community knowledge behind it, but much of that information is spread across older guides, forum posts, and calculators built for a different era of the web. This site is intended to gather that knowledge into a clean, maintainable home that can grow naturally as new tools and guides are added.
-  </p>
-  <p>
-    The first focus is practical DevilutionX-era play: calculators that handle the tedious math, guides that explain the rules behind the results, and references that make Diablo and Hellfire mechanics easier to understand without losing the atmosphere of the original game.
-  </p>
+  <p>Diablo I has decades of community knowledge behind it, but much of that information is spread across older guides, forum posts, and calculators built for a different era of the web. And other information has been completely lost to time as sites have gone down as people left the community. This site is intended to gather and preserve that knowledge into a clean, maintainable home that can grow naturally as new tools and guides are added.</p>
+  <p>The primary focus is DevilutionX-era play which is the definitive way to play Diablo 1 and Hellfire in the modern era. I host references that make Diablo and Hellfire mechanics easier to understand, calculators that handle the tedious math, and guides that explain how to min-max your characters and optimize your play.</p>
 </section>
 
 <?php require_once __DIR__ . '/includes/public_footer.php'; ?>
