@@ -39,8 +39,8 @@ require_once __DIR__ . '/includes/public_header.php';
 <section class="section-panel flow" aria-labelledby="mission-title">
   <p class="eyebrow">Project mission</p>
   <h2 id="mission-title">Preserve the knowledge. Improve the tooling.</h2>
-  <p>Diablo I has decades of community knowledge behind it, but much of that information is spread across older guides, forum posts, and calculators built for a different era of the web. And other information has been completely lost to time as sites have gone down as people left the community. This site is intended to gather and preserve that knowledge into a clean, maintainable home that can grow naturally as new tools and guides are added.</p>
-  <p>The primary focus is DevilutionX-era play which is the definitive way to play Diablo 1 and Hellfire in the modern era. I host references that make Diablo and Hellfire mechanics easier to understand, calculators that handle the tedious math, and guides that explain how to min-max your characters and optimize your play.</p>
+  <p>Diablo I has decades of community knowledge behind it, but much of that information is spread across older guides, forum posts, and calculators built for a different era of the web. Other information has been completely lost to time as sites have gone down as people left the community. This site is intended to gather and preserve that knowledge into a clean, maintainable home that can grow naturally as new tools and guides are added.</p>
+  <p>The primary focus is DevilutionX play which is the definitive way to play Diablo 1 and Hellfire in the modern era. I host references that make Diablo and Hellfire mechanics easier to understand, calculators that handle the tedious math, and guides that explain how to optimize your play and min-max your characters.</p>
 </section>
 
 <?php require_once __DIR__ . '/includes/public_footer.php'; ?>

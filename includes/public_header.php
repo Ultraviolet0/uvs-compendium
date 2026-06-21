@@ -1,125 +1,150 @@
 <?php
+
 declare(strict_types=1);
 
 $page_title = $page_title ?? "UV's Compendium | Tools & Guides";
 $page_description = $page_description ?? "A Diablo 1 and Hellfire compendium of calculators, mechanics references, and strategy guides with special attention to DevilutionX.";
 $base_path = $base_path ?? '';
 $current_page = $current_page ?? '';
+$page_scripts = $page_scripts ?? [];
 
 function h(string $value): string
 {
-    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+  return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
 function site_url(string $path = ''): string
 {
-    global $base_path;
+  global $base_path;
 
-    return h($base_path . ltrim($path, '/'));
+  if ($path === '') {
+    return h($base_path !== '' ? $base_path : './');
+  }
+
+  return h($base_path . ltrim($path, '/'));
 }
 
 function asset_version(string $path): int
 {
-    $full_path = dirname(__DIR__) . '/' . ltrim($path, '/');
+  $full_path = dirname(__DIR__) . '/' . ltrim($path, '/');
 
-    return is_file($full_path) ? filemtime($full_path) : time();
+  return is_file($full_path) ? filemtime($full_path) : time();
 }
 
 $css_version = asset_version('css/styles.css');
 $js_version = asset_version('js/scripts.js');
+
+if (isset($page_script) && is_string($page_script) && $page_script !== '') {
+  $page_scripts[] = $page_script;
+}
+
+$page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string')));
 ?>
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="<?= h($page_description) ?>">
-    <title><?= h($page_title) ?></title>
 
-    <link rel="stylesheet" href="<?= site_url('css/styles.css') ?>?v=<?= $css_version ?>">
-    <script src="<?= site_url('js/scripts.js') ?>?v=<?= $js_version ?>" defer></script>
-  </head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="<?= h($page_description) ?>">
+  <title><?= h($page_title) ?></title>
 
-  <body data-page="<?= h($current_page) ?>">
-    <a class="skip-link" href="#main-content">Skip to main content</a>
+  <link rel="stylesheet" href="<?= site_url('css/styles.css') ?>?v=<?= $css_version ?>">
+  <script src="<?= site_url('js/scripts.js') ?>?v=<?= $js_version ?>" defer></script>
+  <?php foreach ($page_scripts as $script_path): ?>
+    <script src="<?= site_url($script_path) ?>?v=<?= asset_version($script_path) ?>" defer></script>
+  <?php endforeach; ?>
+</head>
 
-    <div class="site-shell">
-      <header class="site-sidebar" aria-label="Site header">
+<body data-page="<?= h($current_page) ?>">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <div class="site-shell">
+    <header class="site-sidebar" aria-label="Site header">
+      <div class="mobile-header-bar">
         <div class="brand-block">
-          <a class="brand-link" href="<?= site_url('index.php') ?>" aria-label="UV's Compendium home">
+          <a class="brand-link" href="<?= site_url() ?>" aria-label="UV's Compendium home">
             <span class="brand-kicker">Diablo I & Hellfire</span>
             <span class="brand-title">UV's Compendium</span>
             <span class="brand-subtitle">Tools &amp; Guides</span>
           </a>
         </div>
 
-        <nav class="site-nav" aria-label="Primary navigation">
-          <section class="nav-section" aria-labelledby="nav-primary-heading">
-            <p id="nav-primary-heading" class="nav-heading">Navigation</p>
+        <button
+          class="mobile-nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="site-navigation"
+        >
+          <span class="mobile-nav-toggle-text">Menu</span>
+          <span class="hamburger-icon" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+      </div>
 
-            <ul class="nav-list">
-              <li class="nav-item">
-                <a class="nav-link nav-page-link" href="<?= site_url('index.php') ?>">Home</a>
-              </li>
+      <nav id="site-navigation" class="site-nav" aria-label="Primary navigation">
+        <section class="nav-section" aria-labelledby="nav-primary-heading">
+          <p id="nav-primary-heading" class="nav-heading">Navigation</p>
 
-              <li class="nav-menu">
-                <button
-                  class="nav-link nav-menu-toggle"
-                  type="button"
-                  aria-expanded="false"
-                  aria-controls="nav-reference-menu"
-                >
-                  <span>Reference</span>
-                  <span class="nav-arrow" aria-hidden="true"></span>
-                </button>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a class="nav-link nav-page-link" href="<?= site_url() ?>">Home</a>
+            </li>
 
-                <ul id="nav-reference-menu" class="nav-submenu" aria-label="Reference links">
-                  <li><a class="nav-submenu-link" href="https://github.com/diasurgical/DevilutionX/blob/master/docs/installing.md" target="_blank" rel="noopener noreferrer">Install DevilutionX</a></li>
-                  <li><a class="nav-submenu-link" href="https://github.com/diasurgical/DevilutionX/releases" target="_blank" rel="noopener noreferrer">DevilutionX Releases</a></li>
-                  <li><a class="nav-submenu-link" href="<?= site_url('assets/hellfire-shopping-differences.pdf') ?>" target="_blank" rel="noopener noreferrer">Max's Hellfire Shopping Differences</a></li>
-                </ul>
-              </li>
+            <li class="nav-menu">
+              <button class="nav-link nav-menu-toggle" type="button" aria-expanded="false" aria-controls="nav-reference-menu">
+                <span>Reference</span>
+                <span class="nav-arrow" aria-hidden="true"></span>
+              </button>
 
-              <li class="nav-menu">
-                <button
-                  class="nav-link nav-menu-toggle"
-                  type="button"
-                  aria-expanded="false"
-                  aria-controls="nav-calculators-menu"
-                >
-                  <span>Calculators</span>
-                  <span class="nav-arrow" aria-hidden="true"></span>
-                </button>
+              <ul id="nav-reference-menu" class="nav-submenu" aria-label="Reference links">
+                <li><a class="nav-submenu-link" href="https://github.com/diasurgical/DevilutionX/blob/master/docs/installing.md" target="_blank" rel="noopener noreferrer">Install DevilutionX</a></li>
+                <li><a class="nav-submenu-link" href="https://github.com/diasurgical/DevilutionX/releases" target="_blank" rel="noopener noreferrer">DevilutionX Releases</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('reference/hellfire-shopping-differences.pdf') ?>" target="_blank" rel="noopener noreferrer">Max's Hellfire Shopping Differences</a></li>
+              </ul>
+            </li>
 
-                <ul id="nav-calculators-menu" class="nav-submenu" aria-label="Calculator links">
-                  <li><a class="nav-submenu-link" href="<?= site_url('calculators.php') ?>">Calculators Home</a></li>
-                  <li><a class="nav-submenu-link" href="#">Item Price Calculator</a></li>
-                  <li><a class="nav-submenu-link" href="#">Shop Qlvl Calculator</a></li>
-                  <li><a class="nav-submenu-link" href="#">Affix Calculator</a></li>
-                </ul>
-              </li>
+            <li class="nav-menu">
+              <button
+                class="nav-link nav-menu-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="nav-calculators-menu">
+                <span>Calculators</span>
+                <span class="nav-arrow" aria-hidden="true"></span>
+              </button>
 
-              <li class="nav-menu">
-                <button
-                  class="nav-link nav-menu-toggle"
-                  type="button"
-                  aria-expanded="false"
-                  aria-controls="nav-guides-menu"
-                >
-                  <span>Guides</span>
-                  <span class="nav-arrow" aria-hidden="true"></span>
-                </button>
+              <ul id="nav-calculators-menu" class="nav-submenu" aria-label="Calculator links">
+                <!-- <li><a class="nav-submenu-link" href="<?= site_url('calculators/index.php') ?>">Calculators Home</a></li> -->
+                <li><a class="nav-submenu-link" href="<?= site_url('calculators/hellfire-item-price/') ?>">Hellfire Item Price Calculator</a></li>
+                <li><a class="nav-submenu-link" href="#">Shop Qlvl Calculator</a></li>
+              </ul>
+            </li>
 
-                <ul id="nav-guides-menu" class="nav-submenu" aria-label="Guide links">
-                  <li><a class="nav-submenu-link" href="<?= site_url('guides/index.php') ?>">Guides Home</a></li>
+            <li class="nav-menu">
+              <button
+                class="nav-link nav-menu-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="nav-guides-menu">
+                <span>Guides</span>
+                <span class="nav-arrow" aria-hidden="true"></span>
+              </button>
+
+              <ul id="nav-guides-menu" class="nav-submenu" aria-label="Guide links">
+                <li><a class="nav-submenu-link" href="https://www.youtube.com/watch?v=c8MaZZezeMQ" target="_blank" rel="noopener noreferrer">Max's Hellfire Shopping Guide</a></li>
+                <!-- <li><a class="nav-submenu-link" href="<?= site_url('guides/index.php') ?>">Guides Home</a></li>
                   <li><a class="nav-submenu-link" href="<?= site_url('guides/shopping.php') ?>">Shopping &amp; Affixes</a></li>
                   <li><a class="nav-submenu-link" href="#">Bard Guide Placeholder</a></li>
-                  <li><a class="nav-submenu-link" href="#">Warrior Guide Placeholder</a></li>
-                </ul>
-              </li>
-            </ul>
-          </section>
-        </nav>
-      </header>
+                  <li><a class="nav-submenu-link" href="#">Warrior Guide Placeholder</a></li> -->
+              </ul>
+            </li>
+          </ul>
+        </section>
+      </nav>
+    </header>
 
-      <main id="main-content" class="site-main">
+    <main id="main-content" class="site-main">

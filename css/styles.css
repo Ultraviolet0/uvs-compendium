@@ -100,9 +100,13 @@ h3 {
 }
 
 h1 {
-  max-width: 13ch;
-  font-size: clamp(2.4rem, 6vw, 5.75rem);
-  letter-spacing: -0.05em;
+  max-width: none;
+  font-family: var(--font-base);
+  font-size: clamp(2rem, 4.4vw, 4rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  white-space: nowrap;
 }
 
 h2 {
@@ -229,6 +233,91 @@ button,
 
 .brand-subtitle {
   color: var(--color-magic);
+}
+
+.mobile-header-bar {
+  display: block;
+}
+
+.mobile-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 2.45rem;
+  border: 1px solid rgb(188 168 108 / 0.35);
+  border-radius: var(--radius-sm);
+  background-color: rgb(17 17 17 / 0.82);
+  color: var(--color-text-soft);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.mobile-nav-toggle:hover,
+.mobile-nav-toggle:focus-visible,
+.site-sidebar.is-mobile-nav-open .mobile-nav-toggle {
+  border-color: var(--color-accent);
+  background-color: rgb(255 128 0 / 0.12);
+  color: var(--color-accent);
+}
+
+.hamburger-icon {
+  display: inline-block;
+  flex: 0 0 18px;
+  height: 14px;
+  position: relative;
+  width: 18px;
+}
+
+.hamburger-icon span {
+  background-color: currentColor;
+  border-radius: 999px;
+  display: block;
+  height: 2px;
+  left: 0;
+  position: absolute;
+  transform-origin: center;
+  transition:
+    opacity 160ms ease,
+    top 180ms ease,
+    bottom 180ms ease,
+    transform 180ms ease;
+  width: 18px;
+}
+
+.hamburger-icon span:nth-child(1) {
+  top: 0;
+}
+
+.hamburger-icon span:nth-child(2) {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.hamburger-icon span:nth-child(3) {
+  bottom: 0;
+}
+
+.site-sidebar.is-mobile-nav-open .hamburger-icon span:nth-child(1) {
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.site-sidebar.is-mobile-nav-open .hamburger-icon span:nth-child(2) {
+  opacity: 0;
+}
+
+.site-sidebar.is-mobile-nav-open .hamburger-icon span:nth-child(3) {
+  bottom: 50%;
+  transform: translateY(50%) rotate(-45deg);
 }
 
 .site-nav {
@@ -396,7 +485,7 @@ button,
 }
 
 .hero-copy {
-  max-width: 52rem;
+  /* max-width: 52rem; */
   color: var(--color-text-soft);
   font-size: clamp(1.05rem, 2vw, 1.25rem);
 }
@@ -570,7 +659,7 @@ button,
   font-style: italic;
 }
 
-@media (min-width: 56.01rem) and (max-width: 91.875rem) {
+@media (min-width: 897px) and (max-width: 1299px) {
   :root {
     --sidebar-width: clamp(15rem, 23vw, 18rem);
   }
@@ -611,32 +700,99 @@ button,
   }
 
   h1 {
-    font-size: clamp(2.35rem, 5vw, 4.25rem);
+    font-size: clamp(1.8rem, 4.25vw, 3.25rem);
   }
 
   .content-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 56rem) {
+@media (max-width: 896px) {
   .site-sidebar {
-    position: static;
+    position: sticky;
+    top: 0;
     width: auto;
-    min-height: auto;
-    max-height: none;
+    min-height: 0;
+    max-height: 100dvh;
     overflow: visible;
-    padding: var(--space-md);
+    padding: 0;
     border-right: 0;
     border-bottom: 1px solid rgb(188 168 108 / 0.35);
+    z-index: 50;
+  }
+
+  .mobile-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: linear-gradient(180deg, rgb(17 17 17 / 0.98), rgb(5 5 5 / 0.96));
+    box-shadow: 0 0.75rem 1.75rem rgb(0 0 0 / 0.35);
+  }
+
+  .brand-block {
+    min-width: 0;
   }
 
   .brand-link {
-    padding-bottom: var(--space-md);
+    border-bottom: 0;
+    gap: 0.05rem;
+    padding-bottom: 0;
+  }
+
+  .brand-kicker,
+  .brand-subtitle {
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+  }
+
+  .brand-title {
+    font-size: clamp(1.2rem, 5.5vw, 1.55rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-nav-toggle {
+    display: inline-flex;
+    flex: 0 0 auto;
   }
 
   .site-nav {
-    margin-top: var(--space-md);
+    display: grid;
+    gap: var(--space-lg);
+    max-height: 0;
+    margin-top: 0;
+    overflow: hidden;
+    padding: 0 var(--space-md);
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-0.4rem);
+    transition:
+      max-height 240ms ease,
+      opacity 180ms ease,
+      transform 180ms ease,
+      visibility 0ms linear 240ms,
+      padding 180ms ease;
+  }
+
+  .site-sidebar.is-mobile-nav-open .site-nav {
+    max-height: calc(100dvh - 4.5rem);
+    overflow-y: auto;
+    padding-block: var(--space-md);
+    pointer-events: auto;
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      max-height 260ms ease,
+      opacity 180ms ease,
+      transform 180ms ease,
+      visibility 0ms,
+      padding 180ms ease;
   }
 
   .site-main,
@@ -646,7 +802,247 @@ button,
     padding: var(--space-lg) var(--space-md);
   }
 
+  h1 {
+    font-size: clamp(1.65rem, 7.5vw, 2.75rem);
+    letter-spacing: -0.04em;
+    white-space: normal;
+  }
+
   .content-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+
+/* Calculator layout utilities */
+.calculator-page h1 {
+  max-width: none;
+}
+
+.calculator-page .section-panel {
+  padding: clamp(var(--space-md), 2.4vw, var(--space-xl));
+}
+
+.calculator-panel.calculator-form {
+  background:
+    linear-gradient(180deg, rgb(17 17 17 / 0.94), rgb(5 5 5 / 0.92));
+  gap: clamp(0.65rem, 1.4vw, var(--space-md));
+  padding: clamp(var(--space-md), 2vw, var(--space-lg));
+}
+
+/*
+  Calculator forms already use CSS grid gap.
+  This prevents .flow-lg from adding extra vertical margins between grid rows.
+*/
+.calculator-panel.flow-lg > * + * {
+  margin-top: 0;
+}
+
+.calculator-page select,
+.calculator-page input,
+.calculator-page textarea {
+  padding: 0.45rem 0.65rem;
+}
+
+.calculator-page select {
+  min-height: 2.45rem;
+}
+
+.calculator-grid {
+  display: grid;
+  gap: clamp(0.65rem, 1.35vw, var(--space-md));
+}
+
+.calculator-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.calculator-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.calculator-grid-center {
+  justify-items: center;
+}
+
+.calculator-grid-align-end {
+  align-items: end;
+}
+
+.calculator-field {
+  min-width: 0;
+}
+
+.calculator-field-narrow {
+  width: min(100%, 20rem);
+}
+
+.calculator-field-full,
+.grid-column-full {
+  grid-column: 1 / -1;
+}
+
+.calculator-field fieldset,
+.calculator-source-group {
+  border: 1px solid rgb(188 168 108 / 0.28);
+  border-radius: var(--radius-md);
+  margin: 0;
+  padding: 0.55rem 0.8rem 0.7rem;
+}
+
+.calculator-source-group legend,
+.result-label {
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.choice-stack {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.choice-option {
+  align-items: center;
+  color: var(--color-text-muted);
+  display: flex;
+  gap: var(--space-xs);
+  line-height: 1.15;
+}
+
+.choice-option input {
+  accent-color: var(--color-accent);
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.choice-option.is-disabled {
+  color: #4c4c4c;
+  font-style: italic;
+}
+
+.price-result {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  min-height: 5.5rem;
+  padding-block: var(--space-sm);
+  text-align: center;
+}
+
+.result-value {
+  color: var(--color-magic);
+  display: block;
+  font-family: var(--font-heading);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.calculator-page .result-card {
+  padding: clamp(var(--space-sm), 1.5vw, var(--space-md));
+}
+
+/*
+  Keep calculator control rows in three columns through tablet and narrow layouts.
+  The old 2-column breakpoint produced awkward orphaned controls and wasted vertical space.
+  Below 760px, tighten spacing/text instead of immediately switching to mobile.
+*/
+@media (min-width: 561px) and (max-width: 760px) {
+  .calculator-page {
+    font-size: 0.9rem;
+  }
+
+  .calculator-page .section-panel {
+    padding: var(--space-sm);
+  }
+
+  .calculator-panel.calculator-form {
+    gap: 0.55rem;
+    padding: 0.65rem;
+  }
+
+  .calculator-grid {
+    gap: 0.55rem;
+  }
+
+  .calculator-page select,
+  .calculator-page input,
+  .calculator-page textarea {
+    padding: 0.35rem 0.5rem;
+  }
+
+  .calculator-page select {
+    min-height: 2.15rem;
+  }
+
+  .form-field label,
+  .calculator-source-group legend,
+  .result-label {
+    font-size: 0.88rem;
+    line-height: 1.15;
+  }
+
+  .calculator-field fieldset,
+  .calculator-source-group {
+    padding: 0.45rem 0.6rem 0.55rem;
+  }
+
+  .choice-stack {
+    gap: 0.25rem;
+  }
+
+  .choice-option {
+    gap: 0.4rem;
+  }
+
+  .price-result {
+    min-height: 4.5rem;
+    padding-block: 0.45rem;
+  }
+
+  .result-value {
+    font-size: clamp(1.65rem, 5vw, 2.25rem);
+  }
+}
+
+@media (max-width: 560px) {
+  .calculator-page .section-panel {
+    padding: var(--space-md);
+  }
+
+  .calculator-panel.calculator-form {
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+  }
+
+  .calculator-grid {
+    gap: var(--space-sm);
+  }
+
+  .calculator-grid-2,
+  .calculator-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .calculator-grid-center {
+    justify-items: stretch;
+  }
+
+  .calculator-field-narrow {
+    width: 100%;
+  }
+
+  .calculator-field fieldset,
+  .calculator-source-group {
+    padding: var(--space-sm);
+  }
+
+  .price-result {
+    min-height: 4.75rem;
+  }
+
+  .result-value {
+    font-size: clamp(1.55rem, 8vw, 2.2rem);
   }
 }

@@ -1,6 +1,23 @@
 (() => {
   const initDiabloCompendium = () => {
+    const sidebar = document.querySelector('.site-sidebar');
+    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
     const menus = Array.from(document.querySelectorAll('.nav-menu'));
+    const mobileNavQuery = window.matchMedia('(max-width: 896px)');
+
+    const closeMobileNav = () => {
+      if (!sidebar || !mobileNavToggle) return;
+
+      sidebar.classList.remove('is-mobile-nav-open');
+      mobileNavToggle.setAttribute('aria-expanded', 'false');
+    };
+
+    const toggleMobileNav = () => {
+      if (!sidebar || !mobileNavToggle) return;
+
+      const isOpen = sidebar.classList.toggle('is-mobile-nav-open');
+      mobileNavToggle.setAttribute('aria-expanded', String(isOpen));
+    };
 
     const closeMenu = (menu) => {
       if (!menu) return;
@@ -47,6 +64,37 @@
       }
     };
 
+    mobileNavToggle?.addEventListener('click', (event) => {
+      event.preventDefault();
+      toggleMobileNav();
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!sidebar?.classList.contains('is-mobile-nav-open')) return;
+      if (!mobileNavQuery.matches) return;
+      if (sidebar.contains(event.target)) return;
+
+      closeMobileNav();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeMobileNav();
+      }
+    });
+
+    const handleMobileNavQueryChange = (event) => {
+      if (!event.matches) {
+        closeMobileNav();
+      }
+    };
+
+    if (typeof mobileNavQuery.addEventListener === 'function') {
+      mobileNavQuery.addEventListener('change', handleMobileNavQueryChange);
+    } else if (typeof mobileNavQuery.addListener === 'function') {
+      mobileNavQuery.addListener(handleMobileNavQueryChange);
+    }
+
     menus.forEach((menu) => {
       const button = menu.querySelector('.nav-menu-toggle');
       if (!button) return;
@@ -76,6 +124,12 @@
         link.setAttribute('aria-current', isCurrentHash ? 'location' : 'page');
         openMenu(link.closest('.nav-menu'));
       }
+
+      link.addEventListener('click', () => {
+        if (mobileNavQuery.matches) {
+          closeMobileNav();
+        }
+      });
     });
 
     const year = document.getElementById('current-year');
