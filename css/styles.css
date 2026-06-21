@@ -564,6 +564,18 @@ button,
   color: var(--color-bg);
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Utilities */
 .wrapper {
   margin-inline: auto;
@@ -943,6 +955,62 @@ button,
   padding: clamp(var(--space-sm), 1.5vw, var(--space-md));
 }
 
+
+.calculator-control-row {
+  align-items: end;
+}
+
+.calculator-actions {
+  align-items: center;
+  display: flex;
+  min-width: 0;
+}
+
+.calculator-actions .button {
+  min-width: min(100%, 10rem);
+}
+
+.calculator-results {
+  display: grid;
+  gap: clamp(0.75rem, 1.5vw, var(--space-md));
+}
+
+.qlvl-results-grid {
+  grid-template-columns: minmax(19rem, 1.1fr) minmax(18rem, 0.9fr);
+}
+
+.qlvl-result-card-large {
+  grid-row: span 2;
+}
+
+.result-heading {
+  color: var(--color-text-muted);
+  font-family: var(--font-base);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.result-output {
+  display: block;
+  min-height: 0;
+  overflow: auto;
+  resize: vertical;
+  width: 100%;
+}
+
+.qlvl-output {
+  min-height: 5.75rem;
+  font-family: Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  white-space: pre;
+}
+
+.qlvl-output-tall {
+  min-height: 23rem;
+}
+
 /*
   Keep calculator control rows in three columns through tablet and narrow layouts.
   The old 2-column breakpoint produced awkward orphaned controls and wasted vertical space.
@@ -1004,6 +1072,22 @@ button,
   .result-value {
     font-size: clamp(1.65rem, 5vw, 2.25rem);
   }
+
+  .qlvl-results-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .qlvl-result-card-large {
+    grid-row: auto;
+  }
+
+  .qlvl-output {
+    font-size: 0.82rem;
+  }
+
+  .qlvl-output-tall {
+    min-height: 20rem;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1044,5 +1128,26 @@ button,
 
   .result-value {
     font-size: clamp(1.55rem, 8vw, 2.2rem);
+  }
+
+  .calculator-actions .button {
+    width: 100%;
+  }
+
+  .qlvl-results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qlvl-result-card-large {
+    grid-row: auto;
+  }
+
+  .qlvl-output {
+    font-size: 0.78rem;
+    min-height: 5.5rem;
+  }
+
+  .qlvl-output-tall {
+    min-height: 19rem;
   }
 }
