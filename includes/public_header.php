@@ -106,6 +106,7 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
                 <li><a class="nav-submenu-link" href="<?= site_url('reference/jarulf162.pdf') ?>" target="_blank" rel="noopener noreferrer">Jarulf's Guide v1.62</a></li>
                 <li><a class="nav-submenu-link" href="https://github.com/kphoenix137/JGX/blob/main/1-Introduction/1.0.md" target="_blank" rel="noopener noreferrer">Jarulf's Guide X</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('reference/hellfire-shopping-differences.pdf') ?>" target="_blank" rel="noopener noreferrer">Max's Hellfire Shopping Differences</a></li>
+                <li><a class="nav-submenu-link" href="https://docs.google.com/spreadsheets/d/1oZnXf1MbXWDGosbR6votB0E7V6Si1dUp" target="_blank" rel="noopener noreferrer">Repair Durability Loss Sheet</a></li>
               </ul>
             </li>
 
