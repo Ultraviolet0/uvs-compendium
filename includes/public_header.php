@@ -49,6 +49,7 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
   <meta name="description" content="<?= h($page_description) ?>">
   <title><?= h($page_title) ?></title>
 
+  <link rel="icon" href="<?php echo site_url('/favicon.ico'); ?>" sizes="any">
   <link rel="stylesheet" href="<?= site_url('css/styles.css') ?>?v=<?= $css_version ?>">
   <script src="<?= site_url('js/scripts.js') ?>?v=<?= $js_version ?>" defer></script>
   <?php foreach ($page_scripts as $script_path): ?>
@@ -74,8 +75,7 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
           class="mobile-nav-toggle"
           type="button"
           aria-expanded="false"
-          aria-controls="site-navigation"
-        >
+          aria-controls="site-navigation">
           <span class="mobile-nav-toggle-text">Menu</span>
           <span class="hamburger-icon" aria-hidden="true">
             <span></span>
@@ -103,6 +103,8 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
               <ul id="nav-reference-menu" class="nav-submenu" aria-label="Reference links">
                 <li><a class="nav-submenu-link" href="https://github.com/diasurgical/DevilutionX/blob/master/docs/installing.md" target="_blank" rel="noopener noreferrer">Install DevilutionX</a></li>
                 <li><a class="nav-submenu-link" href="https://github.com/diasurgical/DevilutionX/releases" target="_blank" rel="noopener noreferrer">DevilutionX Releases</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('reference/jarulf162.pdf') ?>" target="_blank" rel="noopener noreferrer">Jarulf's Guide v1.62</a></li>
+                <li><a class="nav-submenu-link" href="https://github.com/kphoenix137/JGX/blob/main/1-Introduction/1.0.md" target="_blank" rel="noopener noreferrer">Jarulf's Guide X</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('reference/hellfire-shopping-differences.pdf') ?>" target="_blank" rel="noopener noreferrer">Max's Hellfire Shopping Differences</a></li>
               </ul>
             </li>
