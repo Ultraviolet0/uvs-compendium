@@ -67,7 +67,7 @@
 
   const calcAdriaQlvls = (clvl) => {
     const ilvl = specialIlvl(clvl);
-    return `Base items and spells (of staffs or books):  1-${ilvl}\nPrefixes on staffs with spell:    1-${2 * ilvl}\nAffixes on staffs without spell:  ${ilvl}-${2 * ilvl}`;
+    return `Base items and spells (of staves or books):  1-${ilvl}\nPrefixes on staves with spell:    1-${2 * ilvl}`;
   };
 
   const runQlvlCalculation = () => {
@@ -101,6 +101,7 @@
       runQlvlCalculation();
     });
 
+    clvlInput?.addEventListener('input', runQlvlCalculation);
     clvlInput?.addEventListener('change', runQlvlCalculation);
   };
 

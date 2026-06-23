@@ -6,6 +6,7 @@ $page_title = "Hellfire Shop Qlvl Calculator | UV's Compendium";
 $page_description = "Calculate Hellfire shop item and affix qlvl ranges for Griswold, Wirt, and Adria.";
 $base_path = '../../';
 $current_page = 'shop-qlvl';
+$page_styles = ['calculators/css/styles.css', 'calculators/shop-qlvl/css/styles.css'];
 $page_scripts = ['calculators/shop-qlvl/js/scripts.js'];
 
 require_once dirname(__DIR__, 2) . '/includes/public_header.php';
@@ -21,18 +22,14 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
   </div>
 
   <form id="calc" class="calculator-panel calculator-form flow-lg" action="#" novalidate>
-    <div class="calculator-grid calculator-grid-2 calculator-grid-align-end calculator-control-row">
+    <div class="calculator-grid calculator-grid-center calculator-control-row qlvl-level-row">
       <div class="form-field calculator-field calculator-field-narrow">
         <label for="clvl">Character Level</label>
         <input id="clvl" name="clvl" type="number" min="1" max="50" inputmode="numeric" required placeholder="1-50">
       </div>
-
-      <div class="calculator-actions">
-        <button id="calculate" class="button button-primary" type="submit">Calculate</button>
-      </div>
     </div>
 
-    <section class="calculator-results qlvl-results-grid" aria-label="Shop qlvl results">
+    <section class="calculator-results qlvl-results-grid" aria-label="Shop qlvl results" aria-live="polite">
       <article class="result-card qlvl-result-card qlvl-result-card-large flow">
         <h2 class="result-heading">Griswold</h2>
         <label class="sr-only" for="grisresult">Griswold qlvl results</label>
@@ -65,9 +62,8 @@ Affixes:     25-60</textarea>
       <article class="result-card qlvl-result-card flow">
         <h2 class="result-heading">Adria <span class="text-muted">(MP)</span></h2>
         <label class="sr-only" for="adriaresult">Adria multiplayer qlvl results</label>
-        <textarea id="adriaresult" class="result-output qlvl-output" rows="3" readonly>Base items and spells (of staffs or books):  1-16
-Prefixes on staffs with spell:    1-32
-Affixes on staffs without spell:  16-32</textarea>
+        <textarea id="adriaresult" class="result-output qlvl-output" rows="2" readonly>Base items and spells (of staves or books):  1-16
+Prefixes on staves with spell:    1-32</textarea>
       </article>
     </section>
   </form>

@@ -1,0 +1,41 @@
+/* Hellfire Item Price Calculator styles */
+
+.price-result {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  min-height: 5.5rem;
+  padding-block: var(--space-sm);
+  text-align: center;
+}
+
+.result-value {
+  color: var(--color-magic);
+  display: block;
+  font-family: var(--font-heading);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 561px) and (max-width: 760px) {
+  .price-result {
+    min-height: 4.5rem;
+    padding-block: 0.45rem;
+  }
+
+  .result-value {
+    font-size: clamp(1.65rem, 5vw, 2.25rem);
+  }
+}
+
+@media (max-width: 560px) {
+  .price-result {
+    min-height: 4.75rem;
+  }
+
+  .result-value {
+    font-size: clamp(1.55rem, 8vw, 2.2rem);
+  }
+}

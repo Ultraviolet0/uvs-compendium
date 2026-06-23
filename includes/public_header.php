@@ -6,6 +6,7 @@ $page_title = $page_title ?? "UV's Compendium | Tools & Guides";
 $page_description = $page_description ?? "A Diablo 1 and Hellfire compendium of calculators, mechanics references, and strategy guides with special attention to DevilutionX.";
 $base_path = $base_path ?? '';
 $current_page = $current_page ?? '';
+$page_styles = $page_styles ?? [];
 $page_scripts = $page_scripts ?? [];
 
 function h(string $value): string
@@ -34,10 +35,15 @@ function asset_version(string $path): int
 $css_version = asset_version('css/styles.css');
 $js_version = asset_version('js/scripts.js');
 
+if (isset($page_style) && is_string($page_style) && $page_style !== '') {
+  $page_styles[] = $page_style;
+}
+
 if (isset($page_script) && is_string($page_script) && $page_script !== '') {
   $page_scripts[] = $page_script;
 }
 
+$page_styles = array_values(array_unique(array_filter($page_styles, 'is_string')));
 $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string')));
 ?>
 <!doctype html>
@@ -51,6 +57,9 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
 
   <link rel="icon" href="<?php echo site_url('/favicon.ico'); ?>" sizes="any">
   <link rel="stylesheet" href="<?= site_url('css/styles.css') ?>?v=<?= $css_version ?>">
+  <?php foreach ($page_styles as $stylesheet_path): ?>
+    <link rel="stylesheet" href="<?= site_url($stylesheet_path) ?>?v=<?= asset_version($stylesheet_path) ?>">
+  <?php endforeach; ?>
   <script src="<?= site_url('js/scripts.js') ?>?v=<?= $js_version ?>" defer></script>
   <?php foreach ($page_scripts as $script_path): ?>
     <script src="<?= site_url($script_path) ?>?v=<?= asset_version($script_path) ?>" defer></script>
