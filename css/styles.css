@@ -175,13 +175,60 @@ button,
   position: fixed;
   inset: 0 auto 0 0;
   width: var(--sidebar-width);
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--space-xl) var(--space-md);
   border-right: 1px solid rgb(188 168 108 / 0.35);
   background: linear-gradient(180deg, rgb(17 17 17 / 0.97), rgb(5 5 5 / 0.97));
   box-shadow: var(--shadow-soft);
   z-index: 10;
+}
+
+.site-sidebar,
+.site-sidebar .site-nav {
+  -webkit-overflow-scrolling: touch;
+}
+
+.site-sidebar,
+.site-sidebar .site-nav {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.site-sidebar:hover,
+.site-sidebar:focus-within,
+.site-sidebar.is-mobile-nav-open .site-nav {
+  scrollbar-color: rgb(188 168 108 / 0.45) transparent;
+}
+
+.site-sidebar::-webkit-scrollbar,
+.site-sidebar .site-nav::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.site-sidebar::-webkit-scrollbar-track,
+.site-sidebar .site-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.site-sidebar::-webkit-scrollbar-thumb,
+.site-sidebar .site-nav::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 999px;
+}
+
+.site-sidebar:hover::-webkit-scrollbar-thumb,
+.site-sidebar:focus-within::-webkit-scrollbar-thumb,
+.site-sidebar.is-mobile-nav-open .site-nav::-webkit-scrollbar-thumb {
+  background-color: rgb(188 168 108 / 0.35);
+}
+
+.site-sidebar::-webkit-scrollbar-thumb:hover,
+.site-sidebar .site-nav::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(188 168 108 / 0.55);
 }
 
 .site-main {
@@ -671,6 +718,21 @@ button,
   font-style: italic;
 }
 
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
 @media (min-width: 897px) and (max-width: 1299px) {
   :root {
     --sidebar-width: clamp(15rem, 23vw, 18rem);
@@ -726,6 +788,7 @@ button,
     top: 0;
     width: auto;
     min-height: 0;
+    max-height: 100vh;
     max-height: 100dvh;
     overflow: visible;
     padding: 0;
@@ -792,8 +855,10 @@ button,
   }
 
   .site-sidebar.is-mobile-nav-open .site-nav {
+    max-height: calc(100vh - 4.5rem);
     max-height: calc(100dvh - 4.5rem);
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding-block: var(--space-md);
     pointer-events: auto;
     visibility: visible;

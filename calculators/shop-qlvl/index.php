@@ -17,9 +17,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
     <p class="hero-copy">
       Check the base-item and affix qlvl ranges available from Hellfire shop sources based on character level.
     </p>
-    <p class="warning-text">
-      Original calculator by <a href="https://jsfiddle.net/23nzfd4p/show" target="_blank" rel="noopener noreferrer">@Royal#4121</a>.
-    </p>
+    <p class="warning-text">Original calculator by <a href="https://jsfiddle.net/23nzfd4p/show" target="_blank" rel="noopener noreferrer">@Royal#4121</a> hosted on <a href="https://mgpat-gm.github.io/calcs.html" target="_blank" rel="noopener noreferrer">Ghast's Grotto</a>. Updated for this compendium while preserving the calculator behavior and modifying for Hellfire rules.</p>
   </div>
 
   <form id="calc" class="calculator-panel calculator-form flow-lg" action="#" novalidate>

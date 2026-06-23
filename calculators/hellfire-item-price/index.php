@@ -12,7 +12,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
     <p class="eyebrow">Calculator</p>
     <h1 id="calculator-title">Hellfire Item Price Calculator</h1>
     <p class="hero-copy">Estimate Hellfire item prices by selecting an item class, base item, optional prefix or suffix, variable affix values, and vendor source.</p>
-    <p class="warning-text">Original calculator by <a href="https://web.archive.org/web/20120530085023/http://www.dpsyche.com/price.html" target="_blank" rel="noopener noreferrer">Eso aka the_Langolier</a> hosted on <a href="https://mgpat-gm.github.io/calcs.html" target="_blank" rel="noopener noreferrer">Ghast's Grotto</a>. Updated for this compendium layout while preserving the calculator behavior and adding Hellfire affixes.</p>
+    <p class="warning-text">Original calculator by <a href="https://web.archive.org/web/20120530085023/http://www.dpsyche.com/price.html" target="_blank" rel="noopener noreferrer">Eso aka the_Langolier</a> hosted on <a href="https://mgpat-gm.github.io/calcs.html" target="_blank" rel="noopener noreferrer">Ghast's Grotto</a>. Updated for this compendium while preserving the calculator behavior and adding Hellfire affixes.</p>
   </header>
 
   <form id="hellfire-price-calculator" class="calculator-panel calculator-form flow-lg" name="SelectItm">

@@ -38,10 +38,6 @@
     const toggleMenu = (menu) => {
       const isOpen = menu.classList.contains('is-open');
 
-      menus.forEach((otherMenu) => {
-        if (otherMenu !== menu) closeMenu(otherMenu);
-      });
-
       if (isOpen) {
         closeMenu(menu);
       } else {
