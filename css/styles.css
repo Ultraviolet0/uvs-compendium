@@ -718,21 +718,6 @@ button,
   font-style: italic;
 }
 
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
-}
-
 @media (min-width: 897px) and (max-width: 1299px) {
   :root {
     --sidebar-width: clamp(15rem, 23vw, 18rem);
@@ -787,9 +772,9 @@ button,
     position: sticky;
     top: 0;
     width: auto;
+    height: auto;
     min-height: 0;
-    max-height: 100vh;
-    max-height: 100dvh;
+    max-height: none;
     overflow: visible;
     padding: 0;
     border-right: 0;
@@ -844,12 +829,8 @@ button,
     padding: 0 var(--space-md);
     pointer-events: none;
     visibility: hidden;
-    opacity: 0;
-    transform: translateY(-0.4rem);
     transition:
       max-height 240ms ease,
-      opacity 180ms ease,
-      transform 180ms ease,
       visibility 0ms linear 240ms,
       padding 180ms ease;
   }
@@ -862,12 +843,8 @@ button,
     padding-block: var(--space-md);
     pointer-events: auto;
     visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
     transition:
       max-height 260ms ease,
-      opacity 180ms ease,
-      transform 180ms ease,
       visibility 0ms,
       padding 180ms ease;
   }
@@ -1214,5 +1191,17 @@ button,
 
   .qlvl-output-tall {
     min-height: 19rem;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

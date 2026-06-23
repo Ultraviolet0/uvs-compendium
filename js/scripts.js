@@ -36,6 +36,8 @@
     };
 
     const toggleMenu = (menu) => {
+      if (!menu) return;
+
       const isOpen = menu.classList.contains('is-open');
 
       if (isOpen) {
