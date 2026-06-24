@@ -1,41 +1,114 @@
 /* Hellfire Item Price Calculator styles */
 
-.price-result {
+.hellfire-price-form {
   display: grid;
-  gap: 0.25rem;
+  gap: clamp(0.65rem, 1.35vw, var(--space-md));
+}
+
+.hellfire-class-row {
+  grid-template-columns: 1fr;
   justify-items: center;
-  min-height: 5.5rem;
-  padding-block: var(--space-sm);
+}
+
+.hellfire-class-row .form-field {
   text-align: center;
+  width: min(100%, 20rem);
+}
+
+#hellfire-price-calculator .calculator-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#hellfire-price-calculator .form-field {
+  gap: 0.3rem;
+}
+
+#hellfire-price-calculator .calculator-source-group {
+  border: 0;
+  border-radius: 0;
+  justify-self: center;
+  padding: 0;
+  width: max-content;
+}
+
+#hellfire-price-calculator .choice-stack {
+  gap: 0.2rem;
+  justify-items: start;
+}
+
+.price-result {
+  color: var(--color-text-muted);
+  display: grid;
+  gap: 0.15rem;
+  justify-items: start;
+  min-height: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.price-result .result-label {
+  line-height: 1.2;
 }
 
 .result-value {
   color: var(--color-magic);
   display: block;
-  font-family: var(--font-heading);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  font-weight: 700;
-  line-height: 1.05;
+  font-family: var(--font-base);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
-@media (min-width: 561px) and (max-width: 760px) {
-  .price-result {
-    min-height: 4.5rem;
-    padding-block: 0.45rem;
+@media (max-width: 560px) {
+  .hellfire-price-form {
+    gap: 0.6rem;
+  }
+
+  #hellfire-price-calculator .calculator-grid-3 {
+    gap: 0.45rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #hellfire-price-calculator select {
+    font-size: 0.75rem;
+    min-height: 2.05rem;
+    padding: 0.28rem 0.35rem;
+  }
+
+  #hellfire-price-calculator .form-field label,
+  #hellfire-price-calculator .result-label {
+    font-size: 0.78rem;
+    line-height: 1.15;
+  }
+
+  #hellfire-price-calculator .choice-option {
+    font-size: 0.75rem;
+    gap: 0.3rem;
+  }
+
+  #hellfire-price-calculator .choice-option input {
+    margin: 0;
   }
 
   .result-value {
-    font-size: clamp(1.65rem, 5vw, 2.25rem);
+    font-size: 0.95rem;
   }
 }
 
-@media (max-width: 560px) {
-  .price-result {
-    min-height: 4.75rem;
+@media (max-width: 412px) {
+  #hellfire-price-calculator .calculator-grid-3 {
+    gap: 0.35rem;
   }
 
-  .result-value {
-    font-size: clamp(1.55rem, 8vw, 2.2rem);
+  #hellfire-price-calculator select {
+    font-size: 0.68rem;
+    padding-inline: 0.25rem;
+  }
+
+  #hellfire-price-calculator .form-field label,
+  #hellfire-price-calculator .choice-option,
+  #hellfire-price-calculator .result-label {
+    font-size: 0.7rem;
   }
 }

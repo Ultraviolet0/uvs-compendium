@@ -1,32 +1,37 @@
 /* Shop Qlvl Calculator styles */
 
-.qlvl-level-row {
-  justify-items: start;
+.qlvl-form,
+.qlvl-results {
+  display: grid;
+  gap: var(--space-sm);
 }
 
-.qlvl-level-row .calculator-field-narrow {
+.qlvl-form {
+  gap: var(--space-md);
+}
+
+.qlvl-level-field {
   width: min(100%, 20rem);
 }
 
-.qlvl-results-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.qlvl-result-card-large {
-  grid-row: span 2;
+.qlvl-results .result-heading:not(:first-child) {
+  margin-top: var(--space-sm);
 }
 
 .qlvl-output {
-  min-height: 5.75rem;
+  color: var(--color-magic);
   font-family: Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.86rem;
   line-height: 1.35;
+  margin: 0;
   overflow-x: auto;
   white-space: pre;
 }
 
-.qlvl-output-tall {
-  min-height: 23rem;
+.qlvl-output-wrap {
+  overflow-wrap: anywhere;
+  overflow-x: visible;
+  white-space: pre-wrap;
 }
 
 @media (min-width: 761px) and (max-width: 980px) {
@@ -39,27 +44,14 @@
   .qlvl-output {
     font-size: 0.76rem;
   }
-
-  .qlvl-output-tall {
-    min-height: 20rem;
-  }
 }
 
 @media (max-width: 560px) {
-  .qlvl-results-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .qlvl-result-card-large {
-    grid-row: auto;
+  .qlvl-level-field {
+    width: 100%;
   }
 
   .qlvl-output {
     font-size: 0.78rem;
-    min-height: 5.5rem;
-  }
-
-  .qlvl-output-tall {
-    min-height: 19rem;
   }
 }

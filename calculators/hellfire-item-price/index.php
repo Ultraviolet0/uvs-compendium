@@ -16,8 +16,8 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
     <p class="warning-text">Original calculator by <a href="https://web.archive.org/web/20120530085023/http://www.dpsyche.com/price.html" target="_blank" rel="noopener noreferrer">Eso aka the_Langolier</a> hosted on <a href="https://mgpat-gm.github.io/calcs.html" target="_blank" rel="noopener noreferrer">Ghast's Grotto</a>. Updated for this compendium while preserving the calculator behavior and adding Hellfire affixes.</p>
   </header>
 
-  <form id="hellfire-price-calculator" class="calculator-panel calculator-form flow-lg" name="SelectItm">
-    <div class="calculator-grid calculator-grid-center">
+  <form id="hellfire-price-calculator" class="hellfire-price-form flow-lg" name="SelectItm">
+    <div class="calculator-grid hellfire-class-row">
       <div class="form-field calculator-field calculator-field-narrow">
         <label for="item-class">Item Class</label>
         <select id="item-class" name="Clas">
@@ -69,7 +69,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
       </div>
 
       <fieldset class="calculator-field calculator-source-group">
-        <legend>Source</legend>
+        <legend class="sr-only">Source</legend>
         <div class="choice-stack">
           <label id="Adria" class="choice-option calculator-source-option">
             <input name="Source" type="radio" value="Adria">
@@ -99,7 +99,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
       </div>
     </div>
 
-    <section class="result-card price-result" aria-labelledby="price-result-label" aria-live="polite">
+    <section class="price-result" aria-labelledby="price-result-label" aria-live="polite">
       <p id="price-result-label" class="result-label">Price</p>
       <output id="Price" class="result-value" name="Price">0</output>
     </section>

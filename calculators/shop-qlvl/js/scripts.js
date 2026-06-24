@@ -70,6 +70,10 @@
     return `Base items and spells (of staves or books):  1-${ilvl}\nPrefixes on staves with spell:    1-${2 * ilvl}`;
   };
 
+  const setResultText = (element, text) => {
+    element.textContent = text;
+  };
+
   const runQlvlCalculation = () => {
     const clvlInput = document.getElementById('clvl');
     const grisResult = document.getElementById('grisresult');
@@ -85,9 +89,9 @@
     const boundedClvl = Math.min(Math.max(clvl, 1), 50);
     clvlInput.value = String(boundedClvl);
 
-    grisResult.value = calcGriswoldsMinMaxQlvls(boundedClvl);
-    wirtResult.value = calcWirtQlvls(boundedClvl);
-    adriaResult.value = calcAdriaQlvls(boundedClvl);
+    setResultText(grisResult, calcGriswoldsMinMaxQlvls(boundedClvl));
+    setResultText(wirtResult, calcWirtQlvls(boundedClvl));
+    setResultText(adriaResult, calcAdriaQlvls(boundedClvl));
   };
 
   const initQlvlCalculator = () => {
