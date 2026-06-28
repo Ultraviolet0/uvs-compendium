@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 $page_title = "Calculators | UV's Compendium";
-$page_description = "Diablo I, Hellfire, and DevilutionX calculator tools for item prices, shopping qlvls, affixes, and related mechanics.";
+$page_description = "Diablo I, Hellfire, and DevilutionX calculator tools for item prices, shopping qlvls, premium items, repair durability, physical damage, spell damage, and related mechanics.";
 $base_path = '../';
 $current_page = 'calculators';
 $page_styles = [
@@ -12,12 +12,14 @@ $page_styles = [
   'calculators/hellfire-item-price/css/styles.css',
   'calculators/shop-qlvl/css/styles.css',
   'calculators/warrior-repair/css/styles.css',
+  'calculators/hellfire-damage/css/styles.css',
 ];
 $page_scripts = [
   'calculators/premium-item-checker/js/scripts.js',
   'calculators/hellfire-item-price/js/scripts.js',
   'calculators/shop-qlvl/js/scripts.js',
   'calculators/warrior-repair/js/scripts.js',
+  'calculators/hellfire-damage/js/scripts.js',
 ];
 
 require_once dirname(__DIR__) . '/includes/public_header.php';
@@ -40,5 +42,8 @@ require __DIR__ . '/shop-qlvl/calculator.php';
 
 $warrior_repair_heading_level = 'h2';
 require __DIR__ . '/warrior-repair/calculator.php';
+
+$hellfire_damage_heading_level = 'h2';
+require __DIR__ . '/hellfire-damage/calculator.php';
 
 require_once dirname(__DIR__) . '/includes/public_footer.php';

@@ -136,6 +136,7 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
                 <li><a class="nav-submenu-link" href="<?= site_url('calculators/hellfire-item-price/') ?>">Hellfire Item Price Calculator</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('calculators/shop-qlvl/') ?>">Hellfire Shop Qlvl Calculator</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('calculators/warrior-repair/') ?>">Warrior Repair Calculator</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('calculators/hellfire-damage/') ?>">Hellfire Damage Calculator</a></li>
               </ul>
             </li>
 
