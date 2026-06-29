@@ -35,26 +35,26 @@ $hellfire_damage_section_heading_level = $hellfire_damage_heading_level === 'h1'
 
         <div class="form-field calculator-field">
           <label for="characterLevel">Character level</label>
-          <input id="characterLevel" type="number" min="1" max="50" step="1" value="50">
+          <input id="characterLevel" type="text" inputmode="numeric" min="1" max="50" step="1" value="50">
         </div>
       </div>
 
       <div class="damage-grid damage-grid-4 damage-stat-grid">
         <div class="form-field calculator-field">
           <label for="strength">Effective Strength</label>
-          <input id="strength" type="number" min="0" max="999" step="1" value="250">
+          <input id="strength" type="text" inputmode="numeric" min="0" max="999" step="1" value="250">
         </div>
         <div class="form-field calculator-field">
           <label for="magic">Effective Magic</label>
-          <input id="magic" type="number" min="0" max="999" step="1" value="50">
+          <input id="magic" type="text" inputmode="numeric" min="0" max="999" step="1" value="50">
         </div>
         <div class="form-field calculator-field">
           <label for="dexterity">Effective Dexterity</label>
-          <input id="dexterity" type="number" min="0" max="999" step="1" value="60">
+          <input id="dexterity" type="text" inputmode="numeric" min="0" max="999" step="1" value="60">
         </div>
         <div class="form-field calculator-field">
           <label for="vitality">Effective Vitality</label>
-          <input id="vitality" type="number" min="0" max="999" step="1" value="100">
+          <input id="vitality" type="text" inputmode="numeric" min="0" max="999" step="1" value="100">
         </div>
       </div>
     </section>
@@ -86,22 +86,22 @@ $hellfire_damage_section_heading_level = $hellfire_damage_heading_level === 'h1'
       <div class="damage-grid damage-grid-3">
         <div class="form-field calculator-field">
           <label for="weaponMin">Weapon min damage</label>
-          <input id="weaponMin" type="number" min="0" max="999" step="0.1" value="6">
+          <input id="weaponMin" type="text" inputmode="decimal" min="0" max="999" step="0.1" value="6">
         </div>
         <div class="form-field calculator-field">
           <label for="weaponMax">Weapon max damage</label>
-          <input id="weaponMax" type="number" min="0" max="999" step="0.1" value="15">
+          <input id="weaponMax" type="text" inputmode="decimal" min="0" max="999" step="0.1" value="15">
         </div>
         <div class="form-field calculator-field">
           <label for="weaponPercent">Weapon +% damage</label>
-          <input id="weaponPercent" type="number" min="0" max="500" step="1" value="0">
+          <input id="weaponPercent" type="text" inputmode="decimal" min="0" max="500" step="1" value="0">
         </div>
       </div>
 
       <div class="damage-grid damage-grid-2">
         <div class="form-field calculator-field">
           <label for="flatDamage">Flat +damage</label>
-          <input id="flatDamage" type="number" min="0" max="999" step="0.1" value="0">
+          <input id="flatDamage" type="text" inputmode="decimal" min="0" max="999" step="0.1" value="0">
         </div>
         <label class="damage-checkline damage-align-end">
           <input id="autoSpecialDamage" type="checkbox" checked>
@@ -128,7 +128,7 @@ $hellfire_damage_section_heading_level = $hellfire_damage_heading_level === 'h1'
         </label>
         <label class="damage-checkline" id="jesterRow">
           <input id="jester" type="checkbox">
-          <span>Jester's prefix: ×0 to ×6-ish (avg ×1.985)</span>
+          <span>Jester's prefix: ×0 to ×6 (avg ×2)</span>
         </label>
         <label class="damage-checkline" id="quarterRow">
           <input id="quarterDamage" type="checkbox">
@@ -192,7 +192,7 @@ $hellfire_damage_section_heading_level = $hellfire_damage_heading_level === 'h1'
         </div>
         <div class="form-field calculator-field" id="targetHpRow">
           <label for="targetHp">Target HP, for Bone Spirit</label>
-          <input id="targetHp" type="number" min="1" max="99999" step="1" value="1000">
+          <input id="targetHp" type="text" inputmode="numeric" min="1" max="99999" step="1" value="1000">
         </div>
       </div>
 

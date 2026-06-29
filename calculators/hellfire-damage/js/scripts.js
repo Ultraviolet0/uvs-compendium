@@ -31,7 +31,11 @@
       return;
     }
 
-    root.addEventListener('submit', (event) => event.preventDefault());
+    root.addEventListener('submit', (event) => {
+      event.preventDefault();
+      normalizeAllNumericFields();
+      render();
+    });
 
   const classLabels = {
     warrior: 'Warrior',
@@ -83,11 +87,11 @@
     staff: [2, 4]
   };
 
-  // Jarulf's exact Jester implementation has two equally likely branches:
-  // Rnd[100] / 100, or 5 * (Rnd[100] + 20) / 100.
-  // That gives an exact average multiplier of (0.495 + 3.475) / 2 = 1.985.
-  const JESTER_MAX_MULT = 5.95;
-  const JESTER_AVG_MULT = 1.985;
+  // DevilutionX correction: Jester's uses Rnd[201].
+  // This gives an exact total-damage multiplier range of ×0 to ×6,
+  // with an average multiplier of ×2.
+  const JESTER_MAX_MULT = 6;
+  const JESTER_AVG_MULT = 2;
 
   const spellDefinitions = {
     apocalypse: {
@@ -269,13 +273,203 @@
     };
   }
 
-  function num(input, fallback = 0) {
-    const parsed = Number(input.value);
-    return Number.isFinite(parsed) ? parsed : fallback;
+  const numericInputConfig = {
+    characterLevel: { min: 1, max: 50, integer: true, fallback: 50 },
+    strength: { min: 0, max: 999, integer: true, fallback: 250 },
+    magic: { min: 0, max: 999, integer: true, fallback: 50 },
+    dexterity: { min: 0, max: 999, integer: true, fallback: 60 },
+    vitality: { min: 0, max: 999, integer: true, fallback: 100 },
+    weaponMin: { min: 0, max: 999, integer: false, fallback: 6 },
+    weaponMax: { min: 0, max: 999, integer: false, fallback: 15 },
+    weaponPercent: { min: 0, max: 500, integer: false, fallback: 0 },
+    flatDamage: { min: 0, max: 999, integer: false, fallback: 0 },
+    targetHp: { min: 1, max: 99999, integer: true, fallback: 1000 }
+  };
+
+  const lastValidNumericValues = {};
+
+  function parseNumericExpression(rawValue) {
+    const source = String(rawValue).replace(/,/g, '').trim();
+
+    if (source === '') {
+      return NaN;
+    }
+
+    let index = 0;
+
+    function skipSpaces() {
+      while (source[index] === ' ' || source[index] === '\t') {
+        index += 1;
+      }
+    }
+
+    function parseNumber() {
+      skipSpaces();
+      const start = index;
+      let hasDigit = false;
+      let hasDot = false;
+
+      while (index < source.length) {
+        const char = source[index];
+
+        if (char >= '0' && char <= '9') {
+          hasDigit = true;
+          index += 1;
+          continue;
+        }
+
+        if (char === '.' && !hasDot) {
+          hasDot = true;
+          index += 1;
+          continue;
+        }
+
+        break;
+      }
+
+      if (!hasDigit) {
+        throw new Error('Expected number');
+      }
+
+      return Number(source.slice(start, index));
+    }
+
+    function parseFactor() {
+      skipSpaces();
+
+      if (source[index] === '+') {
+        index += 1;
+        return parseFactor();
+      }
+
+      if (source[index] === '-') {
+        index += 1;
+        return -parseFactor();
+      }
+
+      if (source[index] === '(') {
+        index += 1;
+        const value = parseExpression();
+        skipSpaces();
+
+        if (source[index] !== ')') {
+          throw new Error('Expected closing parenthesis');
+        }
+
+        index += 1;
+        return value;
+      }
+
+      return parseNumber();
+    }
+
+    function parseTerm() {
+      let value = parseFactor();
+
+      while (true) {
+        skipSpaces();
+        const operator = source[index];
+
+        if (operator !== '*' && operator !== '/') {
+          break;
+        }
+
+        index += 1;
+        const right = parseFactor();
+
+        if (operator === '*') {
+          value *= right;
+        } else {
+          value /= right;
+        }
+      }
+
+      return value;
+    }
+
+    function parseExpression() {
+      let value = parseTerm();
+
+      while (true) {
+        skipSpaces();
+        const operator = source[index];
+
+        if (operator !== '+' && operator !== '-') {
+          break;
+        }
+
+        index += 1;
+        const right = parseTerm();
+        value = operator === '+' ? value + right : value - right;
+      }
+
+      return value;
+    }
+
+    try {
+      const value = parseExpression();
+      skipSpaces();
+
+      if (index !== source.length || !Number.isFinite(value)) {
+        return NaN;
+      }
+
+      return value;
+    } catch (_error) {
+      return NaN;
+    }
   }
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
+  }
+
+  function constrainNumericValue(value, config) {
+    let constrained = clamp(value, config.min, config.max);
+
+    if (config.integer) {
+      constrained = Math.trunc(constrained);
+    }
+
+    return constrained;
+  }
+
+  function numericValue(id) {
+    const input = state[id];
+    const config = numericInputConfig[id];
+    const parsed = parseNumericExpression(input.value);
+
+    if (Number.isFinite(parsed)) {
+      const constrained = constrainNumericValue(parsed, config);
+      lastValidNumericValues[id] = constrained;
+      return constrained;
+    }
+
+    return lastValidNumericValues[id] ?? config.fallback;
+  }
+
+  function formatNumericFieldValue(value, config) {
+    if (config.integer) {
+      return String(Math.trunc(value));
+    }
+
+    return fmt(value);
+  }
+
+  function normalizeNumericField(id) {
+    const input = state[id];
+
+    if (!input || input.disabled) {
+      return;
+    }
+
+    const config = numericInputConfig[id];
+    const value = numericValue(id);
+    input.value = formatNumericFieldValue(value, config);
+  }
+
+  function normalizeAllNumericFields() {
+    Object.keys(numericInputConfig).forEach(normalizeNumericField);
   }
 
   function fmt(value) {
@@ -382,28 +576,23 @@
   }
 
   function getInputs() {
-    let clvl = clamp(Math.trunc(num(state.characterLevel, 1)), 1, 50);
-    state.characterLevel.value = clvl;
-
-    let weaponPercent = clamp(num(state.weaponPercent, 0), 0, 500);
-    state.weaponPercent.value = weaponPercent;
-
-    let slvl = clamp(Math.trunc(num(state.spellLevel, 1)), 0, 20);
-    state.spellLevel.value = slvl;
+    const clvl = numericValue('characterLevel');
+    const weaponPercent = numericValue('weaponPercent');
+    const slvl = clamp(Math.trunc(Number(state.spellLevel.value) || 0), 0, 20);
 
     return {
       cls: state.characterClass.value,
       clvl,
-      str: Math.max(0, num(state.strength, 0)),
-      mag: Math.max(0, num(state.magic, 0)),
-      dex: Math.max(0, num(state.dexterity, 0)),
-      vit: Math.max(0, num(state.vitality, 0)),
+      str: numericValue('strength'),
+      mag: numericValue('magic'),
+      dex: numericValue('dexterity'),
+      vit: numericValue('vitality'),
       weaponType: state.weaponType.value,
       hasShield: state.hasShield.checked,
-      weaponMin: Math.max(0, num(state.weaponMin, 0)),
-      weaponMax: Math.max(0, num(state.weaponMax, 0)),
+      weaponMin: numericValue('weaponMin'),
+      weaponMax: numericValue('weaponMax'),
       weaponPercent,
-      flatDamage: Math.max(0, num(state.flatDamage, 0)),
+      flatDamage: numericValue('flatDamage'),
       autoSpecialDamage: state.autoSpecialDamage.checked,
       bardHasSword: state.bardHasSword.checked,
       criticalHit: state.criticalHit.checked,
@@ -414,7 +603,7 @@
       peril: state.peril.checked,
       spellKey: state.spellKey.value,
       slvl,
-      targetHp: Math.max(1, num(state.targetHp, 1))
+      targetHp: numericValue('targetHp')
     };
   }
 
@@ -555,7 +744,7 @@
         min = 0;
         avg *= JESTER_AVG_MULT;
         max *= JESTER_MAX_MULT;
-        applied.push("Jester's: ×0 to ×6-ish (avg ×1.985; exact max ×5.95)");
+        applied.push("Jester's: ×0 to ×6 (avg ×2)");
       }
 
       if (inputs.quarterDamage) {
@@ -584,6 +773,14 @@
       baseMax,
       rows
     };
+  }
+
+  function calculatePerilReturnRange(inputs) {
+    const weaponRange = normalizeDamageInputs(inputs);
+    const min = weaponRange.min * (1 + inputs.weaponPercent / 100) + inputs.flatDamage;
+    const max = weaponRange.max * (1 + inputs.weaponPercent / 100) + inputs.flatDamage;
+
+    return range(min, (min + max) / 2, max);
   }
 
   function calculateSpell(inputs) {
@@ -735,11 +932,12 @@
     }
 
     if (inputs.jester) {
-      notes.push('Jester\'s is usually described as ×0 to ×6; this calculator uses the exact Jarulf roll, with an average multiplier of ×1.985 and largest possible multiplier of ×5.95.');
+      notes.push('Jester\'s uses Rnd[201], giving an exact total-damage multiplier range of ×0 to ×6 with an average multiplier of ×2.');
     }
 
     if (inputs.peril) {
-      notes.push('Peril self-damage is not calculated here. This only shows outgoing monster damage.');
+      const perilReturn = calculatePerilReturnRange(inputs);
+      notes.push(`Peril return damage to player: ${fmt(perilReturn.min)} / ${fmt(perilReturn.avg)} / ${fmt(perilReturn.max)}. This uses weapon damage after +% and flat +damage only; it excludes character damage, monster category rules, critical hits, Civerb-style demon damage, Devastation, Jester, adjacent quarter damage, and Peril's outgoing ×2.`);
     }
 
     $('notes').innerHTML = notes.map((note) => `<div class="damage-note">${note}</div>`).join('');
@@ -805,8 +1003,30 @@
 
   state.autoSpecialDamage.addEventListener('change', render);
 
+  const numericInputIds = new Set(Object.keys(numericInputConfig));
+
+  numericInputIds.forEach((id) => {
+    const input = $(id);
+
+    input.addEventListener('input', render);
+    input.addEventListener('change', () => {
+      normalizeNumericField(id);
+      render();
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') {
+        return;
+      }
+
+      event.preventDefault();
+      normalizeNumericField(id);
+      render();
+      input.blur();
+    });
+  });
+
   fields.forEach((id) => {
-    if (id === 'characterClass' || id === 'weaponType' || id === 'autoSpecialDamage') return;
+    if (id === 'characterClass' || id === 'weaponType' || id === 'autoSpecialDamage' || numericInputIds.has(id)) return;
     $(id).addEventListener('input', render);
     $(id).addEventListener('change', render);
   });
