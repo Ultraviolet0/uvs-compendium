@@ -184,6 +184,41 @@ button,
   z-index: 10;
 }
 
+.site-sidebar,
+.site-sidebar .site-nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(188 168 108 / 0.28) transparent;
+}
+
+.site-sidebar::-webkit-scrollbar,
+.site-sidebar .site-nav::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.site-sidebar::-webkit-scrollbar-track,
+.site-sidebar .site-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.site-sidebar::-webkit-scrollbar-thumb,
+.site-sidebar .site-nav::-webkit-scrollbar-thumb {
+  background-color: rgb(188 168 108 / 0.24);
+  border-radius: 999px;
+}
+
+.site-sidebar:hover,
+.site-sidebar:focus-within,
+.site-sidebar.is-mobile-nav-open .site-nav {
+  scrollbar-color: rgb(188 168 108 / 0.42) transparent;
+}
+
+.site-sidebar:hover::-webkit-scrollbar-thumb,
+.site-sidebar:focus-within::-webkit-scrollbar-thumb,
+.site-sidebar.is-mobile-nav-open .site-nav::-webkit-scrollbar-thumb {
+  background-color: rgb(188 168 108 / 0.38);
+}
+
 .site-main {
   width: min(
     calc(100% - var(--sidebar-width) - (var(--space-xl) * 2)),
