@@ -3,9 +3,17 @@ $page_title = "Guides | UV's Compendium";
 $page_description = "Strategy guides and mechanics references for Diablo I, Hellfire, and DevilutionX.";
 $base_path = '../';
 $current_page = 'guides';
+$page_styles = ['guides/css/styles.css'];
 
 require_once __DIR__ . '/../includes/public_header.php';
 ?>
+
+<nav class="guide-breadcrumbs" aria-label="Breadcrumb">
+  <ol class="guide-breadcrumb-list">
+    <li><a href="<?= site_url() ?>">Home</a></li>
+    <li aria-current="page">Guides</li>
+  </ol>
+</nav>
 
 <section class="section-panel flow-lg" aria-labelledby="page-title">
   <p class="eyebrow">Documentation</p>
@@ -33,8 +41,8 @@ require_once __DIR__ . '/../includes/public_header.php';
   <article class="card flow">
     <p class="card-label">Video Guide</p>
     <h2>Max's Hellfire Shopping Video</h2>
-    <p>Max's walkthrough of Hellfire shopping mechanics, vendor behavior, and practical equipment targets.</p>
-    <p class="guide-card-action"><a class="button button-secondary" href="https://www.youtube.com/watch?v=c8MaZZezeMQ" target="_blank" rel="noopener noreferrer">Watch the Video</a></p>
+    <p>Max's practical Hellfire shopping demonstration, using a King's Bastard Sword of Speed or Haste as the target.</p>
+    <p class="guide-card-action"><a class="button button-secondary" href="<?= site_url('guides/max-shopping-video/') ?>">Watch the Video</a></p>
   </article>
 </section>
 

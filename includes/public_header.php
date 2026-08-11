@@ -155,7 +155,7 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
                 <li><a class="nav-submenu-link" href="<?= site_url('guides/') ?>">Guides Home</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('guides/fast-character-development/') ?>">Fast Character Development</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('guides/shopping/') ?>">UV's Shopping &amp; Affixes</a></li>
-                <li><a class="nav-submenu-link" href="https://www.youtube.com/watch?v=c8MaZZezeMQ" target="_blank" rel="noopener noreferrer">Max's Hellfire Shopping Video</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('guides/max-shopping-video/') ?>">Max's Hellfire Shopping Video</a></li>
               </ul>
             </li>
           </ul>

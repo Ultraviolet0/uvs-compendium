@@ -63,7 +63,7 @@ require_once dirname(__DIR__, 2) . "/includes/public_header.php";
       </dl>
     </header>
 
-    <figure class="guide-figure">
+    <figure class="guide-figure guide-featured-figure">
       <video
         class="guide-video"
         controls

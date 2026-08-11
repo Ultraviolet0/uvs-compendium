@@ -132,7 +132,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
 → item creation level
 → allowed qlvl ranges</code></pre>
         <p>For most shopping, you do not need to calculate the item creation level manually. What matters is the resulting range of base-item and affix qlvls available in each shop slot.</p>
-        <p>Our <strong>Hellfire Shop Qlvl Calculator</strong> handles this for you.</p>
+        <p>Our <a class="guide-tool-link" href="<?= site_url('calculators/shop-qlvl/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Shop Qlvl Calculator (opens in a new tab)"><strong>Hellfire Shop Qlvl Calculator</strong></a> handles this for you.</p>
         <dl class="guide-definition-list">
           <div>
             <dt>qlvl</dt>
@@ -171,7 +171,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
         <p>There are a couple of good ways to research a target.</p>
         <section id="premium-item-checker-first">
           <h3>Premium Item Checker First</h3>
-          <p>If you already have an item combination in mind, the <strong>Hellfire Premium Item Checker</strong> is usually the easiest place to start.</p>
+          <p>If you already have an item combination in mind, the <a class="guide-tool-link" href="<?= site_url('calculators/premium-item-checker/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Premium Item Checker (opens in a new tab)"><strong>Hellfire Premium Item Checker</strong></a> is usually the easiest place to start.</p>
           <p>Use it to determine things such as:</p>
           <ul class="guide-list">
             <li>Whether the prefix can occur on the base item</li>
@@ -182,7 +182,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
             <li>Whether the item can be found in the dungeon</li>
             <li>The qlvl of the components</li>
           </ul>
-          <p>Once you know the item is valid, use the <strong>Hellfire Shop Qlvl Calculator</strong> to check different shopper levels and see which Griswold slots can actually generate it.</p>
+          <p>Once you know the item is valid, use the <a class="guide-tool-link" href="<?= site_url('calculators/shop-qlvl/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Shop Qlvl Calculator (opens in a new tab)"><strong>Hellfire Shop Qlvl Calculator</strong></a> to check different shopper levels and see which Griswold slots can actually generate it.</p>
           <p>This is important for narrow-range items. A target may technically be available across several character levels, while one specific level gives you far more usable slots than the others.</p>
         </section>
         <section id="jarulf--shop-qlvl-calculator">
@@ -198,9 +198,9 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
             <li>Item requirements</li>
             <li>Price information</li>
           </ul>
-          <p>Then use the <strong>Hellfire Shop Qlvl Calculator</strong> to determine where those qlvls fit into Griswold, Wirt, or Adria's available ranges.</p>
+          <p>Then use the <a class="guide-tool-link" href="<?= site_url('calculators/shop-qlvl/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Shop Qlvl Calculator (opens in a new tab)"><strong>Hellfire Shop Qlvl Calculator</strong></a> to determine where those qlvls fit into Griswold, Wirt, or Adria's available ranges.</p>
           <p>In practice, all three resources work together well.</p>
-          <p>I often use the Premium Item Checker to confirm that something is possible, then use the Shop Qlvl Calculator to compare different character levels and determine exactly which shop slots I should be checking.</p>
+          <p>I often use the <a class="guide-tool-link" href="<?= site_url('calculators/premium-item-checker/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Premium Item Checker (opens in a new tab)">Premium Item Checker</a> to confirm that something is possible, then use the <a class="guide-tool-link" href="<?= site_url('calculators/shop-qlvl/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Shop Qlvl Calculator (opens in a new tab)">Shop Qlvl Calculator</a> to compare different character levels and determine exactly which shop slots I should be checking.</p>
         </section>
       </section>
       <section id="griswold" class="guide-section">
@@ -262,7 +262,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
             <li><strong>Affix qlvl:</strong> ilvl / 2 through ilvl</li>
           </ul>
           <p>Values are rounded down.</p>
-          <p>Lower character levels have slightly different slot progression, so use the <strong>Hellfire Shop Qlvl Calculator</strong> rather than trying to memorize all of the early-level exceptions.</p>
+          <p>Lower character levels have slightly different slot progression, so use the <a class="guide-tool-link" href="<?= site_url('calculators/shop-qlvl/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Shop Qlvl Calculator (opens in a new tab)"><strong>Hellfire Shop Qlvl Calculator</strong></a> rather than trying to memorize all of the early-level exceptions.</p>
         </section>
         <section id="shop-slots-matter">
           <h3>Shop Slots Matter</h3>
@@ -449,7 +449,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
           <p>will show a resale value around:</p>
           <p><strong>31,593 gold</strong></p>
           <p>That makes resale price a convenient way to estimate an anchor's real value.</p>
-          <p>Alternatively, enter the item's exact stats into the <strong>Hellfire Item Price Calculator</strong>.</p>
+          <p>Alternatively, enter the item's exact stats into the <a class="guide-tool-link" href="<?= site_url('calculators/hellfire-item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a>.</p>
           <p>The calculator is especially useful when planning around theoretical equipment you do not own yet.</p>
         </section>
       </section>
@@ -458,7 +458,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
         <p>A magical item can satisfy all of the qlvl and affix rules and still fail to appear because its price is too high.</p>
         <p>Hellfire normally caps town-generated items at <strong>200,000 gold</strong> in underlying item value.</p>
         <p>Wirt applies his own pricing modifier afterward, which is why his displayed prices differ.</p>
-        <p>The <strong>Hellfire Item Price Calculator</strong> reports when a theoretical item exceeds the normal shop limit.</p>
+        <p>The <a class="guide-tool-link" href="<?= site_url('calculators/hellfire-item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a> reports when a theoretical item exceeds the normal shop limit.</p>
         <p>That doesn't necessarily make the item absolutely unobtainable in DevilutionX, but it means you are no longer doing normal shopping.</p>
         <p>You are trying to break the shop's normal generation rules.</p>
       </section>
@@ -843,7 +843,7 @@ Long War Bow:  1–31</code></pre>
           <p>Do not blindly apply every old Diablo/Hellfire price example to DevilutionX.</p>
           <p>For example, old references sometimes use <strong>Merciless Long War Bow of the Heavens</strong> as an example of an item that cannot be sold because of its price.</p>
           <p>Under DevilutionX Hellfire's pricing and 200,000-gold shop limit, Merciless bows of the Heavens can fit within the normal rules.</p>
-          <p>Use the <strong>Hellfire Item Price Calculator</strong> rather than relying on an old example.</p>
+          <p>Use the <a class="guide-tool-link" href="<?= site_url('calculators/hellfire-item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a> rather than relying on an old example.</p>
           <p>If the calculator reports that an item exceeds the normal shop limit, you can still theoretically attempt to force it through DevilutionX fallback behavior, but the odds become dramatically worse.</p>
         </section>
       </section>
@@ -1060,10 +1060,10 @@ Affix qlvl:     clvl through 2 × clvl</code></pre>
         <ol class="guide-list guide-list-ordered">
           <li><strong>Choose the exact base item.</strong></li>
           <li><strong>Choose the exact prefix and suffix.</strong></li>
-          <li><strong>Check the Premium Item Checker to make sure the combination is valid.</strong></li>
+          <li><strong>Check the <a class="guide-tool-link" href="<?= site_url('calculators/premium-item-checker/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Premium Item Checker (opens in a new tab)">Premium Item Checker</a> to make sure the combination is valid.</strong></li>
           <li><strong>Use Jarulf's Guide for detailed affix and item information when needed.</strong></li>
-          <li><strong>Use the Shop Qlvl Calculator to find the best shopper level and Griswold slots.</strong></li>
-          <li><strong>Use the Hellfire Item Price Calculator if the item is expensive.</strong></li>
+          <li><strong>Use the <a class="guide-tool-link" href="<?= site_url('calculators/shop-qlvl/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Shop Qlvl Calculator (opens in a new tab)">Shop Qlvl Calculator</a> to find the best shopper level and Griswold slots.</strong></li>
+          <li><strong>Use the <a class="guide-tool-link" href="<?= site_url('calculators/hellfire-item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)">Hellfire Item Price Calculator</a> if the item is expensive.</strong></li>
           <li><strong>Choose the shopper class that removes the most unwanted equipment without removing your target.</strong></li>
           <li><strong>Set the shopper's stats carefully.</strong></li>
           <li><strong>Carry the best price anchors you have for every relevant item type.</strong></li>

@@ -162,6 +162,14 @@
   text-decoration-color: currentColor;
 }
 
+.guide-tool-link::after {
+  content: "\2197";
+  display: inline-block;
+  font-size: 0.75em;
+  margin-left: 0.28em;
+  transform: translateY(-0.12em);
+}
+
 .guide-content code:not(.guide-mechanics code),
 .guide-figcaption code {
   background-color: rgb(160 165 200 / 0.1);
@@ -204,13 +212,38 @@
   margin-block: var(--space-xl) var(--space-2xl);
 }
 
-.guide-video {
-  background-color: #000;
+.guide-featured-figure img {
   border: 1px solid rgb(188 168 108 / 0.3);
   border-radius: var(--radius-md);
   display: block;
   height: auto;
   max-width: 100%;
+  width: 100%;
+}
+
+.guide-video,
+.guide-video-embed {
+  background-color: #000;
+  border: 1px solid rgb(188 168 108 / 0.3);
+  border-radius: var(--radius-md);
+  width: 100%;
+}
+
+.guide-video {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.guide-video-embed {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.guide-video-embed iframe {
+  border: 0;
+  display: block;
+  height: 100%;
   width: 100%;
 }
 
