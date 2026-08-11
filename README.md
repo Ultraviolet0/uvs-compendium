@@ -81,14 +81,41 @@ The intended separation is:
 
 This keeps repeated markup low and makes it easier to update a calculator once while having the change appear on both its standalone page and the combined calculators page.
 
+## Guide Architecture
+
+Guide entries use the shared site header and footer, the reusable in-page navigation component, and a guide-specific stylesheet:
+
+```text
+guides/
+  template/
+    index.php
+  css/
+    styles.css
+
+css/
+  in-page-navigation.css
+
+js/
+  in-page-navigation.js
+```
+
+- `guides/template/index.php` demonstrates the semantic article structure and reusable guide components. Link to it using the clean `guides/template/` directory URL.
+- `guides/css/styles.css` contains guide-only typography, figures, callouts, tables, cards, metadata, and responsive article layout rules.
+- `css/in-page-navigation.css` provides the shared sticky panel, nested-link styling, responsive presentation, and themed scrollbar used by guides and the combined calculator page.
+- `js/in-page-navigation.js` is the shared opt-in navigation builder used by both guides and the combined calculator page.
+
+To create a guide, copy the template, update its metadata and article content, and keep section `h2` and `h3` elements inside `#guide-content`. The script assigns missing heading IDs, builds the table of contents, highlights the current section, and can omit any heading marked with `data-in-page-nav-ignore`.
+
 ## Project Structure
 
 ```text
 css/
   styles.css
+  in-page-navigation.css
 
 js/
   scripts.js
+  in-page-navigation.js
 
 includes/
   public_header.php
@@ -108,6 +135,15 @@ calculators/
 docs/
 references/
 guides/
+  index.php
+  fast-character-development/
+    index.php
+  shopping/
+    index.php
+  template/
+    index.php
+  css/
+    styles.css
 ```
 
 The global stylesheet and script are reserved for site-wide layout, navigation, typography, and shared behavior. Calculator-specific styles and scripts are loaded only on the pages that need them.

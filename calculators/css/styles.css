@@ -3,6 +3,59 @@
   Loaded only by calculator pages via $page_styles.
 */
 
+.calculator-breadcrumbs {
+  color: var(--color-text-muted);
+  font-size: 0.86rem;
+}
+
+.calculator-breadcrumb-list {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.calculator-breadcrumb-list li {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.calculator-breadcrumb-list li:not(:last-child)::after {
+  color: rgb(188 168 108 / 0.55);
+  content: "/";
+}
+
+.calculator-breadcrumb-list a {
+  color: var(--color-text-soft);
+  text-decoration: underline;
+  text-decoration-color: rgb(188 168 108 / 0.35);
+  text-underline-offset: 0.2em;
+}
+
+.calculator-collection-layout {
+  align-items: start;
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-areas: "calculators toc";
+  grid-template-columns: minmax(0, 1fr) minmax(13.5rem, 16rem);
+}
+
+.calculator-collection-content {
+  display: grid;
+  gap: var(--space-lg);
+  grid-area: calculators;
+  min-width: 0;
+}
+
+.calculator-collection-content .calculator-page > h2,
+.calculator-collection-content .calculator-page > header > h2 {
+  scroll-margin-top: var(--space-xl);
+}
+
 .section-panel.calculator-page {
   padding: clamp(var(--space-md), 2.4vw, var(--space-xl));
 }
@@ -98,6 +151,22 @@
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.02em;
+}
+
+@media (max-width: 1120px) {
+  .calculator-collection-layout {
+    grid-template-areas:
+      "toc"
+      "calculators";
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 896px) {
+  .calculator-collection-content .calculator-page > h2,
+  .calculator-collection-content .calculator-page > header > h2 {
+    scroll-margin-top: 6rem;
+  }
 }
 
 @media (min-width: 561px) and (max-width: 760px) {

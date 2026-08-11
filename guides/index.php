@@ -11,28 +11,30 @@ require_once __DIR__ . '/../includes/public_header.php';
   <p class="eyebrow">Documentation</p>
   <h1 id="page-title">Strategy Guides</h1>
   <p class="hero-copy">
-    This section will collect practical Diablo I, Hellfire, and DevilutionX guides as the compendium grows.
+    Browse practical Diablo I, Hellfire, and DevilutionX guides from UV's Compendium and the wider community.
   </p>
 </section>
 
-<section class="content-grid" aria-label="Guide placeholders">
+<section class="content-grid guide-catalog" aria-label="Guide catalog">
   <article class="card flow">
-    <p class="card-label">Guide</p>
-    <h2>Shopping &amp; Affixes</h2>
-    <p>A home for shopping strategy, affix rules, and item-generation notes.</p>
-    <p><a class="button button-secondary" href="<?= site_url('guides/shopping.php') ?>">Open Guide Placeholder</a></p>
+    <p class="card-label">Strategy Guide</p>
+    <h2>Fast Character Development</h2>
+    <p>A practical Diablo I and Hellfire route for leveling, gearing, spell development, shrine hunting, and efficient farming.</p>
+    <p class="guide-card-action"><a class="button button-secondary" href="<?= site_url('guides/fast-character-development/') ?>">Read the Guide</a></p>
   </article>
 
   <article class="card flow">
-    <p class="card-label">Planned Guide</p>
-    <h2>Bard</h2>
-    <p>Placeholder for Hellfire Bard strategy and mechanics.</p>
+    <p class="card-label">Strategy Guide</p>
+    <h2>UV's Shopping &amp; Affixes</h2>
+    <p>A detailed guide to vendor mechanics, shopper levels, item-pool manipulation, price anchors, and targeted equipment shopping.</p>
+    <p class="guide-card-action"><a class="button button-secondary" href="<?= site_url('guides/shopping/') ?>">Read the Guide</a></p>
   </article>
 
   <article class="card flow">
-    <p class="card-label">Planned Guide</p>
-    <h2>Warrior</h2>
-    <p>Placeholder for Warrior strategy, gearing, and progression notes.</p>
+    <p class="card-label">Video Guide</p>
+    <h2>Max's Hellfire Shopping Video</h2>
+    <p>Max's walkthrough of Hellfire shopping mechanics, vendor behavior, and practical equipment targets.</p>
+    <p class="guide-card-action"><a class="button button-secondary" href="https://www.youtube.com/watch?v=c8MaZZezeMQ" target="_blank" rel="noopener noreferrer">Watch the Video</a></p>
   </article>
 </section>
 

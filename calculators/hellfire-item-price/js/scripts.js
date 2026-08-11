@@ -369,10 +369,10 @@ suffx[94] = new Affx("Thorns", 1, "attacker takes 1-3 damage", "AS----", false, 
 prefx.push(new Affx("Wyrm's", 35, "61-80, mana", "---T--", false, 15100, 3900, 12));
 prefx.push(new Affx("Hydra's", 60, "81-100, mana", "---T--", false, 19100, 10900, 13));
 prefx.push(new Affx("Doppelganger's", 11, "81-95,% damage", "--WT--", false, 2000, 400, 10));
-prefx.push(new Affx("Decay", 1, "150-250,% damage", "--WTB-", false, 200, 0, 2));
 prefx.push(new Affx("Crystalline", 5, "200-280,% damage", "--W---", false, 1000, 2000, 3));
 prefx.push(new Affx("Jester's", 7, "x0-6 damage", "--W---", false, 1200, 0, 3));
 
+suffx.push(new Affx("Decay", 1, "150-250,% damage", "--WTB-", false, 200, 0, 2));
 suffx.push(new Affx("Devastation", 1, "5% chance of doing x3 damage", "--WTB-", false, 1200, 0, 3));
 suffx.push(new Affx("Peril", 5, "x2 damage to monster, x1 to user", "--WTB-", false, 500, 0, 1));
 

@@ -52,6 +52,28 @@
 html {
   color-scheme: dark;
   scroll-behavior: smooth;
+  scrollbar-color: rgb(188 168 108 / 0.5) var(--color-bg-alt);
+  scrollbar-width: auto;
+}
+
+html::-webkit-scrollbar {
+  height: 14px;
+  width: 14px;
+}
+
+html::-webkit-scrollbar-track,
+html::-webkit-scrollbar-corner {
+  background-color: var(--color-bg-alt);
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: rgb(188 168 108 / 0.48);
+  border: 3px solid var(--color-bg-alt);
+  border-radius: 999px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(188 168 108 / 0.68);
 }
 
 body {
@@ -531,6 +553,16 @@ button,
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-lg);
   margin-block: 0;
+}
+
+.guide-catalog .card {
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-catalog .guide-card-action {
+  margin-top: auto;
+  padding-top: var(--space-md);
 }
 
 /* Page sections */

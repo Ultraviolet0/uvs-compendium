@@ -894,8 +894,8 @@ function Display(theForm, SelBasee, SelPref, SelSuff) {
 
 
 //== define array =======================================
-var premax = 87;
-var sufmax = 123;
+var premax = 86;
+var sufmax = 124;
 var basmaxx = 168;
 var unqmax = 98;
 
@@ -1025,9 +1025,8 @@ prefixx[83] = new MakePremium("Bountiful", "Extra Magic Charges x3 ", 9, new Get
 
 //-- Hellfire-only Prefixes --------------------------------
 prefixx[84] = new MakePremium("Doppelganger's", "Damage: +81% - +95%   to Hit: +21% - +30%   10% chance to duplicate hit monsters except Diablo and unique monsters", 11, new GetEquip(0x28), 10, 2000, 2400, 81, 14);
-prefixx[85] = new MakePremium("Decay", "Damage: +150% - +250%   Bonus decays by 5% each weapon hit; item is destroyed at -100%", 1, new GetEquip(0x38), 2, 200, 200, 150, 100);
-prefixx[86] = new MakePremium("Crystalline", "Damage: +200% - +280%   Durability: -30% - -70%", 5, new GetEquip(0x20), 3, 1000, 3000, 200, 80);
-prefixx[87] = new MakePremium("Jester's", "Each swing deals random x0 - x6 total damage", 7, new GetEquip(0x20), 3, 1200, 1200, 0, 6);
+prefixx[85] = new MakePremium("Crystalline", "Damage: +200% - +280%   Durability: -30% - -70%", 5, new GetEquip(0x20), 3, 1000, 3000, 200, 80);
+prefixx[86] = new MakePremium("Jester's", "Each swing deals random x0 - x6 total damage", 7, new GetEquip(0x20), 3, 1200, 1200, 0, 6);
 
 
 //-- SUFFIX ---------
@@ -1180,8 +1179,9 @@ suffixx[120] = new MakePremium("Blood Star", "Blood Star Charges: 20 - 60", 13, 
 suffixx[121] = new MakePremium("Apocalypse", "Apocalypse Charges:  8 - 12", 15, new GetEquip(0x08), 0, 3200, 4800, 8, 4);
 
 //-- Hellfire-only Suffixes --------------------------------
-suffixx[122] = new MakePremium("Devastation", "5% chance to do x3 total damage", 1, new GetEquip(0x38), 3, 1200, 1200, 3, 0);
-suffixx[123] = new MakePremium("Peril", "x2 damage to monster and x1 damage to the user", 5, new GetEquip(0x38), 1, 500, 500, 2, 0);
+suffixx[122] = new MakePremium("Decay", "Damage: +150% - +250%   Bonus decays by 5% each weapon hit; item is destroyed at -100%", 1, new GetEquip(0x38), 2, 200, 200, 150, 100);
+suffixx[123] = new MakePremium("Devastation", "5% chance to do x3 total damage", 1, new GetEquip(0x38), 3, 1200, 1200, 3, 0);
+suffixx[124] = new MakePremium("Peril", "x2 damage to monster and x1 damage to the user", 5, new GetEquip(0x38), 1, 500, 500, 2, 0);
 
 
 //-- BASE ITEM ------

@@ -10,5 +10,7 @@ $page_styles = ['calculators/css/styles.css', 'calculators/shop-qlvl/css/styles.
 $page_scripts = ['calculators/shop-qlvl/js/scripts.js'];
 
 require_once dirname(__DIR__, 2) . '/includes/public_header.php';
+$calculator_breadcrumb_title = 'Hellfire Shop Qlvl Calculator';
+require dirname(__DIR__) . '/breadcrumbs.php';
 require __DIR__ . '/calculator.php';
 require_once dirname(__DIR__, 2) . '/includes/public_footer.php';

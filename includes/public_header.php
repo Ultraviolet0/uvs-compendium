@@ -152,11 +152,10 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
               </button>
 
               <ul id="nav-guides-menu" class="nav-submenu" aria-label="Guide links">
-                <li><a class="nav-submenu-link" href="https://www.youtube.com/watch?v=c8MaZZezeMQ" target="_blank" rel="noopener noreferrer">Max's Hellfire Shopping Guide</a></li>
-                <!-- <li><a class="nav-submenu-link" href="<?= site_url('guides/index.php') ?>">Guides Home</a></li>
-                  <li><a class="nav-submenu-link" href="<?= site_url('guides/shopping.php') ?>">Shopping &amp; Affixes</a></li>
-                  <li><a class="nav-submenu-link" href="#">Bard Guide Placeholder</a></li>
-                  <li><a class="nav-submenu-link" href="#">Warrior Guide Placeholder</a></li> -->
+                <li><a class="nav-submenu-link" href="<?= site_url('guides/') ?>">Guides Home</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('guides/fast-character-development/') ?>">Fast Character Development</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('guides/shopping/') ?>">UV's Shopping &amp; Affixes</a></li>
+                <li><a class="nav-submenu-link" href="https://www.youtube.com/watch?v=c8MaZZezeMQ" target="_blank" rel="noopener noreferrer">Max's Hellfire Shopping Video</a></li>
               </ul>
             </li>
           </ul>
