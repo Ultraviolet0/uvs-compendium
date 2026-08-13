@@ -75,7 +75,7 @@ if (!in_array($warrior_repair_heading_level, ['h1', 'h2', 'h3'], true)) {
         <li>Does not model mod-specific code changes.</li>
       </ul>
       <p class="warning-text">
-        Thanks to <a href="<?= site_url('reference/jarulf162.pdf') ?>" target="_blank" rel="noopener noreferrer">Jarulf's Guide</a> and the <a href="https://discord.gg/invite/devilutionx" target="_blank" rel="noopener noreferrer">DevilutionX community</a>.
+        Thanks to <a href="<?= site_url('reference/jarulf162.pdf') ?>" target="_blank" rel="noopener noreferrer">Jarulf's Guide</a> and the <a href="https://discord.gg/devilutionx-518540764754608128" target="_blank" rel="noopener noreferrer">DevilutionX community</a>.
       </p>
     </div>
   </details>

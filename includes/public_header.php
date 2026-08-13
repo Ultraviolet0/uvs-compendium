@@ -112,6 +112,7 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
               <ul id="nav-reference-menu" class="nav-submenu" aria-label="Reference links">
                 <li><a class="nav-submenu-link" href="https://github.com/diasurgical/DevilutionX/blob/master/docs/installing.md" target="_blank" rel="noopener noreferrer">Install DevilutionX</a></li>
                 <li><a class="nav-submenu-link" href="https://github.com/diasurgical/DevilutionX/releases" target="_blank" rel="noopener noreferrer">DevilutionX Releases</a></li>
+                <li><a class="nav-submenu-link" href="https://discord.gg/devilutionx-518540764754608128" target="_blank" rel="noopener noreferrer">DevilutionX Discord</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('reference/jarulf162.pdf') ?>" target="_blank" rel="noopener noreferrer">Jarulf's Guide v1.62</a></li>
                 <li><a class="nav-submenu-link" href="https://github.com/kphoenix137/JGX/blob/main/1-Introduction/1.0.md" target="_blank" rel="noopener noreferrer">Jarulf's Guide X</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('reference/hellfire-shopping-differences.pdf') ?>" target="_blank" rel="noopener noreferrer">Max's Hellfire Shopping Differences</a></li>
