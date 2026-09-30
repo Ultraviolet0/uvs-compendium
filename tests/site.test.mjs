@@ -77,6 +77,15 @@ test('development files are denied by Apache', async () => {
   assert.equal((await context.request.get(new URL('/reference/jarulf162.pdf', base).href)).status(), 200);
 });
 
+test('premium modules are JavaScript and revalidate their cache', async () => {
+  for (const module of ['scripts.mjs', 'rules.mjs', 'calculate.mjs', 'data.mjs']) {
+    const response = await context.request.get(new URL(`/calculators/premium-item-checker/js/${module}`, base).href);
+    assert.equal(response.status(), 200, module);
+    assert.match(response.headers()['content-type'], /^(?:text|application)\/javascript\b/i, module);
+    assert.match(response.headers()['cache-control'], /(?:^|,)\s*no-cache\b/i, module);
+  }
+});
+
 test('guide navigation and shared menu respond to interaction', async () => {
   const page = await context.newPage();
   await page.goto(new URL('/guides/shopping/', base).href);
@@ -136,6 +145,48 @@ test('premium checker: base-item data populates from selection', async () => {
   await page.close();
 });
 
+test('premium checker: quest items have no magic-affix choices and plain bases name the basic shop', async () => {
+  const page = await context.newPage();
+  await page.goto(new URL('/calculators/premium-item-checker/', base).href);
+  await page.locator('#premium-base-item').selectOption({ label: 'Cap' });
+  assert.equal(await page.locator('#premium-availability li').first().locator('strong').textContent(),
+    'Griswold (basic items)');
+  for (const name of ['Auric Amulet', 'Bovine Plate']) {
+    await page.locator('#premium-base-item').selectOption({ label: name });
+    assert.deepEqual(await page.locator('#premium-prefix option').evaluateAll((options) =>
+      options.map((option) => option.value)), ['0']);
+    assert.deepEqual(await page.locator('#premium-suffix option').evaluateAll((options) =>
+      options.map((option) => option.value)), ['0']);
+  }
+  await page.close();
+});
+
+test('premium checker announces affix changes and incompatible selections cleared', async () => {
+  const page = await context.newPage();
+  await page.goto(new URL('/calculators/premium-item-checker/', base).href);
+  await page.locator('#premium-base-item').selectOption({ label: 'Bastard Sword' });
+  await page.locator('#premium-prefix').selectOption({ label: "Knight's" });
+  await page.locator('#premium-suffix').selectOption({ label: 'Speed' });
+  assert.match(await page.locator('#premium-status').textContent(),
+    /Knight's Bastard Sword of Speed/);
+  await page.locator('#premium-suffix').selectOption({ label: 'Haste' });
+  assert.match(await page.locator('#premium-status').textContent(),
+    /Knight's Bastard Sword of Haste/);
+  await page.locator('#premium-price-mode').selectOption({ label: 'On' });
+  assert.match(await page.locator('#premium-status').textContent(), /Detailed prices on/);
+  await page.evaluate(() => {
+    const baseSelect = document.getElementById('premium-base-item');
+    baseSelect.add(new Option('Auric Amulet', '157'));
+    baseSelect.value = '157';
+    baseSelect.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  assert.equal(await page.locator('#premium-prefix').inputValue(), '0');
+  assert.equal(await page.locator('#premium-suffix').inputValue(), '0');
+  assert.match(await page.locator('#premium-status').textContent(),
+    /Incompatible prefix and suffix cleared/);
+  await page.close();
+});
+
 test('premium checker: Hellfire Griswold +3 slot reaches affixes one level earlier', async () => {
   const page = await context.newPage();
   await page.goto(new URL('/calculators/premium-item-checker/', base).href);
@@ -167,7 +218,9 @@ test('premium checker: sub-30 Griswold source levels expire after level 31', asy
 
 test('premium checker: controls, reset, and combined page work by keyboard and on narrow screens', async () => {
   for (const route of ['/calculators/premium-item-checker/', '/calculators/']) {
-    const page = await context.newPage({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.deepEqual(page.viewportSize(), { width: 390, height: 844 });
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });

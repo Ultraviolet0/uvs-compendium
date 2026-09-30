@@ -1,4 +1,4 @@
-import { prefixx, suffixx, basee } from './data.mjs';
+import { prefixx, suffixx, basee, premiumIndex } from './data.mjs';
 
 // The levels of the 15 Hellfire premium items after a character-level refresh.
 // Jarulf 1.62, section 3.9, gives the slot levels; the earlier slots retain
@@ -83,7 +83,8 @@ function isPrefixAvailable(baseIndex, prefixIndex, suffixIndex) {
   return (suffixIndex === 0 || (suffix.equip.parm & prefix.equip.parm) !== 0) &&
     (baseIndex === 0 || ((prefix.equip.parm >> kind) & 1) !== 0) &&
     (suffixIndex === 0 || affixLevelsOverlap(prefix.level, suffix.level) ||
-      (suffixIndex > 95 && suffixIndex <= 121)) &&
+      (suffixIndex >= premiumIndex.firstChargedSpellSuffix &&
+        suffixIndex <= premiumIndex.lastChargedSpellSuffix)) &&
     !isExcludedAffixPair(prefixIndex, suffixIndex);
 }
 
@@ -95,7 +96,8 @@ function isSuffixAvailable(baseIndex, prefixIndex, suffixIndex) {
   return (prefixIndex === 0 || (prefix.equip.parm & suffix.equip.parm) !== 0) &&
     (baseIndex === 0 || ((suffix.equip.parm >> kind) & 1) !== 0) &&
     (prefixIndex === 0 || affixLevelsOverlap(prefix.level, suffix.level) ||
-      (kind % 3 === 0 && suffixIndex > 95 && suffixIndex <= 121)) &&
+      (kind % 3 === 0 && suffixIndex >= premiumIndex.firstChargedSpellSuffix &&
+        suffixIndex <= premiumIndex.lastChargedSpellSuffix)) &&
     !isExcludedAffixPair(prefixIndex, suffixIndex);
 }
 

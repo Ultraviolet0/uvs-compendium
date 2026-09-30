@@ -1,4 +1,5 @@
 import { getHellfireGriswoldMagicCharacterLevels, formatCharacterLevels } from './rules.mjs';
+import { premiumIndex } from './data.mjs';
 
 // Preserve the checker’s existing vendor limits while keeping them independent
 // of DOM rendering and the item-price calculation.
@@ -19,7 +20,7 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
 
 
   //-- Griswold ----------
-  if ((SelBasee < 63) && (SelBasee > 0) && (slvlmin <= 30) && (pricemin <= legacyGriswoldPriceLimit) && (minusitem == false)) {
+  if ((SelBasee <= premiumIndex.lastGriswoldBase) && (SelBasee > 0) && (slvlmin <= 30) && (pricemin <= legacyGriswoldPriceLimit) && (minusitem == false)) {
     if (SelPref + SelSuff == 0) {
       clvl_min = baslvl;
       if (baslvl > 16) {
@@ -47,12 +48,13 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
         clvl_dsp = clvl_max;
       }
       grisdsp = "\n    Griswold     Char Level: " + clvl_dsp;
-      availability.push({ source: 'Griswold', levelType: 'Character level', range: String(clvl_dsp) });
+      availability.push({ source: SelPref + SelSuff === 0 ? 'Griswold (basic items)' : 'Griswold',
+        levelType: 'Character level', range: String(clvl_dsp) });
     }
   }
 
   //-- Wirt --------------
-  if ((SelBasee < 63) && (SelBasee > 0) && (SelPref + SelSuff > 0) && (pricemin <= legacyWirtPriceLimit) && (minusitem == false)) {
+  if ((SelBasee <= premiumIndex.lastGriswoldBase) && (SelBasee > 0) && (SelPref + SelSuff > 0) && (pricemin <= legacyWirtPriceLimit) && (minusitem == false)) {
     clvl_min = Math.ceil(slvlmin * 0.5);
     clvl_max = Math.floor(slvlmax * 0.5);
 
@@ -76,7 +78,7 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
   }
 
   //-- Adria -------------
-  if ((SelBasee > 62) && (SelBasee < 68) && (SelPref + SelSuff > 0) && (slvlmin <= 32) && (pricemin <= legacyAdriaPriceLimit) && (minusitem == false)) {
+  if ((SelBasee >= premiumIndex.firstStaffBase) && (SelBasee <= premiumIndex.lastStaffBase) && (SelPref + SelSuff > 0) && (slvlmin <= 32) && (pricemin <= legacyAdriaPriceLimit) && (minusitem == false)) {
     if (slvlmin > 4) {
       clvl_min = slvlmin - 4;
     } else {
@@ -89,7 +91,8 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
       clvl_max = slvlmax - 4;
     }
 
-    if (((SelSuff > 95) && (SelSuff <= 121)) && (suflvl > baslvl)) {
+    if (((SelSuff >= premiumIndex.firstChargedSpellSuffix) &&
+      (SelSuff <= premiumIndex.lastChargedSpellSuffix)) && (suflvl > baslvl)) {
       baslvl = suflvl;
     }
 
@@ -119,7 +122,7 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
   // Dungeon tiers share the same level intersection; only the base minimum differs.
   let dungeonDisplay = '';
   if (SelBasee > 0 && slvlmin <= 34) {
-    const plainBase = SelPref + SelSuff === 0 && SelBasee < 70;
+    const plainBase = SelPref + SelSuff === 0 && SelBasee <= premiumIndex.lastNormalBase;
     const dungeonSources = [
       ['Normal', baslvl, 'Normal     '],
       ['Nightmare', baslvl < 16 ? 1 : baslvl - 15, 'Nightmare  '],

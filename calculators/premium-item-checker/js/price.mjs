@@ -1,4 +1,4 @@
-import { prefixx, suffixx } from './data.mjs';
+import { prefixx, suffixx, premiumIndex } from './data.mjs';
 
 // This table uses the original checker’s rounding and step order.
 function formatDetailedPrice({ SelBasee, SelPref, SelSuff, detailedPrice, pricemin, psmulti, multi_sign, prerange, sufrange, premin, sufmin, prestep, sufstep }) {
@@ -23,7 +23,7 @@ function formatDetailedPrice({ SelBasee, SelPref, SelSuff, detailedPrice, pricem
       }
 
       if (sufrange) {
-        if (SelSuff <= 95) {
+        if (SelSuff < premiumIndex.firstChargedSpellSuffix) {
           psmulti = 1;
         }
 
@@ -52,7 +52,7 @@ function formatDetailedPrice({ SelBasee, SelPref, SelSuff, detailedPrice, pricem
           sufsign = "";
         }
 
-        if (SelSuff <= 95) {
+        if (SelSuff < premiumIndex.firstChargedSpellSuffix) {
           psmulti = 1;
         }
 

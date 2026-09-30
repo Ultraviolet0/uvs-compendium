@@ -46,14 +46,19 @@ if (form) {
   }
 
   function keepValidSelection(changedField) {
+    const cleared = [];
     const otherFields = {
       base: ['prefix', 'suffix'],
       prefix: ['base', 'suffix'],
       suffix: ['base', 'prefix']
     }[changedField];
     for (const field of otherFields) {
-      if (!isSelectedValid(field)) selection[`${field}Index`] = 0;
+      if (!isSelectedValid(field) && selection[`${field}Index`] !== 0) {
+        cleared.push(field);
+        selection[`${field}Index`] = 0;
+      }
     }
+    return cleared;
   }
 
   function renderAvailability(items, hasSelection) {
@@ -86,7 +91,7 @@ if (form) {
     output.availability.replaceChildren(...rows);
   }
 
-  function render() {
+  function render(cleared = []) {
     const { baseIndex, prefixIndex, suffixIndex } = selection;
     const result = calculatePremiumItem(baseIndex, prefixIndex, suffixIndex,
       controls.price.selectedIndex === 1);
@@ -94,20 +99,34 @@ if (form) {
     output.details.textContent = result.display2;
     output.price.textContent = result.display3;
     renderAvailability(result.availability, baseIndex !== 0);
-    output.status.textContent = baseIndex === 0
-      ? 'Choose a base item to see availability.'
-      : `Result updated for ${basee[baseIndex].name}.`;
+    const combination = [
+      prefixIndex ? prefixx[prefixIndex].name : '',
+      baseIndex ? basee[baseIndex].name : 'a base item',
+      suffixIndex ? `of ${suffixx[suffixIndex].name}` : ''
+    ].filter(Boolean).join(' ');
+    const pendingAffixes = [
+      prefixIndex ? `prefix ${prefixx[prefixIndex].name}` : '',
+      suffixIndex ? `suffix ${suffixx[suffixIndex].name}` : ''
+    ].filter(Boolean).join(', ');
+    const message = baseIndex === 0
+      ? pendingAffixes
+        ? `Selected ${pendingAffixes}. Choose a base item to see availability.`
+        : 'Choose a base item to see availability.'
+      : `Result updated: ${combination}. Detailed prices ${controls.price.selectedIndex === 1 ? 'on' : 'off'}.`;
+    output.status.textContent = cleared.length
+      ? `${message} Incompatible ${cleared.join(' and ')} cleared.`
+      : message;
   }
 
   for (const field of ['prefix', 'base', 'suffix']) {
     controls[field].addEventListener('change', () => {
       selection[`${field}Index`] = Number(controls[field].value);
-      keepValidSelection(field);
+      const cleared = keepValidSelection(field);
       refreshOptions();
-      render();
+      render(cleared);
     });
   }
-  controls.price.addEventListener('change', render);
+  controls.price.addEventListener('change', () => render());
   document.getElementById('premium-reset').addEventListener('click', () => {
     Object.assign(selection, { baseIndex: 0, prefixIndex: 0, suffixIndex: 0 });
     controls.price.selectedIndex = 0;

@@ -52,6 +52,16 @@ const premax = 86;
 const sufmax = 124;
 const basmaxx = 168;
 const unqmax = 98;
+// Boundaries used by the index-based rules; keep these in sync with the tables below.
+const premiumIndex = Object.freeze({
+  lastGriswoldBase: 62,
+  firstStaffBase: 63,
+  lastStaffBase: 67,
+  lastNormalBase: 69,
+  firstUniqueBase: 70,
+  firstChargedSpellSuffix: 96,
+  lastChargedSpellSuffix: 121
+});
 const prefixx = Array(premax + 1);
 const suffixx = Array(sufmax + 1);
 const basee = Array(basmaxx + 1);
@@ -601,4 +611,4 @@ uniq[98] = new MakeUniq("Full Plate Mail", 25, 60, "qlvl: 25   Armor Class: 80  
 
 
 
-export { prefixx, suffixx, basee, uniq };
+export { prefixx, suffixx, basee, uniq, premiumIndex };

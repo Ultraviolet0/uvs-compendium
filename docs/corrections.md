@@ -22,6 +22,26 @@ Use one entry per discrepancy. `Proposed` means the evidence still needs review;
 - **Status:** Proposed for separate review. No price or vendor-limit behavior changed in the premium-slot fix or refactor.
 - **Affected Compendium components:** Hellfire Premium Item Checker vendor-availability rules and tests.
 
+## Affix-pair alignment and exclusion review
+
+- **Mechanic/topic:** Premium Item Checker affix-pair compatibility.
+- **Affected game/version:** Diablo and Hellfire; establish separate rules if they differ.
+- **Incorrect or incomplete source behavior:** Inherited alignment/exclusion logic may hide valid combinations such as Vicious items of the Moon, Stars, or Heavens.
+- **Proposed behavior:** Audit the game rule and source data, then handle any confirmed correction in a separate mechanics change with boundary tests.
+- **Evidence or reasoning:** Independent PR #3 review flagged these examples; the current refactor preserves the inherited result pending a dedicated source audit.
+- **Status:** Proposed for separate review. No affix-pair mechanics changed in this PR stack.
+- **Affected Compendium components:** Premium Item Checker selection rules and tests.
+
+## Hellfire vendor item types by game mode
+
+- **Mechanic/topic:** Griswold and Wirt item-type availability, including staves and single-player jewelry.
+- **Affected game/version:** Hellfire Single Player and Multiplayer; compare with Diablo modes.
+- **Incorrect or incomplete source behavior:** The current checker does not expose game and player-count modes, so its vendor item-type availability cannot express every mode-specific rule.
+- **Proposed behavior:** Add explicit Diablo/Hellfire and Single Player/Multiplayer modes, then validate item-type availability against the appropriate game rules.
+- **Evidence or reasoning:** Independent PR #3 review identified the mode dependency; the current refactor preserves inherited vendor behavior pending a separate correction.
+- **Status:** Proposed for separate review. No vendor item-type mechanics changed in this PR stack.
+- **Affected Compendium components:** Premium Item Checker vendor availability, mode controls, and tests.
+
 ## Entry template
 
 - **Mechanic/topic:**

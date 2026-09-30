@@ -1,4 +1,4 @@
-import { prefixx, suffixx, basee, uniq } from "./data.mjs";
+import { prefixx, suffixx, basee, uniq, premiumIndex } from "./data.mjs";
 import { calculateAvailability } from "./availability.mjs";
 import { formatDetailedPrice } from "./price.mjs";
 
@@ -75,13 +75,14 @@ function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false)
     }
   }
 
-  if (((SelSuff > 95) && (SelSuff <= 121)) || (slvlmax >= 50)) {
+  if (((SelSuff >= premiumIndex.firstChargedSpellSuffix) &&
+    (SelSuff <= premiumIndex.lastChargedSpellSuffix)) || (slvlmax >= 50)) {
     slvlmax = 60;
   }
 
-  if (SelBasee > 69) {
-    slvlmin = uniq[SelBasee - 70].minlvl;
-    slvlmax = uniq[SelBasee - 70].maxlvl;
+  if (SelBasee >= premiumIndex.firstUniqueBase) {
+    slvlmin = uniq[SelBasee - premiumIndex.firstUniqueBase].minlvl;
+    slvlmax = uniq[SelBasee - premiumIndex.firstUniqueBase].maxlvl;
   }
 
   if ((slvlmin == slvlmax) || (slvlmin == 0)) {
@@ -138,10 +139,10 @@ function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false)
       dsp2base = "";
       pricemin = basee[SelBasee].price;
       pricemax = basee[SelBasee].price;
-      if (SelBasee > 69) {
-        dspbase = basee[SelBasee].name + " (" + uniq[SelBasee - 70].basee + ")";
+      if (SelBasee >= premiumIndex.firstUniqueBase) {
+        dspbase = basee[SelBasee].name + " (" + uniq[SelBasee - premiumIndex.firstUniqueBase].basee + ")";
         dspbase += "\n    " + basee[SelBasee].effect + "\n    G/A Price:  " + basee[SelBasee].price + "    Source Level:  " + slvldsp + "    Base qlvl:  " + baslvl;
-        baseefc = "\n\n    " + uniq[SelBasee - 70].effect + "\n";
+        baseefc = "\n\n    " + uniq[SelBasee - premiumIndex.firstUniqueBase].effect + "\n";
       } else {
         dspbase = basee[SelBasee].name + "\n    " + basee[SelBasee].effect + "\n    G/A Price:  " + basee[SelBasee].price + "    qlvl:  " + basee[SelBasee].level;
         baseefc = "";
@@ -154,7 +155,8 @@ function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false)
         dspbase = basee[SelBasee].name;
       }
       baseefc = "\n    " + basee[SelBasee].effect + "\n";
-      if ((SelSuff > 95) && (SelSuff <= 121)) {
+      if ((SelSuff >= premiumIndex.firstChargedSpellSuffix) &&
+        (SelSuff <= premiumIndex.lastChargedSpellSuffix)) {
         pricemin = multi_sign * Math.floor((basee[SelBasee].price + sufaddmin) * psmulti) + preaddmin;
         pricemax = multi_sign * Math.floor((basee[SelBasee].price + sufaddmax) * psmulti) + preaddmax;
       } else {
@@ -174,7 +176,7 @@ function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false)
 
   var dsp1;
 
-  if (SelBasee > 69) {
+  if (SelBasee >= premiumIndex.firstUniqueBase) {
     dsp1 = dsppref + dspbase + dspsuff + baseefc;
   } else {
     dsp1 = dsppref + dspbase + dspsuff + baseefc + prefefc + suffefc + totalefc;

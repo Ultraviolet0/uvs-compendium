@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { calculatePremiumItem } from '../calculators/premium-item-checker/js/calculate.mjs';
-import { basee, prefixx, suffixx } from '../calculators/premium-item-checker/js/data.mjs';
+import { basee, prefixx, suffixx, uniq, premiumIndex } from '../calculators/premium-item-checker/js/data.mjs';
 import {
   getHellfirePremiumItemLevels,
   getHellfireGriswoldMagicCharacterLevels,
@@ -91,6 +91,50 @@ test('selection rules keep incompatible equipment and excluded affix pairs out',
   assert.ok(options.prefixes.includes(62));
   assert.ok(options.suffixes.includes(86));
   assert.ok(!options.bases.includes(1));
+});
+
+test('quest items cannot expose ordinary magic affixes', () => {
+  for (const [index, name] of [[157, 'Auric Amulet'], [167, 'Bovine Plate']]) {
+    assert.equal(basee[index].name, name);
+    assert.equal(basee[index].level, 0);
+    const options = getAvailableOptions({ baseIndex: index, prefixIndex: 0, suffixIndex: 0 });
+    assert.deepEqual(options.prefixes, [0], name);
+    assert.deepEqual(options.suffixes, [0], name);
+  }
+});
+
+test('index-sensitive item categories retain their expected boundaries', () => {
+  assert.equal(prefixx.length, 87);
+  assert.equal(suffixx.length, 125);
+  assert.equal(basee.length, 169);
+  assert.equal(uniq.length, 99);
+  assert.equal(basee[premiumIndex.lastGriswoldBase].name, 'Long War Bow');
+  assert.equal(basee[premiumIndex.firstStaffBase].name, 'Short Staff');
+  assert.equal(basee[premiumIndex.lastStaffBase].name, 'War Staff');
+  for (let index = premiumIndex.firstStaffBase; index <= premiumIndex.lastStaffBase; index++) {
+    assert.equal(basee[index].kind.parm, 3, `staff index ${index}`);
+  }
+  assert.equal(basee[premiumIndex.lastNormalBase].name, 'Amulet');
+  assert.equal(basee[premiumIndex.firstUniqueBase].name, "Aguinara's Hatchet");
+  for (let index = premiumIndex.firstUniqueBase; index < basee.length; index++) {
+    assert.equal(basee[index].kind.parm, 7, `unique index ${index}`);
+  }
+  assert.equal(basee.length - premiumIndex.firstUniqueBase, uniq.length);
+  assert.equal(suffixx[premiumIndex.firstChargedSpellSuffix].name, 'Firebolt');
+  assert.equal(suffixx[premiumIndex.lastChargedSpellSuffix].name, 'Apocalypse');
+  for (let index = premiumIndex.firstChargedSpellSuffix;
+    index <= premiumIndex.lastChargedSpellSuffix; index++) {
+    assert.equal(suffixx[index].equip.parm, 0x08, `charged-spell suffix index ${index}`);
+  }
+  assert.equal(suffixx[premiumIndex.lastChargedSpellSuffix + 1].name, 'Decay');
+});
+
+test('plain Griswold bases identify the basic inventory without changing availability', () => {
+  const plain = calculatePremiumItem(1, 0, 0).availability;
+  assert.deepEqual(plain.find(({ source }) => source.startsWith('Griswold')),
+    { source: 'Griswold (basic items)', levelType: 'Character level', range: '1 - 50' });
+  const magic = calculatePremiumItem(39, 62, 86).availability;
+  assert.equal(magic.find(({ source }) => source.startsWith('Griswold')).source, 'Griswold');
 });
 
 test('Hellfire-only data, including Rob’s accepted Decay suffix, stays classified correctly', () => {
