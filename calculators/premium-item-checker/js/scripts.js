@@ -113,6 +113,55 @@ function GetKind(parm1, parm2) {
   this.name = parm2;
 }
 
+// The levels of the 15 Hellfire premium items after a character-level refresh.
+// Jarulf 1.62, section 3.9, gives the slot levels; the earlier slots retain
+// items from previous levels. DevilutionX Source/items.cpp (SpawnPremium)
+// confirms that only slots 11, 13, and 15 are regenerated on level-up.
+function GetHellfirePremiumItemLevels(characterLevel) {
+  var level = characterLevel;
+  var earlyOffsets = {
+    1: [-1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3],
+    2: [-1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3],
+    3: [-2, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3],
+    4: [-2, -2, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 2, 2, 3],
+    5: [-2, -2, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 3]
+  };
+  var offsets = earlyOffsets[level] || [-2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 3];
+  return offsets.map(function (offset) {
+    return Math.min(Math.max(level + offset, 1), 30);
+  });
+}
+
+function GetHellfireGriswoldMagicCharacterLevels(baseQlvl, sourceLevelMin, sourceLevelMax) {
+  var characterLevels = [];
+  for (var characterLevel = 1; characterLevel <= 50; characterLevel++) {
+    var itemLevels = GetHellfirePremiumItemLevels(characterLevel);
+    if (itemLevels.some(function (itemLevel) {
+      return itemLevel >= sourceLevelMin && itemLevel <= sourceLevelMax &&
+        baseQlvl >= Math.floor(itemLevel / 4) && baseQlvl <= itemLevel;
+    })) {
+      characterLevels.push(characterLevel);
+    }
+  }
+  return characterLevels;
+}
+
+function FormatCharacterLevels(levels) {
+  var ranges = [];
+  var start = levels[0];
+  var end = start;
+  for (var index = 1; index <= levels.length; index++) {
+    if (levels[index] === end + 1) {
+      end = levels[index];
+    } else {
+      ranges.push(start === end ? String(start) : start + " - " + end);
+      start = levels[index];
+      end = start;
+    }
+  }
+  return ranges.join(", ");
+}
+
 
 //== Main Action ==========================================
 
@@ -612,32 +661,15 @@ function Display(theForm, SelBasee, SelPref, SelSuff) {
         clvl_max = 50;
       }
     } else {
-      clvl_min = slvlmin;
-      clvl_max = slvlmax;
-
-      if (clvl_min < baslvl) {
-        clvl_min = baslvl;
-      }
-      if (clvl_max > baslvl * 4 + 3) {
-        clvl_max = baslvl * 4 + 3;
-      }
-      if (clvl_max < clvl_min) {
-        clvl_max = -1;
-      }
-
-      clvl_min = clvl_min - 2;
-      clvl_max = clvl_max + 1;
-
-      if (clvl_min < 1) {
-        clvl_min = 1;
-      }
-      if (clvl_max > 30) {
-        clvl_max = 50;
-      }
+      var griswoldLevels = GetHellfireGriswoldMagicCharacterLevels(baslvl, slvlmin, slvlmax);
+      clvl_min = griswoldLevels[0];
+      clvl_max = griswoldLevels[griswoldLevels.length - 1];
     }
 
     if (clvl_min <= clvl_max) {
-      if (clvl_min < clvl_max) {
+      if (SelPref + SelSuff > 0) {
+        clvl_dsp = FormatCharacterLevels(griswoldLevels);
+      } else if (clvl_min < clvl_max) {
         clvl_dsp = clvl_min + " - " + clvl_max;
       } else {
         clvl_dsp = clvl_max;
