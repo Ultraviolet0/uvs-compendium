@@ -7,7 +7,6 @@ $page_description = "Check Hellfire premium item combinations, affix data, sourc
 $base_path = '../../';
 $current_page = 'premium-item-checker';
 $page_styles = ['calculators/css/styles.css', 'calculators/premium-item-checker/css/styles.css'];
-$page_scripts = ['calculators/premium-item-checker/js/scripts.js'];
 
 require_once dirname(__DIR__, 2) . '/includes/public_header.php';
 $calculator_breadcrumb_title = 'Hellfire Premium Item Checker';

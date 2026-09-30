@@ -1,0 +1,167 @@
+[
+  {
+    "id": "empty",
+    "selection": {
+      "base": 0,
+      "prefix": 0,
+      "suffix": 0
+    },
+    "display1": "",
+    "display2": "",
+    "display3": ""
+  },
+  {
+    "id": "cap",
+    "selection": {
+      "base": 1,
+      "prefix": 0,
+      "suffix": 0
+    },
+    "display1": "Cap\n    Armor Class: 1 - 3    DUR: 15\n    G/A Price:  15    qlvl:  1\n\n    Griswold     Char Level: 1 - 50\n    Normal     Source Level: 1 - 34\n    Nightmare  Source Level: 1 - 34\n    Hell       Source Level: 1 - 34",
+    "display2": "",
+    "display3": ""
+  },
+  {
+    "id": "bastard",
+    "selection": {
+      "base": 39,
+      "prefix": 0,
+      "suffix": 0
+    },
+    "display1": "Bastard Sword\n    Damage: 6 - 15    DUR:  60    Required:  STR 50\n    G/A Price:  1000    qlvl:  10\n\n    Griswold     Char Level: 16 - 50\n    Normal     Source Level: 10 - 34\n    Nightmare  Source Level: 1 - 34\n    Hell       Source Level: 1 - 34",
+    "display2": "",
+    "display3": ""
+  },
+  {
+    "id": "knights-speed",
+    "selection": {
+      "base": 39,
+      "prefix": 62,
+      "suffix": 86
+    },
+    "display1": "Knight's Sword of Speed\n    Damage: 6 - 15    DUR:  60    Required:  STR 50\n    Damage: +96% - +110%   to Hit: +31% - +40%    Faster Attack\n\n    G/A Price: 48100 - 50450    Source Level: 23 - 39    Base qlvl:  10\n\n    Griswold     Char Level: 20 - 50\n    Wirt         Char Level: 12 - 19\n    Normal     Source Level: 23 - 34\n    Nightmare  Source Level: 23 - 34\n    Hell       Source Level: 23 - 34",
+    "display2": "Knight's\n    Damage: +96% - +110%   to Hit: +31% - +40%    Types: W-T---\n    qlvl: 23    Multiplier: 26    Base-Max: 6100 - 8450\n\nSpeed\n    Faster Attack    Types: W-T---\n    qlvl: 19    Multiplier: 8    Base-Max: 8000 - 8000\n\nBastard Sword\n    qlvl: 10    Damage: 6 - 15    DUR:  60    Required:  STR 50    G/A Price:  1000",
+    "display3": ""
+  },
+  {
+    "id": "knights-haste",
+    "selection": {
+      "base": 39,
+      "prefix": 62,
+      "suffix": 87
+    },
+    "display1": "Knight's Sword of Haste\n    Damage: 6 - 15    DUR:  60    Required:  STR 50\n    Damage: +96% - +110%   to Hit: +31% - +40%    Fastest Attack\n\n    G/A Price: 64100 - 66450    Source Level: 27 - 47    Base qlvl:  10\n\n    Griswold     Char Level: 24 - 50\n    Wirt         Char Level: 14 - 23\n    Normal     Source Level: 27 - 34\n    Nightmare  Source Level: 27 - 34\n    Hell       Source Level: 27 - 34",
+    "display2": "Knight's\n    Damage: +96% - +110%   to Hit: +31% - +40%    Types: W-T---\n    qlvl: 23    Multiplier: 26    Base-Max: 6100 - 8450\n\nHaste\n    Fastest Attack    Types: W-T---\n    qlvl: 27    Multiplier: 16    Base-Max: 16000 - 16000\n\nBastard Sword\n    qlvl: 10    Damage: 6 - 15    DUR:  60    Required:  STR 50    G/A Price:  1000",
+    "display3": ""
+  },
+  {
+    "id": "kings-speed",
+    "selection": {
+      "base": 39,
+      "prefix": 65,
+      "suffix": 86
+    },
+    "display1": "King's Sword of Speed\n    Damage: 6 - 15    DUR:  60    Required:  STR 50\n    Damage: +151% - +175%   to Hit: +76% - +100%    Faster Attack\n\n    G/A Price: 78100 - 89000    Source Level: 28 - 39    Base qlvl:  10\n\n    Griswold     Char Level: 25 - 50\n    Wirt         Char Level: 14 - 19\n    Normal     Source Level: 28 - 34\n    Nightmare  Source Level: 28 - 34\n    Hell       Source Level: 28 - 34",
+    "display2": "King's\n    Damage: +151% - +175%   to Hit: +76% - +100%    Types: W-T---\n    qlvl: 28    Multiplier: 38    Base-Max: 24100 - 35000\n\nSpeed\n    Faster Attack    Types: W-T---\n    qlvl: 19    Multiplier: 8    Base-Max: 8000 - 8000\n\nBastard Sword\n    qlvl: 10    Damage: 6 - 15    DUR:  60    Required:  STR 50    G/A Price:  1000",
+    "display3": ""
+  },
+  {
+    "id": "kings-haste",
+    "selection": {
+      "base": 39,
+      "prefix": 65,
+      "suffix": 87
+    },
+    "display1": "King's Sword of Haste\n    Damage: 6 - 15    DUR:  60    Required:  STR 50\n    Damage: +151% - +175%   to Hit: +76% - +100%    Fastest Attack\n\n    G/A Price: 94100 - 105000    Source Level: 28 - 60    Base qlvl:  10\n\n    Griswold     Char Level: 25 - 50\n    Normal     Source Level: 28 - 34\n    Nightmare  Source Level: 28 - 34\n    Hell       Source Level: 28 - 34",
+    "display2": "King's\n    Damage: +151% - +175%   to Hit: +76% - +100%    Types: W-T---\n    qlvl: 28    Multiplier: 38    Base-Max: 24100 - 35000\n\nHaste\n    Fastest Attack    Types: W-T---\n    qlvl: 27    Multiplier: 16    Base-Max: 16000 - 16000\n\nBastard Sword\n    qlvl: 10    Damage: 6 - 15    DUR:  60    Required:  STR 50    G/A Price:  1000",
+    "display3": ""
+  },
+  {
+    "id": "kings-speed-price",
+    "selection": {
+      "base": 39,
+      "prefix": 65,
+      "suffix": 86
+    },
+    "display1": "King's Sword of Speed\n    Damage: 6 - 15    DUR:  60    Required:  STR 50\n    Damage: +151% - +175%   to Hit: +76% - +100%    Faster Attack\n\n    G/A Price: 78100 - 89000    Source Level: 28 - 39    Base qlvl:  10\n\n    Griswold     Char Level: 25 - 50\n    Wirt         Char Level: 14 - 19\n    Normal     Source Level: 28 - 34\n    Nightmare  Source Level: 28 - 34\n    Hell       Source Level: 28 - 34",
+    "display2": "King's\n    Damage: +151% - +175%   to Hit: +76% - +100%    Types: W-T---\n    qlvl: 28    Multiplier: 38    Base-Max: 24100 - 35000\n\nSpeed\n    Faster Attack    Types: W-T---\n    qlvl: 19    Multiplier: 8    Base-Max: 8000 - 8000\n\nBastard Sword\n    qlvl: 10    Damage: 6 - 15    DUR:  60    Required:  STR 50    G/A Price:  1000",
+    "display3": "King's\n   +151 : 78100   +152 : 78536   +153 : 78972   +154 : 79408   +155 : 79844\n   +156 : 80280   +157 : 80825   +158 : 81261   +159 : 81697   +160 : 82133\n   +161 : 82569   +162 : 83005   +163 : 83550   +164 : 83986   +165 : 84422\n   +166 : 84858   +167 : 85294   +168 : 85729   +169 : 86275   +170 : 86711\n   +171 : 87147   +172 : 87583   +173 : 88019   +174 : 88455   +175 : 89000"
+  },
+  {
+    "id": "decay",
+    "selection": {
+      "base": 39,
+      "prefix": 0,
+      "suffix": 122
+    },
+    "display1": "Sword of Decay\n    Damage: 6 - 15    DUR:  60    Required:  STR 50\n    Damage: +150% - +250%   Bonus decays by 5% each weapon hit; item is destroyed at -100%\n\n    G/A Price: 2200 - 2200    Source Level: 1 - 3    Base qlvl:  10\n\n    Nightmare  Source Level: 1 - 3\n    Hell       Source Level: 1 - 3",
+    "display2": "Decay\n    Damage: +150% - +250%   Bonus decays by 5% each weapon hit; item is destroyed at -100%    Types: WBT---\n    qlvl: 1    Multiplier: 2    Base-Max: 200 - 200\n\nBastard Sword\n    qlvl: 10    Damage: 6 - 15    DUR:  60    Required:  STR 50    G/A Price:  1000",
+    "display3": ""
+  },
+  {
+    "id": "long-sword-speed",
+    "selection": {
+      "base": 37,
+      "prefix": 0,
+      "suffix": 86
+    },
+    "display1": "Sword of Speed\n    Damage: 2 - 10    DUR:  40    Required:  STR 30  DEX 30\n    Faster Attack\n\n    G/A Price: 10800 - 10800    Source Level: 19 - 39    Base qlvl:  6\n\n    Griswold     Char Level: 16 - 29\n    Wirt         Char Level: 10 - 19\n    Normal     Source Level: 19 - 34\n    Nightmare  Source Level: 19 - 34\n    Hell       Source Level: 19 - 34",
+    "display2": "Speed\n    Faster Attack    Types: W-T---\n    qlvl: 19    Multiplier: 8    Base-Max: 8000 - 8000\n\nLong Sword\n    qlvl: 6    Damage: 2 - 10    DUR:  40    Required:  STR 30  DEX 30    G/A Price:  350",
+    "display3": ""
+  },
+  {
+    "id": "plate-no-affix",
+    "selection": {
+      "base": 23,
+      "prefix": 0,
+      "suffix": 0
+    },
+    "display1": "Full Plate Mail\n    Armor Class: 60 - 75    DUR: 90    Required:  STR 90\n    G/A Price:  6500    qlvl:  25\n\n    Normal     Source Level: 25 - 34\n    Nightmare  Source Level: 10 - 34\n    Hell       Source Level: 1 - 34",
+    "display2": "",
+    "display3": ""
+  },
+  {
+    "id": "cap-white",
+    "selection": {
+      "base": 1,
+      "prefix": 1,
+      "suffix": 0
+    },
+    "display1": "White Cap\n    Armor Class: 1 - 3    DUR: 15\n    Resist Magic: +10% - +20%\n\n    G/A Price: 530 - 1530    Source Level: 4 - 9    Base qlvl:  1\n\n    Griswold     Char Level: 1 - 9\n    Wirt         Char Level: 2 - 4\n    Normal     Source Level: 4 - 9\n    Nightmare  Source Level: 4 - 9\n    Hell       Source Level: 4 - 9",
+    "display2": "White\n    Resist Magic: +10% - +20%    Types: WBTASJ\n    qlvl: 4    Multiplier: 2    Base-Max: 500 - 1500\n\nCap\n    qlvl: 1    Armor Class: 1 - 3    DUR: 15    G/A Price:  15",
+    "display3": ""
+  },
+  {
+    "id": "cap-crystal",
+    "selection": {
+      "base": 1,
+      "prefix": 4,
+      "suffix": 0
+    },
+    "display1": "Crystal Cap\n    Armor Class: 1 - 3    DUR: 15\n    Resist Magic: +41% - +50%\n\n    G/A Price: 8245 - 12045    Source Level: 20 - 41    Base qlvl:  1\n\n    Wirt         Char Level: 10 - 20\n    Normal     Source Level: 20 - 34\n    Nightmare  Source Level: 20 - 34\n    Hell       Source Level: 20 - 34",
+    "display2": "Crystal\n    Resist Magic: +41% - +50%    Types: WBTASJ\n    qlvl: 20    Multiplier: 3    Base-Max: 8200 - 12000\n\nCap\n    qlvl: 1    Armor Class: 1 - 3    DUR: 15    G/A Price:  15",
+    "display3": ""
+  },
+  {
+    "id": "staff",
+    "selection": {
+      "base": 63,
+      "prefix": 0,
+      "suffix": 0
+    },
+    "display1": "Short Staff\n    Damage: 2 - 4    DUR:  25\n    G/A Price:  30    qlvl:  1\n\n    Normal     Source Level: 1 - 34\n    Nightmare  Source Level: 1 - 34\n    Hell       Source Level: 1 - 34",
+    "display2": "",
+    "display3": ""
+  },
+  {
+    "id": "unique",
+    "selection": {
+      "base": 140,
+      "prefix": 0,
+      "suffix": 0
+    },
+    "display1": "Thinking Cap (Skull Cap)\n    Armor Class: 2 - 4    DUR:   1\n    G/A Price:  2020    Source Level:  6 - 60    Base qlvl:  4\n\n    qlvl: 6   Mana +30   Spells Are Increased 2 Levels   Resist All +20%\n    Alterd Durability\n\n    Normal     Source Level: 6 - 34\n    Nightmare  Source Level: 6 - 34\n    Hell       Source Level: 6 - 34",
+    "display2": "",
+    "display3": ""
+  }
+]

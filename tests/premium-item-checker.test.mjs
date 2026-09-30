@@ -1,16 +1,20 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import vm from 'node:vm';
+import { calculatePremiumItem } from '../calculators/premium-item-checker/js/calculate.mjs';
+import { basee, prefixx, suffixx } from '../calculators/premium-item-checker/js/data.mjs';
+import {
+  getHellfirePremiumItemLevels,
+  getHellfireGriswoldMagicCharacterLevels,
+  getAvailableOptions,
+  isBaseAvailable,
+  isPrefixAvailable,
+  isSuffixAvailable
+} from '../calculators/premium-item-checker/js/rules.mjs';
 
-const source = readFileSync('calculators/premium-item-checker/js/scripts.js', 'utf8');
-const checker = vm.createContext({});
-vm.runInContext(source, checker, { filename: 'premium-item-checker/js/scripts.js' });
-
-const slotLevels = (characterLevel) =>
-  Array.from(checker.GetHellfirePremiumItemLevels(characterLevel));
-const availableLevels = (baseQlvl, minIlvl, maxIlvl) =>
-  Array.from(checker.GetHellfireGriswoldMagicCharacterLevels(baseQlvl, minIlvl, maxIlvl));
+const slotLevels = getHellfirePremiumItemLevels;
+const availableLevels = getHellfireGriswoldMagicCharacterLevels;
+const baseline = JSON.parse(readFileSync('tests/fixtures/premium-results.json', 'utf8'));
 
 test('Hellfire premium inventory retains older slots and has one current +3 slot after level-up', () => {
   const levels = slotLevels(23);
@@ -74,4 +78,39 @@ test('base qlvl and the 30 ilvl cap still constrain Griswold availability', () =
   assert.equal(availableLevels(3, 28, 30).length, 0);
   assert.equal(availableLevels(10, 31, 60).length, 0);
   assert.deepEqual(availableLevels(10, 27, 27), [24, 25, 26, 27, 28, 29]);
+});
+
+test('selection rules keep incompatible equipment and excluded affix pairs out', () => {
+  assert.equal(isBaseAvailable(39, 62, 86), true);
+  assert.equal(isBaseAvailable(1, 62, 86), false);
+  assert.equal(isPrefixAvailable(39, 62, 86), true);
+  assert.equal(isSuffixAvailable(39, 62, 86), true);
+  assert.equal(isSuffixAvailable(39, 62, 122), false);
+  const options = getAvailableOptions({ baseIndex: 39, prefixIndex: 62, suffixIndex: 86 });
+  assert.ok(options.bases.includes(39));
+  assert.ok(options.prefixes.includes(62));
+  assert.ok(options.suffixes.includes(86));
+  assert.ok(!options.bases.includes(1));
+});
+
+test('Hellfire-only data, including Rob’s accepted Decay suffix, stays classified correctly', () => {
+  assert.equal(prefixx[62].name, "Knight's");
+  assert.equal(prefixx[62].level, 23);
+  assert.equal(suffixx[86].name, 'Speed');
+  assert.equal(suffixx[87].name, 'Haste');
+  assert.equal(suffixx[122].name, 'Decay');
+  assert.equal(suffixx[122].level, 1);
+  assert.equal(prefixx.some((entry) => entry?.name === 'Decay'), false);
+  assert.equal(basee[147].name, "Xorine's Ring");
+  assert.equal(calculatePremiumItem(39, 0, 122).display1.includes('of Decay'), true);
+});
+
+test('refactored calculations match the 15-case committed-fix baseline, including price data', () => {
+  for (const row of baseline) {
+    const actual = calculatePremiumItem(row.selection.base, row.selection.prefix,
+      row.selection.suffix, row.id.endsWith('price'));
+    for (const field of ['display1', 'display2', 'display3']) {
+      assert.equal(actual[field], row[field], `${row.id}: ${field}`);
+    }
+  }
 });

@@ -148,10 +148,10 @@ test('premium checker: Hellfire Griswold +3 slot reaches affixes one level earli
   ]) {
     await page.locator('#premium-prefix').selectOption({ label: prefix });
     await page.locator('#premium-suffix').selectOption({ label: suffix });
-    assert.match(await page.locator('#display1').textContent(),
-      new RegExp(`Griswold\\s+Char Level: ${firstLevel} - 50`), `${prefix} / ${suffix}`);
+    assert.equal(await page.locator('#premium-availability li').first().locator('.premium-availability-range').textContent(),
+      `${firstLevel} - 50`, `${prefix} / ${suffix}`);
   }
-  assert.match(await page.locator('.premium-level-note').textContent(), /item generation level \(ilvl\)/);
+  assert.match(await page.locator('.premium-level-note').textContent(), /Item level \(ilvl\)/);
   await page.close();
 });
 
@@ -160,9 +160,41 @@ test('premium checker: sub-30 Griswold source levels expire after level 31', asy
   await page.goto(new URL('/calculators/premium-item-checker/', base).href);
   await page.locator('#premium-base-item').selectOption({ label: 'Helm' });
   await page.locator('#premium-prefix').selectOption({ label: 'Glorious' });
-  assert.match(await page.locator('#display1').textContent(),
-    /Griswold\s+Char Level: 11 - 31/);
+  assert.equal(await page.locator('#premium-availability li').first()
+    .locator('.premium-availability-range').textContent(), '11 - 31');
   await page.close();
+});
+
+test('premium checker: controls, reset, and combined page work by keyboard and on narrow screens', async () => {
+  for (const route of ['/calculators/premium-item-checker/', '/calculators/']) {
+    const page = await context.newPage({ viewport: { width: 390, height: 844 } });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.goto(new URL(route, base).href);
+    assert.match(await page.locator('#display1').textContent(), /^$/);
+    await page.locator('#premium-base-item').selectOption({ label: 'Bastard Sword' });
+    await page.locator('#premium-prefix').selectOption({ label: "Knight's" });
+    await page.locator('#premium-suffix').selectOption({ label: 'Speed' });
+    assert.match(await page.locator('#display1').textContent(), /Knight's Sword of Speed/);
+    assert.equal(await page.locator('#premium-availability li').first().locator('strong').textContent(), 'Griswold');
+    await page.locator('#premium-prefix').focus();
+    await page.keyboard.press('Tab');
+    assert.ok(await page.locator('#premium-base-item').evaluate((el) => el === document.activeElement));
+    await page.keyboard.press('Tab');
+    assert.ok(await page.locator('#premium-suffix').evaluate((el) => el === document.activeElement));
+    await page.locator('#premium-price-mode').selectOption({ label: 'On' });
+    assert.match(await page.locator('#display3').textContent(), /Knight's/);
+    await page.locator('#premium-reset').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#premium-base-item').inputValue(), '0');
+    assert.equal(await page.locator('#premium-price-mode').inputValue(), 'Off');
+    assert.match(await page.locator('#premium-availability').textContent(), /Choose a base item/);
+    assert.ok(await page.locator('#premium-base-item').evaluate((el) => el === document.activeElement));
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), false);
+    assert.deepEqual(errors, [], route);
+    await page.close();
+  }
 });
 
 test('damage calculator: class preset changes deterministic output', async () => {

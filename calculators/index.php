@@ -17,7 +17,6 @@ $page_styles = [
 ];
 $page_scripts = [
   'js/in-page-navigation.js',
-  'calculators/premium-item-checker/js/scripts.js',
   'calculators/hellfire-item-price/js/scripts.js',
   'calculators/shop-qlvl/js/scripts.js',
   'calculators/warrior-repair/js/scripts.js',
