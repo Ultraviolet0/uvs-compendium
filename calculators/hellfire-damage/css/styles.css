@@ -5,6 +5,10 @@
   gap: var(--space-xl);
 }
 
+.hellfire-damage-page .warning-text {
+  overflow-wrap: anywhere;
+}
+
 .damage-section {
   display: grid;
   gap: var(--space-md);

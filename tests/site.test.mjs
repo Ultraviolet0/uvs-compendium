@@ -15,7 +15,7 @@ async function assertNoHorizontalOverflow(page, route, stage) {
       if (style.display === 'none' || style.visibility === 'hidden') return [];
       const rect = element.getBoundingClientRect();
       if (rect.right <= viewportWidth && rect.left >= 0
-        && element.scrollWidth <= element.clientWidth) return [];
+        && (element.scrollWidth <= element.clientWidth || style.overflowX !== 'visible')) return [];
       return [{
         tag: element.tagName.toLowerCase(), id: element.id,
         className: typeof element.className === 'string' ? element.className : '',
@@ -264,7 +264,9 @@ test('premium checker: controls, reset, and combined page work by keyboard and o
     await page.keyboard.press('Tab');
     assert.ok(await page.locator('#premium-suffix').evaluate((el) => el === document.activeElement));
     await page.locator('#premium-price-mode').selectOption({ label: 'On' });
-    assert.match(await page.locator('#display3').textContent(), /Knight's/);
+    const detailedPrices = await page.locator('#display3').textContent();
+    assert.match(detailedPrices, /Knight's/);
+    assert.ok(detailedPrices.length > 200, `${route}: detailed price result is unexpectedly short`);
     await assertNoHorizontalOverflow(page, route, 'detailed prices');
     await page.locator('#premium-reset').focus();
     await page.keyboard.press('Enter');
@@ -273,6 +275,27 @@ test('premium checker: controls, reset, and combined page work by keyboard and o
     assert.match(await page.locator('#premium-availability').textContent(), /Choose a base item/);
     assert.ok(await page.locator('#premium-base-item').evaluate((el) => el === document.activeElement));
     await assertNoHorizontalOverflow(page, route, 'after keyboard reset');
+    assert.deepEqual(errors, [], route);
+    await page.close();
+  }
+});
+
+test('premium checker: standalone and combined layouts fit a desktop viewport with detailed results', async () => {
+  for (const route of ['/calculators/premium-item-checker/', '/calculators/']) {
+    const page = await context.newPage({ viewport: { width: 1440, height: 900 } });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.goto(new URL(route, base).href);
+    await assertNoHorizontalOverflow(page, route, 'desktop initial');
+    await page.locator('#premium-base-item').selectOption({ label: 'Bastard Sword' });
+    await page.locator('#premium-prefix').selectOption({ label: "Knight's" });
+    await page.locator('#premium-suffix').selectOption({ label: 'Speed' });
+    await page.locator('#premium-price-mode').selectOption({ label: 'On' });
+    const detailedPrices = await page.locator('#display3').textContent();
+    assert.match(detailedPrices, /Knight's/);
+    assert.ok(detailedPrices.length > 200, `${route}: detailed price result is unexpectedly short`);
+    await assertNoHorizontalOverflow(page, route, 'desktop detailed prices');
     assert.deepEqual(errors, [], route);
     await page.close();
   }
