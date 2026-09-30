@@ -6,6 +6,31 @@ const base = process.env.SITE_URL || 'http://localhost:8080';
 let browser;
 let context;
 
+async function assertNoHorizontalOverflow(page, route, stage) {
+  const layout = await page.evaluate(() => {
+    const documentWidth = document.documentElement.scrollWidth;
+    const viewportWidth = document.documentElement.clientWidth;
+    const elements = [...document.querySelectorAll('*')].flatMap((element) => {
+      const style = getComputedStyle(element);
+      if (style.display === 'none' || style.visibility === 'hidden') return [];
+      const rect = element.getBoundingClientRect();
+      if (rect.right <= viewportWidth && rect.left >= 0
+        && element.scrollWidth <= element.clientWidth) return [];
+      return [{
+        tag: element.tagName.toLowerCase(), id: element.id,
+        className: typeof element.className === 'string' ? element.className : '',
+        left: rect.left, right: rect.right, width: rect.width,
+        scrollWidth: element.scrollWidth, clientWidth: element.clientWidth,
+        overflowX: style.overflowX, minWidth: style.minWidth
+      }];
+    });
+    return { documentWidth, viewportWidth, elements };
+  });
+  assert.ok(layout.documentWidth <= layout.viewportWidth,
+    `${route} (${stage}): document scrollWidth=${layout.documentWidth}, clientWidth=${layout.viewportWidth}; `
+      + `out-of-viewport elements=${JSON.stringify(layout.elements)}`);
+}
+
 before(async () => {
   let ready = false;
   for (let attempt = 0; attempt < 40; attempt += 1) {
@@ -225,12 +250,14 @@ test('premium checker: controls, reset, and combined page work by keyboard and o
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
     await page.goto(new URL(route, base).href);
+    await assertNoHorizontalOverflow(page, route, 'initial');
     assert.match(await page.locator('#display1').textContent(), /^$/);
     await page.locator('#premium-base-item').selectOption({ label: 'Bastard Sword' });
     await page.locator('#premium-prefix').selectOption({ label: "Knight's" });
     await page.locator('#premium-suffix').selectOption({ label: 'Speed' });
     assert.match(await page.locator('#display1').textContent(), /Knight's Sword of Speed/);
     assert.equal(await page.locator('#premium-availability li').first().locator('strong').textContent(), 'Griswold');
+    await assertNoHorizontalOverflow(page, route, 'selected');
     await page.locator('#premium-prefix').focus();
     await page.keyboard.press('Tab');
     assert.ok(await page.locator('#premium-base-item').evaluate((el) => el === document.activeElement));
@@ -238,13 +265,14 @@ test('premium checker: controls, reset, and combined page work by keyboard and o
     assert.ok(await page.locator('#premium-suffix').evaluate((el) => el === document.activeElement));
     await page.locator('#premium-price-mode').selectOption({ label: 'On' });
     assert.match(await page.locator('#display3').textContent(), /Knight's/);
+    await assertNoHorizontalOverflow(page, route, 'detailed prices');
     await page.locator('#premium-reset').focus();
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#premium-base-item').inputValue(), '0');
     assert.equal(await page.locator('#premium-price-mode').inputValue(), 'Off');
     assert.match(await page.locator('#premium-availability').textContent(), /Choose a base item/);
     assert.ok(await page.locator('#premium-base-item').evaluate((el) => el === document.activeElement));
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), false);
+    await assertNoHorizontalOverflow(page, route, 'after keyboard reset');
     assert.deepEqual(errors, [], route);
     await page.close();
   }
