@@ -67,7 +67,9 @@ test('development files are denied by Apache', async () => {
     '/.env.example', '/AGENTS.md', '/README.md', '/Dockerfile', '/compose.yaml',
     '/package.json', '/package-lock.json', '/docs/development.md',
     '/docs/game-data.md', '/docs/corrections.md', '/tests/site.test.mjs',
-    '/scripts/check.mjs', '/includes/public_header.php', '/css/'
+    '/scripts/check.mjs', '/includes/public_header.php', '/css/',
+    '/calculators/breadcrumbs.php', '/calculators/shop-qlvl/calculator.php',
+    '/calculators/hellfire-item-price/calculator.php'
   ]) {
     const response = await context.request.get(new URL(path, base).href);
     assert.ok([403, 404].includes(response.status()), `${path}: ${response.status()}`);

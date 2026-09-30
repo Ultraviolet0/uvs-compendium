@@ -9,3 +9,7 @@ Options -Indexes
 <FilesMatch "(?i)(?:^\.|\.local\.|\.(?:bak|cache|env|ini|key|log|pem|pfx|p12|sql|tmp)$|credentials|secret)">
   Require all denied
 </FilesMatch>
+
+<FilesMatch "(?i)^(?:breadcrumbs|calculator)\.php$">
+  Require all denied
+</FilesMatch>
