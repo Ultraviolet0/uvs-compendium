@@ -118,7 +118,7 @@ function GetKind(parm1, parm2) {
 // items from previous levels. DevilutionX Source/items.cpp (SpawnPremium)
 // confirms that only slots 11, 13, and 15 are regenerated on level-up.
 function GetHellfirePremiumItemLevels(characterLevel) {
-  var level = Math.min(Math.max(characterLevel, 1), 30);
+  var level = characterLevel;
   var earlyOffsets = {
     1: [-1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3],
     2: [-1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3],

@@ -19,7 +19,37 @@ test('Hellfire premium inventory retains older slots and has one current +3 slot
   assert.equal(levels.filter((level) => level === 26).length, 1);
   assert.deepEqual(slotLevels(1).slice(-2), [4, 4]);
   assert.deepEqual(slotLevels(2).slice(-2), [4, 5]);
-  assert.deepEqual(slotLevels(50).slice(-2), [30, 30]);
+});
+
+test('all 15 post-level-up Hellfire premium slots cap after their offsets', () => {
+  const expected = new Map([
+    [29, [27, 27, 27, 28, 28, 28, 29, 29, 29, 30, 30, 30, 30, 30, 30]],
+    [30, [28, 28, 28, 29, 29, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30]],
+    [31, [29, 29, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30]],
+    [32, Array(15).fill(30)],
+    [50, Array(15).fill(30)]
+  ]);
+  for (const [characterLevel, levels] of expected) {
+    assert.deepEqual(slotLevels(characterLevel), levels, `character level ${characterLevel}`);
+  }
+});
+
+test('sub-30 source levels leave the Hellfire premium inventory at their upper boundaries', () => {
+  const ilvl27 = availableLevels(10, 27, 27);
+  assert.equal(ilvl27.includes(29), true);
+  assert.equal(ilvl27.includes(30), false);
+
+  const ilvl28 = availableLevels(10, 28, 28);
+  assert.equal(ilvl28.includes(30), true);
+  assert.equal(ilvl28.includes(31), false);
+  assert.equal(ilvl28.includes(50), false);
+
+  const ilvl29 = availableLevels(10, 29, 29);
+  assert.equal(ilvl29.includes(31), true);
+  assert.equal(ilvl29.includes(32), false);
+  assert.equal(ilvl29.includes(50), false);
+
+  assert.equal(availableLevels(10, 30, 30).includes(50), true);
 });
 
 test('the +3 slot changes Knight, King, Speed, and Haste availability at exact boundaries', () => {
@@ -35,7 +65,9 @@ test('the +3 slot changes Knight, King, Speed, and Haste availability at exact b
   const kingsSpeed = availableLevels(10, 28, 39);
   assert.equal(kingsSpeed.includes(24), false);
   assert.equal(kingsSpeed.includes(25), true);
-  assert.equal(availableLevels(10, 28, 60)[0], 25);
+  const kingsHaste = availableLevels(10, 28, 47);
+  assert.equal(kingsHaste.includes(24), false);
+  assert.equal(kingsHaste.includes(25), true);
 });
 
 test('base qlvl and the 30 ilvl cap still constrain Griswold availability', () => {

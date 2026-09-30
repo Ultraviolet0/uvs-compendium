@@ -155,6 +155,16 @@ test('premium checker: Hellfire Griswold +3 slot reaches affixes one level earli
   await page.close();
 });
 
+test('premium checker: sub-30 Griswold source levels expire after level 31', async () => {
+  const page = await context.newPage();
+  await page.goto(new URL('/calculators/premium-item-checker/', base).href);
+  await page.locator('#premium-base-item').selectOption({ label: 'Helm' });
+  await page.locator('#premium-prefix').selectOption({ label: 'Glorious' });
+  assert.match(await page.locator('#display1').textContent(),
+    /Griswold\s+Char Level: 11 - 31/);
+  await page.close();
+});
+
 test('damage calculator: class preset changes deterministic output', async () => {
   const page = await context.newPage();
   await page.goto(new URL('/calculators/hellfire-damage/', base).href);
