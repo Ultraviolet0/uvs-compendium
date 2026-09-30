@@ -136,6 +136,25 @@ test('premium checker: base-item data populates from selection', async () => {
   await page.close();
 });
 
+test('premium checker: Hellfire Griswold +3 slot reaches affixes one level earlier', async () => {
+  const page = await context.newPage();
+  await page.goto(new URL('/calculators/premium-item-checker/', base).href);
+  await page.locator('#premium-base-item').selectOption({ label: 'Bastard Sword' });
+  for (const [prefix, suffix, firstLevel] of [
+    ["Knight's", 'Speed', 20],
+    ["Knight's", 'Haste', 24],
+    ["King's", 'Speed', 25],
+    ["King's", 'Haste', 25]
+  ]) {
+    await page.locator('#premium-prefix').selectOption({ label: prefix });
+    await page.locator('#premium-suffix').selectOption({ label: suffix });
+    assert.match(await page.locator('#display1').textContent(),
+      new RegExp(`Griswold\\s+Char Level: ${firstLevel} - 50`), `${prefix} / ${suffix}`);
+  }
+  assert.match(await page.locator('.premium-level-note').textContent(), /item generation level \(ilvl\)/);
+  await page.close();
+});
+
 test('damage calculator: class preset changes deterministic output', async () => {
   const page = await context.newPage();
   await page.goto(new URL('/calculators/hellfire-damage/', base).href);

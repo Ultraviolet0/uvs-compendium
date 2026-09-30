@@ -10,6 +10,7 @@ if (!in_array($premium_item_checker_heading_level, ['h1', 'h2', 'h3'], true)) {
     <p class="eyebrow">Calculator</p>
     <<?= $premium_item_checker_heading_level ?> id="premium-item-checker-title">Hellfire Premium Item Checker</<?= $premium_item_checker_heading_level ?>>
     <p class="hero-copy">Check valid Hellfire premium item combinations, affix data, source availability, and detailed price ranges.</p>
+    <p class="premium-level-note"><strong>Reading the levels:</strong> Char Level is your character level. Source Level is the item generation level (ilvl) allowed by the chosen affixes, before a vendor's limits. Base, prefix, and suffix qlvls are separate requirements. Griswold's Hellfire premium slots use different ilvls, including one current Char Level + 3 slot after leveling.</p>
     <p class="warning-text">Original by <a href="https://web.archive.org/web/20120125114431/http://www.red-wolf.sakura.ne.jp/dia/premiumchk.html" target="_blank" rel="noopener noreferrer">King aka Red-Wolf</a>, hosted on <a href="https://mgpat-gm.github.io/calcs.html" target="_blank" rel="noopener noreferrer">Ghast's Grotto</a>. Updated for this compendium with Hellfire affixes, Hellfire unique items, and quest item rows.</p>
   </header>
 
