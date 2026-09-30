@@ -227,6 +227,10 @@ UV's Compendium is intentionally lightweight. It favors:
 
 Modern coding practices are used where they help maintainability, accessibility, and clarity, but the main goal is not to chase trends. The main goal is to keep useful Diablo and Hellfire information alive, accurate, and easy to use.
 
+## Development
+
+See [development setup and workflow](docs/development.md) for local startup, validation, branching, and deployment boundaries. The [game-data source hierarchy](docs/game-data.md) and [corrections record](docs/corrections.md) govern mechanics changes.
+
 ## Credits and Sources
 
 This project builds on decades of Diablo community research and toolmaking.

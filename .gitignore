@@ -1,0 +1,37 @@
+# Local environment and credentials (keep examples explicitly tracked)
+.env
+.env.*
+!.env.example
+*.local
+*.local.*
+*.secret
+*.secrets
+*.secret.*
+*.secrets.*
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Generated dependencies, caches, and test output
+node_modules/
+vendor/
+.phpunit.cache/
+.pytest_cache/
+__pycache__/
+coverage/
+test-results/
+playwright-report/
+*.log
+*.tmp
+*.bak
+*.cache
