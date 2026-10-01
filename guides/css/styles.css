@@ -260,6 +260,23 @@
   object-fit: cover;
 }
 
+.guide-gpow-figure {
+  max-width: 38rem;
+}
+
+.guide-gpow-figure a {
+  display: block;
+}
+
+.guide-gpow-image {
+  background-color: var(--color-surface);
+  border: 1px solid rgb(188 168 108 / 0.3);
+  border-radius: var(--radius-md);
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
 .guide-image-placeholder {
   align-content: center;
   background:
