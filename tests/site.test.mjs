@@ -230,7 +230,8 @@ test('premium checker: Hellfire Griswold +3 slot reaches affixes one level earli
     assert.equal(await page.locator('#premium-availability li').first().locator('.premium-availability-range').textContent(),
       `${firstLevel} - 50`, `${prefix} / ${suffix}`);
   }
-  assert.match(await page.locator('.premium-level-note').textContent(), /Item level \(ilvl\)/);
+  assert.equal(await page.locator('.premium-level-note').count(), 0);
+  assert.match(await page.locator('#premium-level-hint').textContent(), /generation level \(ilvl\)/);
   await page.close();
 });
 
@@ -244,6 +245,48 @@ test('premium checker: sub-30 Griswold source levels expire after level 31', asy
   await page.close();
 });
 
+test('shopping guide shows the Wirt example and remains usable at narrow and desktop widths', async () => {
+  for (const width of [390, 1440]) {
+    const page = await context.newPage({ viewport: { width, height: 844 } });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.goto(new URL('/guides/shopping/', base).href);
+    const example = page.locator('#godly-plate-of-the-whale img');
+    await example.scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => document.querySelector('#godly-plate-of-the-whale img')?.naturalWidth > 0);
+    assert.match(await page.locator('#godly-plate-of-the-whale figcaption').textContent(), /offered by Wirt/);
+    assert.match(await page.locator('#building-better-anchors').textContent(), /deterministic sequence/);
+    await assertNoHorizontalOverflow(page, '/guides/shopping/', `${width}px example`);
+    assert.deepEqual(errors, [], `${width}px guide`);
+    await page.close();
+  }
+});
+
+test('premium checker: Hellfire Wirt limits and retry fallback are described without an impossibility claim', async () => {
+  const page = await context.newPage();
+  await page.goto(new URL('/calculators/premium-item-checker/', base).href);
+  await page.locator('#premium-base-item').selectOption({ label: 'Full Plate Mail' });
+  await page.locator('#premium-prefix').selectOption({ label: 'Godly' });
+  assert.match(await page.locator('#premium-availability').textContent(), /Wirt.*30 - 50/);
+  await page.locator('#premium-suffix').selectOption({ label: 'the Whale' });
+  assert.match(await page.locator('#premium-availability').textContent(), /Wirt \(rare retry fallback\).*30 - 50/);
+  assert.match(await page.locator('#premium-level-hint').textContent(), /rare Hellfire retries/);
+  await page.locator('#premium-reset').click();
+  await page.locator('#premium-base-item').selectOption({ label: 'Cap' });
+  await page.locator('#premium-prefix').selectOption({ label: 'Holy' });
+  await page.locator('#premium-suffix').selectOption({ label: 'Giants' });
+  assert.match(await page.locator('#premium-availability').textContent(), /No source identified by the current model/);
+  await page.close();
+});
+
+async function assertPremiumControlHeights(page, route) {
+  const select = await page.locator('#premium-price-mode').boundingBox();
+  const reset = await page.locator('#premium-reset').boundingBox();
+  assert.ok(Math.abs(select.height - reset.height) <= 1,
+    `${route}: price select ${select.height}px and reset button ${reset.height}px differ`);
+}
+
 test('premium checker: controls, reset, and combined page work by keyboard and on narrow screens', async () => {
   for (const route of ['/calculators/premium-item-checker/', '/calculators/']) {
     const page = await context.newPage();
@@ -253,6 +296,7 @@ test('premium checker: controls, reset, and combined page work by keyboard and o
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
     await page.goto(new URL(route, base).href);
+    await assertPremiumControlHeights(page, route);
     await assertNoHorizontalOverflow(page, route, 'initial');
     assert.match(await page.locator('#display1').textContent(), /^$/);
     await page.locator('#premium-base-item').selectOption({ label: 'Bastard Sword' });
@@ -290,6 +334,7 @@ test('premium checker: standalone and combined layouts fit a desktop viewport wi
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
     await page.goto(new URL(route, base).href);
+    await assertPremiumControlHeights(page, route);
     await assertNoHorizontalOverflow(page, route, 'desktop initial');
     await page.locator('#premium-base-item').selectOption({ label: 'Bastard Sword' });
     await page.locator('#premium-prefix').selectOption({ label: "Knight's" });

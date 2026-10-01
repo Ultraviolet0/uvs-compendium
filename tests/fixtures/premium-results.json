@@ -72,7 +72,7 @@
       "prefix": 65,
       "suffix": 87
     },
-    "display1": "King's Sword of Haste\n    Damage: 6 - 15    DUR:  60    Required:  STR 50\n    Damage: +151% - +175%   to Hit: +76% - +100%    Fastest Attack\n\n    G/A Price: 94100 - 105000    Source Level: 28 - 60    Base qlvl:  10\n\n    Griswold     Char Level: 25 - 50\n    Normal     Source Level: 28 - 34\n    Nightmare  Source Level: 28 - 34\n    Hell       Source Level: 28 - 34",
+    "display1": "King's Sword of Haste\n    Damage: 6 - 15    DUR:  60    Required:  STR 50\n    Damage: +151% - +175%   to Hit: +76% - +100%    Fastest Attack\n\n    G/A Price: 94100 - 105000    Source Level: 28 - 60    Base qlvl:  10\n\n    Griswold     Char Level: 25 - 50\n    Wirt         Char Level: 14 - 50\n    Normal     Source Level: 28 - 34\n    Nightmare  Source Level: 28 - 34\n    Hell       Source Level: 28 - 34",
     "display2": "King's\n    Damage: +151% - +175%   to Hit: +76% - +100%    Types: W-T---\n    qlvl: 28    Multiplier: 38    Base-Max: 24100 - 35000\n\nHaste\n    Fastest Attack    Types: W-T---\n    qlvl: 27    Multiplier: 16    Base-Max: 16000 - 16000\n\nBastard Sword\n    qlvl: 10    Damage: 6 - 15    DUR:  60    Required:  STR 50    G/A Price:  1000",
     "display3": ""
   },

@@ -51,6 +51,7 @@ export const runtimeFiles = [
   'guides/shopping/index.php',
   'guides/template/index.php',
   'images/shopping-guide-header.png',
+  'images/godly-plate-of-the-whale.png',
   'includes/public_footer.php',
   'includes/public_header.php',
   'js/in-page-navigation.js',

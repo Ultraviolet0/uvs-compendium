@@ -12,14 +12,14 @@ Use one entry per discrepancy. `Proposed` means the evidence still needs review;
 - **Status:** Accepted by Rob on September 30, 2026. This correction takes precedence over Jarulf's Guide.
 - **Affected Compendium components:** Hellfire Item Price Calculator; Hellfire Premium Item Checker; README.
 
-## Hellfire town-vendor availability limits
+## Hellfire town-vendor availability limits and retries
 
 - **Mechanic/topic:** Vendor price limits and generation retries in the Premium Item Checker.
 - **Affected game/version:** Hellfire and DevilutionX Hellfire mode; verify original Hellfire behavior separately before changing published results.
-- **Incorrect or incomplete source behavior:** The checker still uses Diablo-era `140000` for Griswold and `90000` for Wirt, and its availability result does not model Hellfire's item-value and attribute checks. Adria also uses `140000`; her Hellfire limit was not audited here.
-- **Proposed behavior:** Investigate the Hellfire `200000` price cap for Griswold and Wirt, plus the finite retry fallback that can leave an item exceeding a nominal limit. Decide how to present conditional availability when player inventory, class, and attributes matter.
-- **Evidence or reasoning:** Max's [Hellfire shopping differences](../reference/hellfire-shopping-differences.pdf) describes the 200k caps, inventory and attribute restrictions, and retry fallback. DevilutionX defines `MaxVendorValueHf = 200000` and `MaxBoyValueHf = 200000` in [items.h](https://github.com/diasurgical/DevilutionX/blob/master/Source/items.h); its [item-generation code](https://github.com/diasurgical/DevilutionX/blob/master/Source/items.cpp) uses these in Hellfire mode. This differs from the inherited checker thresholds; no full original-Hellfire behavior audit was done in this task.
-- **Status:** Proposed for separate review. No price or vendor-limit behavior changed in the premium-slot fix or refactor.
+- **Incorrect or incomplete source behavior:** The checker used Diablo-era `140000` for Griswold and `90000` for Wirt, then treated an empty modeled-source list as though the combination had no possible source.
+- **Corrected behavior:** The Hellfire checker now uses the `200000` underlying item-value limit for Griswold and Wirt. Where a Wirt combination exceeds that normal limit but meets the modeled item and affix level rules, it identifies the rare retry fallback instead of declaring the item impossible. Its result text states that class, attributes, carried gear, and game mode are not fully modeled. Adria's inherited `140000` remains unaudited.
+- **Evidence or reasoning:** Max's [Hellfire shopping differences](../reference/hellfire-shopping-differences.pdf) states both `200000` limits, the 150/250 attempt limits, and the conditions ignored on exhaustion. DevilutionX defines `MaxVendorValueHf = 200000` and `MaxBoyValueHf = 200000` in [items.h](https://github.com/diasurgical/DevilutionX/blob/master/Source/items.h); [SpawnOnePremium and SpawnBoy](https://github.com/diasurgical/DevilutionX/blob/master/Source/items.cpp) show the finite loops. Jarulf 1.62, sections 3.9 and 3.10, gives Wirt's base and affix levels and distinguishes these from Griswold's limits. Rob's Wirt screenshot of Godly Full Plate Mail of the Whale is a concrete counterexample to the old empty-source claim.
+- **Status:** Hellfire price limits and Wirt price-retry possibility verified and implemented in the follow-up branch. Full class, attribute, carried-inventory, Diablo, and multiplayer logic remains for the separate mode-system work; original Hellfire and DevilutionX edge cases still require game-specific regression review.
 - **Affected Compendium components:** Hellfire Premium Item Checker vendor-availability rules and tests.
 
 ## Affix-pair alignment and exclusion review

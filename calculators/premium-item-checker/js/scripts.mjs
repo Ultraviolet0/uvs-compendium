@@ -72,7 +72,7 @@ if (form) {
     if (items.length === 0) {
       const empty = document.createElement('li');
       empty.className = 'premium-availability-empty';
-      empty.textContent = 'No listed source qualifies for this combination under the current checker rules.';
+      empty.textContent = 'No source identified by the current model. Hellfire vendor retries and game/mode rules may still allow it.';
       output.availability.replaceChildren(empty);
       return;
     }

@@ -394,6 +394,8 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
             <li>Repeat.</li>
           </ol>
           <p>Over time, you can build a dedicated shopping kit that eliminates a large amount of lower-value junk before it ever reaches the shop inventory.</p>
+          <p>Slot levels tell you which items are eligible, but a shop inventory is generated from a deterministic sequence of random rolls. Tightening one restriction can change the whole package of offers, especially when a new game generates many items before you reach the vendor.</p>
+          <p>If hours of resets produce uniformly poor inventories, try a less expensive anchor rather than assuming a higher price always helps. Reconsider low-Strength filtering too: removing it can open a different mix of rolls without changing the item you are targeting.</p>
         </section>
         <section id="armor-anchor-demonspike-coat">
           <h3>Armor Anchor: Demonspike Coat</h3>
@@ -571,6 +573,10 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
           <p><strong>Godly Plate of the Whale</strong>, usually shortened to GPoW, is basically the holy grail of Hellfire shopping.</p>
           <p>It is not something you normally roll at Wirt.</p>
           <p>The strategy is to deliberately make Wirt fail his generation checks enough times that his fallback behavior has a chance to let the item through.</p>
+          <figure class="guide-figure">
+            <img class="guide-image" src="<?= site_url('images/godly-plate-of-the-whale.png') ?>?v=<?= asset_version('images/godly-plate-of-the-whale.png') ?>" alt="Wirt offering Godly Plate of the Whale with 200% armor and 97 extra hit points" width="1920" height="1080" loading="lazy">
+            <figcaption class="guide-figcaption">A Godly Plate of the Whale offered by Wirt: a rare example of the item appearing despite the normal shop filters.</figcaption>
+          </figure>
           <section id="gpow-shopping-setup">
             <h4>GPoW Shopping Setup</h4>
             <p>A practical setup is:</p>

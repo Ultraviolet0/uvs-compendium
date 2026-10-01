@@ -137,6 +137,22 @@ test('plain Griswold bases identify the basic inventory without changing availab
   assert.equal(magic.find(({ source }) => source.startsWith('Griswold')).source, 'Griswold');
 });
 
+test('Hellfire Wirt price limit and rare fallback do not reject Godly plate combinations', () => {
+  // Max's Hellfire shopping differences: 200,000 underlying-value cap and
+  // a 250-attempt fallback. DevilutionX Source/items.cpp SpawnBoy agrees.
+  const godlyFullPlate = calculatePremiumItem(23, 77, 0);
+  assert.deepEqual(godlyFullPlate.availability.find(({ source }) => source === 'Wirt'),
+    { source: 'Wirt', levelType: 'Character level', range: '30 - 50' });
+
+  const plateWhale = calculatePremiumItem(20, 77, 45);
+  assert.equal(plateWhale.availability.find(({ source }) => source === 'Wirt').range, '30 - 50');
+
+  const fullPlateWhale = calculatePremiumItem(23, 77, 45);
+  assert.deepEqual(fullPlateWhale.availability,
+    [{ source: 'Wirt (rare retry fallback)', levelType: 'Character level', range: '30 - 50' }]);
+  assert.match(fullPlateWhale.itemSummary, /G\/A Price: 239800 - 251500/);
+});
+
 test('Hellfire-only data, including Rob’s accepted Decay suffix, stays classified correctly', () => {
   assert.equal(prefixx[62].name, "Knight's");
   assert.equal(prefixx[62].level, 23);

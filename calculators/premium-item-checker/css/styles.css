@@ -8,12 +8,11 @@
   width: 1px;
 }
 
-.premium-level-note {
-  border-left: 3px solid var(--color-text-muted);
+.premium-level-hint {
   color: var(--color-text-soft);
-  font-size: 0.92rem;
-  line-height: 1.55;
-  padding-left: var(--space-sm);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: 0;
 }
 
 .premium-checker-form,
@@ -52,8 +51,14 @@
   flex: 0 1 15rem;
 }
 
+.premium-checker-actions #premium-price-mode,
 .premium-reset-button {
   min-height: 2.45rem;
+}
+
+.premium-reset-button {
+  line-height: 1.4;
+  padding: 0.45rem 0.65rem;
   white-space: nowrap;
 }
 
