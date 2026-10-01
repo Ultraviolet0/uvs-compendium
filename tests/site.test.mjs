@@ -105,9 +105,14 @@ test('development files are denied by Apache', async () => {
   assert.equal((await context.request.get(new URL('/reference/jarulf162.pdf', base).href)).status(), 200);
 });
 
-test('premium modules are JavaScript and revalidate their cache', async () => {
-  for (const module of ['scripts.mjs', 'rules.mjs', 'calculate.mjs', 'data.mjs', 'availability.mjs', 'price.mjs']) {
-    const response = await context.request.get(new URL(`/calculators/premium-item-checker/js/${module}`, base).href);
+test('calculator modules are JavaScript and revalidate their cache', async () => {
+  const modules = [
+    ...['scripts.mjs', 'rules.mjs', 'calculate.mjs', 'data.mjs', 'availability.mjs', 'price.mjs']
+      .map((file) => `/calculators/premium-item-checker/js/${file}`),
+    '/calculators/shop-qlvl/js/scripts.mjs', '/calculators/town-level.mjs'
+  ];
+  for (const module of modules) {
+    const response = await context.request.get(new URL(module, base).href);
     assert.equal(response.status(), 200, module);
     assert.match(response.headers()['content-type'], /^(?:text|application)\/javascript\b/i, module);
     assert.match(response.headers()['cache-control'], /(?:^|,)\s*no-cache\b/i, module);
@@ -245,6 +250,12 @@ test('premium checker: sub-30 Griswold source levels expire after level 31', asy
   await page.close();
 });
 
+test('previous Shop Qlvl script URL stays available for cached pages', async () => {
+  const response = await context.request.get(new URL('/calculators/shop-qlvl/js/scripts.js', base).href);
+  assert.equal(response.status(), 200);
+  assert.match(await response.text(), /import\('\.\/scripts\.mjs'\)/);
+});
+
 test('shopping guide shows the Wirt example and remains usable at narrow and desktop widths', async () => {
   for (const width of [390, 1440]) {
     const page = await context.newPage({ viewport: { width, height: 844 } });
@@ -347,6 +358,95 @@ test('premium checker: standalone and combined layouts fit a desktop viewport wi
     assert.deepEqual(errors, [], route);
     await page.close();
   }
+});
+
+
+test('game and play-mode controls change checker, shop, and price behavior on standalone and combined pages', async () => {
+  for (const route of ['/calculators/premium-item-checker/', '/calculators/shop-qlvl/',
+    '/calculators/hellfire-item-price/', '/calculators/hellfire-damage/', '/calculators/']) {
+    for (const width of [390, 1440]) {
+      const page = await context.newPage({ viewport: { width, height: 844 } });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+      await page.goto(new URL(route, base).href);
+      if (route.includes('premium-item-checker') || route === '/calculators/') {
+        await page.locator('#premium-base-item').selectOption({ label: 'Ring' });
+        await page.locator('#premium-prefix').selectOption({ label: 'Pearl' });
+        assert.doesNotMatch(await page.locator('#premium-availability').textContent(), /Griswold|Wirt/);
+        await page.locator('#premium-mode').selectOption('single-player');
+        assert.match(await page.locator('#premium-availability').textContent(), /Griswold/);
+        assert.match(await page.locator('#premium-availability').textContent(), /Wirt/);
+        await page.locator('#premium-game').selectOption('diablo');
+        assert.equal(await page.locator('#premium-prefix option[value="84"]').count(), 0);
+        await page.locator('#premium-base-item').selectOption({ label: 'Cap' });
+        assert.doesNotMatch(await page.locator('#premium-availability').textContent(), /Nightmare|Hell\s+Item level/);
+      }
+      if (route.includes('shop-qlvl') || route === '/calculators/') {
+        await page.locator('#clvl').fill('25');
+        await page.locator('#shop-game').selectOption('diablo');
+        assert.equal((await page.locator('#grisresult').textContent()).match(/^\d+\s*:/gm).length, 6);
+        await page.locator('#shop-mode').selectOption('single-player');
+        assert.equal(await page.locator('#shop-depth-field').isVisible(), true);
+        await page.locator('#shop-depth').fill('5');
+        assert.match(await page.locator('#adriaresult').textContent(), /staves with spell:\s+1-14/);
+      }
+      if (route.includes('hellfire-item-price') || route === '/calculators/') {
+        await page.locator('#item-class').selectOption('Jewelry');
+        await page.locator('#item-prefix').selectOption({ label: 'Pearl' });
+        assert.equal(await page.locator('input[name="Source"][value="Gris"]').isDisabled(), true);
+        await page.locator('#price-mode').selectOption('single-player');
+        assert.equal(await page.locator('input[name="Source"][value="Gris"]').isEnabled(), true);
+        assert.equal(await page.locator('input[name="Source"][value="Wirt"]').isEnabled(), true);
+        await page.locator('#price-game').selectOption('diablo');
+        assert.match(await page.locator('#price-mode-note').textContent(), /90,000 gold Wirt limit/);
+        await page.locator('#item-class').selectOption('Sword');
+        assert.equal(await page.locator('#item-prefix option').filter({ hasText: "Doppelganger's" }).count(), 0);
+        await page.locator('#price-game').selectOption('hellfire');
+        assert.ok(await page.locator('#item-prefix option').filter({ hasText: "Doppelganger's" }).count() > 0);
+      }
+      if (route.includes('hellfire-damage') || route === '/calculators/') {
+        await page.locator('#characterClass').selectOption('monk');
+        await page.locator('#gameVersion').selectOption('diablo');
+        assert.equal(await page.locator('#characterClass').inputValue(), 'warrior');
+        assert.equal(await page.locator('#spellKey option[value="immolation"]').count(), 0);
+        assert.equal(await page.locator('#devastation').isDisabled(), true);
+        await page.locator('#spellKey').selectOption('holyBolt');
+        assert.doesNotMatch(await page.locator('#spellRows').textContent(), /Bone Demon in Hellfire/);
+        await page.locator('#gameVersion').selectOption('hellfire');
+        assert.ok(await page.locator('#spellKey option[value="immolation"]').count() > 0);
+        assert.match(await page.locator('#spellRows').textContent(), /Bone Demon in Hellfire/);
+      }
+      await assertNoHorizontalOverflow(page, route, `${width}px mode controls`);
+      assert.deepEqual(errors, [], `${route} ${width}px`);
+      await page.close();
+    }
+  }
+});
+
+test('item price preserves selection and applies Diablo Wirt pricing and limit', async () => {
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto(new URL('/calculators/hellfire-item-price/', base).href);
+  await page.locator('#item-class').selectOption('Helm');
+  await page.locator('#base-item').selectOption({ label: 'Cap' });
+  await page.locator('#item-prefix').selectOption({ label: 'White' });
+  await page.locator('input[name="Source"][value="Wirt"]').check();
+  assert.equal((await page.locator('#Price').textContent()).trim(), '398');
+  await page.locator('#price-game').selectOption('diablo');
+  assert.equal((await page.locator('#Price').textContent()).trim(), '795');
+
+  await page.locator('#item-class').selectOption('Armor');
+  await page.locator('#base-item').selectOption({ label: 'Full Plate Mail' });
+  await page.locator('#item-prefix').selectOption({ label: 'Godly' });
+  await page.locator('input[name="Source"][value="Wirt"]').check();
+  assert.match(await page.locator('#Price').textContent(), /Above Wirt's limit in Diablo/);
+  await page.locator('#price-game').selectOption('hellfire');
+  assert.equal(await page.locator('#base-item').inputValue(), '22');
+  assert.equal((await page.locator('#Price').textContent()).trim(), '102150');
+  assert.deepEqual(errors, []);
+  await page.close();
 });
 
 test('damage calculator: class preset changes deterministic output', async () => {

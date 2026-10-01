@@ -2,7 +2,18 @@ import { prefixx, suffixx, basee, uniq, premiumIndex } from "./data.mjs";
 import { calculateAvailability } from "./availability.mjs";
 import { formatDetailedPrice } from "./price.mjs";
 
-function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false) {
+function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false,
+  { gameVersion = 'hellfire', gameMode = 'multiplayer' } = {}) {
+  if (!['diablo', 'hellfire'].includes(gameVersion) ||
+      !['single-player', 'multiplayer'].includes(gameMode)) {
+    throw new RangeError('Unsupported game context');
+  }
+  if (gameVersion === 'diablo' && (SelBasee > 146 || SelPref > 83 || SelSuff > 121)) {
+    throw new RangeError('Hellfire-only item or affix in Diablo context');
+  }
+  if (gameMode === 'single-player' && (SelSuff === 100 || SelSuff === 102)) {
+    throw new RangeError('Multiplayer-only staff spell in single-player context');
+  }
   var tmpbase;
   var dspbase;
   var dsppref;
@@ -170,8 +181,8 @@ function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false)
 
 
   const vendorAvailability = calculateAvailability({
-    SelBasee, SelPref, SelSuff, baslvl, suflvl, slvlmin, slvlmax, pricemin,
-    premulti, sufmulti
+    SelBasee, SelPref, SelSuff, baslvl, prelvl, suflvl, slvlmin, slvlmax, pricemin,
+    premulti, sufmulti, gameVersion, gameMode
   });
 
   var dsp1;

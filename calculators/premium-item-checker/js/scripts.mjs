@@ -14,14 +14,17 @@ if (form) {
     prefix: form.elements.prefixx,
     base: form.elements.basee,
     suffix: form.elements.suffixx,
-    price: form.elements.calcprice
+    price: form.elements.calcprice,
+    gameVersion: form.elements.gameVersion,
+    gameMode: form.elements.gameMode
   };
   const output = {
     summary: document.getElementById('display1'),
     availability: document.getElementById('premium-availability'),
     details: document.getElementById('display2'),
     price: document.getElementById('display3'),
-    status: document.getElementById('premium-status')
+    status: document.getElementById('premium-status'),
+    hint: document.getElementById('premium-level-hint')
   };
   const selection = { baseIndex: 0, prefixIndex: 0, suffixIndex: 0 };
 
@@ -32,7 +35,8 @@ if (form) {
   }
 
   function refreshOptions() {
-    const choices = getAvailableOptions(selection);
+    const choices = getAvailableOptions({ ...selection,
+      gameVersion: controls.gameVersion.value, gameMode: controls.gameMode.value });
     replaceOptions(controls.base, choices.bases, basee, selection.baseIndex);
     replaceOptions(controls.prefix, choices.prefixes, prefixx, selection.prefixIndex);
     replaceOptions(controls.suffix, choices.suffixes, suffixx, selection.suffixIndex);
@@ -72,7 +76,9 @@ if (form) {
     if (items.length === 0) {
       const empty = document.createElement('li');
       empty.className = 'premium-availability-empty';
-      empty.textContent = 'No source identified by the current model. Hellfire vendor retries and game/mode rules may still allow it.';
+      empty.textContent = controls.gameVersion.value === 'hellfire'
+        ? 'No source identified by the current model. Rare vendor retries or unmodeled conditions may still allow it.'
+        : 'No source identified by the current Diablo level and value rules.';
       output.availability.replaceChildren(empty);
       return;
     }
@@ -94,10 +100,16 @@ if (form) {
   function render(cleared = []) {
     const { baseIndex, prefixIndex, suffixIndex } = selection;
     const result = calculatePremiumItem(baseIndex, prefixIndex, suffixIndex,
-      controls.price.selectedIndex === 1);
+      controls.price.selectedIndex === 1,
+      { gameVersion: controls.gameVersion.value, gameMode: controls.gameMode.value });
     output.summary.textContent = result.itemSummary;
     output.details.textContent = result.display2;
     output.price.textContent = result.display3;
+    const basicStockNote = controls.gameMode.value === 'single-player'
+      ? ' Basic Griswold stock and Adria use deepest dungeon level visited.' : '';
+    output.hint.textContent = controls.gameVersion.value === 'hellfire'
+      ? `Source Level is the item generation level (ilvl). Vendor ranges show possible rolls; class, stats, carried gear, and rare Hellfire retries can affect offers.${basicStockNote}`
+      : `Source Level is the item generation level (ilvl). Diablo vendor price caps apply; vendor ranges are possible rolls.${basicStockNote}`;
     renderAvailability(result.availability, baseIndex !== 0);
     const combination = [
       prefixIndex ? prefixx[prefixIndex].name : '',
@@ -127,6 +139,17 @@ if (form) {
     });
   }
   controls.price.addEventListener('change', () => render());
+  function changeContext() {
+    const choices = getAvailableOptions({ ...selection,
+      gameVersion: controls.gameVersion.value, gameMode: controls.gameMode.value });
+    if (!choices.bases.includes(selection.baseIndex)) selection.baseIndex = 0;
+    if (!choices.prefixes.includes(selection.prefixIndex)) selection.prefixIndex = 0;
+    if (!choices.suffixes.includes(selection.suffixIndex)) selection.suffixIndex = 0;
+    refreshOptions();
+    render();
+  }
+  controls.gameVersion.addEventListener('change', changeContext);
+  controls.gameMode.addEventListener('change', changeContext);
   document.getElementById('premium-reset').addEventListener('click', () => {
     Object.assign(selection, { baseIndex: 0, prefixIndex: 0, suffixIndex: 0 });
     controls.price.selectedIndex = 0;

@@ -21,10 +21,18 @@ function getHellfirePremiumItemLevels(characterLevel) {
     Math.min(Math.max(level + offset, 1), maxPremiumItemLevel));
 }
 
-function getHellfireGriswoldMagicCharacterLevels(baseQlvl, sourceLevelMin, sourceLevelMax) {
+// Jarulf 1.62, 3.9: six Diablo premium slots after the level-up shift.
+function getDiabloPremiumItemLevels(characterLevel) {
+  return [-1, -1, 0, 0, 1, 2].map((offset) =>
+    Math.min(Math.max(characterLevel + offset, 1), maxPremiumItemLevel));
+}
+
+function getGriswoldMagicCharacterLevels(baseQlvl, sourceLevelMin, sourceLevelMax, gameVersion = 'hellfire') {
   const characterLevels = [];
   for (let characterLevel = 1; characterLevel <= maxCharacterLevel; characterLevel++) {
-    const itemLevels = getHellfirePremiumItemLevels(characterLevel);
+    const itemLevels = gameVersion === 'diablo'
+      ? getDiabloPremiumItemLevels(characterLevel)
+      : getHellfirePremiumItemLevels(characterLevel);
     if (itemLevels.some((itemLevel) =>
       itemLevel >= sourceLevelMin && itemLevel <= sourceLevelMax &&
         baseQlvl >= Math.floor(itemLevel / 4) && baseQlvl <= itemLevel)) {
@@ -33,6 +41,9 @@ function getHellfireGriswoldMagicCharacterLevels(baseQlvl, sourceLevelMin, sourc
   }
   return characterLevels;
 }
+
+const getHellfireGriswoldMagicCharacterLevels = (baseQlvl, sourceLevelMin, sourceLevelMax) =>
+  getGriswoldMagicCharacterLevels(baseQlvl, sourceLevelMin, sourceLevelMax, 'hellfire');
 
 function formatCharacterLevels(levels) {
   if (levels.length === 0) return '';
@@ -105,16 +116,27 @@ function availableIndices(items, predicate) {
   return [0, ...items.flatMap((item, index) => index > 0 && item && predicate(index) ? [index] : [])];
 }
 
-function getAvailableOptions({ baseIndex, prefixIndex, suffixIndex }) {
+function isAllowedForGame(index, kind, gameVersion) {
+  if (gameVersion !== 'diablo') return true;
+  if (kind === 'base') return index <= 146;
+  if (kind === 'prefix') return index <= 83;
+  return index <= 121;
+}
+
+function getAvailableOptions({ baseIndex, prefixIndex, suffixIndex, gameVersion = 'hellfire', gameMode = 'multiplayer' }) {
   return {
-    bases: availableIndices(basee, (index) => isBaseAvailable(index, prefixIndex, suffixIndex)),
-    prefixes: availableIndices(prefixx, (index) => isPrefixAvailable(baseIndex, index, suffixIndex)),
-    suffixes: availableIndices(suffixx, (index) => isSuffixAvailable(baseIndex, prefixIndex, index))
+    bases: availableIndices(basee, (index) => isAllowedForGame(index, 'base', gameVersion) && isBaseAvailable(index, prefixIndex, suffixIndex)),
+    prefixes: availableIndices(prefixx, (index) => isAllowedForGame(index, 'prefix', gameVersion) && isPrefixAvailable(baseIndex, index, suffixIndex)),
+    suffixes: availableIndices(suffixx, (index) => isAllowedForGame(index, 'suffix', gameVersion) &&
+      !(gameMode === 'single-player' && (index === 100 || index === 102)) &&
+      isSuffixAvailable(baseIndex, prefixIndex, index))
   };
 }
 
 export {
   getHellfirePremiumItemLevels,
+  getDiabloPremiumItemLevels,
+  getGriswoldMagicCharacterLevels,
   getHellfireGriswoldMagicCharacterLevels,
   formatCharacterLevels,
   isBaseAvailable,

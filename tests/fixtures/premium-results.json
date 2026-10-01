@@ -149,7 +149,7 @@
       "prefix": 0,
       "suffix": 0
     },
-    "display1": "Short Staff\n    Damage: 2 - 4    DUR:  25\n    G/A Price:  30    qlvl:  1\n\n    Normal     Source Level: 1 - 34\n    Nightmare  Source Level: 1 - 34\n    Hell       Source Level: 1 - 34",
+    "display1": "Short Staff\n    Damage: 2 - 4    DUR:  25\n    G/A Price:  30    qlvl:  1\n\n    Griswold     Char Level: 1 - 50\n    Normal     Source Level: 1 - 34\n    Nightmare  Source Level: 1 - 34\n    Hell       Source Level: 1 - 34",
     "display2": "",
     "display3": ""
   },
