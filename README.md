@@ -23,24 +23,20 @@ This is not intended to replace foundational resources like Jarulf's Guide, Ghas
 
 The compendium currently includes:
 
-- **Hellfire Item Price Calculator**  
-  Estimates Hellfire item prices using item class, base item, prefix, suffix, variable affix values, and vendor source.
+- **Item Price Calculator:** Estimates Diablo and Hellfire item prices using item class, base item, affixes, play mode, and vendor source.
 
-- **Hellfire Shop Qlvl Calculator**  
-  Checks base-item and affix qlvl ranges available from Hellfire shop sources based on character level.
+- **Shop Qlvl Calculator:** Checks Diablo and Hellfire shop qlvl ranges using character level or single-player dungeon depth.
 
-- **Hellfire Premium Item Checker**  
-  Checks valid premium item combinations, affix data, source availability, and detailed price ranges for Diablo I and Hellfire items.
+- **Premium Item Checker:** Checks Diablo and Hellfire item combinations, affix data, and mode-specific source availability.
 
 - **Warrior Repair Calculator**  
   Plans guaranteed Warrior repair durability-loss paths for deterministic one-cycle repair cases.
 
-- **Hellfire Damage Calculator**  
-  Calculates physical and spell damage behavior using Hellfire-focused character, stat, spell, weapon, and monster-resistance data.
+- **Damage Calculator:** Calculates Diablo and Hellfire physical and spell damage using game-specific classes, item effects, and spells.
 
 Each calculator has a standalone page and is also included on the combined calculators page. The combined page automatically builds a calculator navigator from its section headings so players can move quickly between several tools.
 
-The Hellfire Premium Item Checker and Hellfire Item Price Calculator treat **Decay as a suffix**, correcting its mistaken classification as a prefix in Jarulf's Guide.
+The Premium Item Checker and Item Price Calculator treat **Decay as a Hellfire suffix**, correcting its mistaken classification as a prefix in Jarulf's Guide.
 
 ## Current Guides
 

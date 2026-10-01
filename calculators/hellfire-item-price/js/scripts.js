@@ -366,6 +366,8 @@ suffx[94] = new Affx("Thorns", 1, "attacker takes 1-3 damage", "AS----", false, 
 // Hellfire-only affixes from Jarulf's Guide.
 // Occurrence notes: Jarulf uses lowercase "t" for staves without spells in Hellfire.
 // This Hellfire calculator treats that as Staff ("T") for dropdown/filter purposes.
+var diabloPrefixCount = prefx.length;
+var diabloSuffixCount = suffx.length;
 prefx.push(new Affx("Wyrm's", 35, "61-80, mana", "---T--", false, 15100, 3900, 12));
 prefx.push(new Affx("Hydra's", 60, "81-100, mana", "---T--", false, 19100, 10900, 13));
 prefx.push(new Affx("Doppelganger's", 11, "81-95,% damage", "--WT--", false, 2000, 400, 10));
@@ -416,6 +418,7 @@ spel[27] = new Spel("Town Portal", 3, "8-12", true, 40);
 
 
 // Hellfire staff spells
+var diabloSpellCount = spel.length;
 spel.push(new Spel("Berserk", 3, "8-12", true, 40));
 spel.push(new Spel("Immolation", 10, "16-32", true, 260));
 spel.push(new Spel("Jester", 4, "15-30", true, 40));
@@ -480,6 +483,38 @@ var GRIS_SOURCE = 1;
 var WIRT_SOURCE = 2;
 var SALE_SOURCE = 3;
 
+function priceGameContext() {
+  var form = document.SelectItm;
+  return { gameVersion: form.elements.gameVersion.value, gameMode: form.elements.gameMode.value };
+}
+
+function isPriceAffixAllowed(index, kind) {
+  var context = priceGameContext();
+  if (kind === 'spell' && context.gameMode === 'single-player' && (index === 14 || index === 23)) {
+    return false;
+  }
+  if (context.gameVersion === 'hellfire') return true;
+  return index < (kind === 'prefix' ? diabloPrefixCount :
+    kind === 'suffix' ? diabloSuffixCount : diabloSpellCount);
+}
+
+function vendorPriceRules(context) {
+  return context.gameVersion === 'hellfire'
+    ? { griswoldLimit: 200000, wirtLimit: 200000, wirtMultiplier: 0.75 }
+    : { griswoldLimit: 140000, wirtLimit: 90000, wirtMultiplier: 1.5 };
+}
+
+function updatePriceModeNote() {
+  var context = priceGameContext();
+  var note = context.gameVersion === "hellfire"
+    ? "Hellfire uses a 200,000 gold underlying vendor limit; Wirt charges 75%. Jewelry is offered by Griswold and Wirt in single player only."
+    : "Diablo uses a 140,000 gold Griswold/Adria limit and a 90,000 gold Wirt limit; Wirt charges 150%. Jewelry is offered by Griswold and Wirt in single player only.";
+  note += context.gameMode === "single-player"
+    ? " Single-player jewelry vendors are included."
+    : " Multiplayer jewelry vendors are excluded.";
+  document.getElementById("price-mode-note").textContent = note;
+}
+
 function currentItemClass() {
   return document.SelectItm.Clas.options[document.SelectItm.Clas.selectedIndex].text;
 }
@@ -512,6 +547,8 @@ function updateClas() {
   var suffxIndex = 1;
   var previusP = ((document.SelectItm.Prefx.selectedIndex >= 0) ? document.SelectItm.Prefx.options[document.SelectItm.Prefx.selectedIndex].text : 0);
   var previusS = ((document.SelectItm.Suffx.selectedIndex >= 0) ? document.SelectItm.Suffx.options[document.SelectItm.Suffx.selectedIndex].text : 0);
+  var previousBase = document.SelectItm.Bse.selectedIndex >= 0
+    ? document.SelectItm.Bse.options[document.SelectItm.Bse.selectedIndex].value : null;
 
 
   //clear current entries
@@ -560,7 +597,7 @@ function updateClas() {
     //prefix
     document.SelectItm.Prefx.options[0] = new Option("None", "None", true);
     for (i = 0; i < prefx.length; i++) {
-      if (prefx[i].spawnn.indexOf("A") > -1) {
+      if (prefx[i].spawnn.indexOf("A") > -1 && isPriceAffixAllowed(i, "prefix")) {
         document.SelectItm.Prefx.options[prefxIndex++] = new Option((prefx[i].cursd) ? prefx[i].name + " (c)" : prefx[i].name, i);
         if (previusP == document.SelectItm.Prefx.options[prefxIndex - 1].text) {
           document.SelectItm.Prefx.options[prefxIndex - 1].selected = true;
@@ -576,7 +613,7 @@ function updateClas() {
     //suffix
     document.SelectItm.Suffx.options[0] = new Option("None", "None", true);
     for (i = 0; i < suffx.length; i++) {
-      if (suffx[i].spawnn.indexOf("A") > -1) {
+      if (suffx[i].spawnn.indexOf("A") > -1 && isPriceAffixAllowed(i, "suffix")) {
         document.SelectItm.Suffx.options[suffxIndex++] = new Option((suffx[i].cursd) ? suffx[i].name + " (c)" : suffx[i].name, i);
         if (previusS == document.SelectItm.Suffx.options[suffxIndex - 1].text) {
           document.SelectItm.Suffx.options[suffxIndex - 1].selected = true;
@@ -588,7 +625,7 @@ function updateClas() {
     //prefix
     document.SelectItm.Prefx.options[0] = new Option("None", "None", true);
     for (i = 0; i < prefx.length; i++) {
-      if (prefx[i].spawnn.indexOf("A") > -1) {
+      if (prefx[i].spawnn.indexOf("A") > -1 && isPriceAffixAllowed(i, "prefix")) {
         document.SelectItm.Prefx.options[prefxIndex++] = new Option((prefx[i].cursd) ? prefx[i].name + " (c)" : prefx[i].name, i);
         if (previusP == document.SelectItm.Prefx.options[prefxIndex - 1].text) {
           document.SelectItm.Prefx.options[prefxIndex - 1].selected = true;
@@ -605,7 +642,7 @@ function updateClas() {
     //suffix
     document.SelectItm.Suffx.options[0] = new Option("None", "None", true);
     for (i = 0; i < suffx.length; i++) {
-      if (suffx[i].spawnn.indexOf("A") > -1) {
+      if (suffx[i].spawnn.indexOf("A") > -1 && isPriceAffixAllowed(i, "suffix")) {
         document.SelectItm.Suffx.options[suffxIndex++] = new Option((suffx[i].cursd) ? suffx[i].name + " (c)" : suffx[i].name, i);
         if (previusS == document.SelectItm.Suffx.options[suffxIndex - 1].text) {
           document.SelectItm.Suffx.options[suffxIndex - 1].selected = true;
@@ -617,7 +654,7 @@ function updateClas() {
     //prefix
     document.SelectItm.Prefx.options[0] = new Option("None", "None", true);
     for (i = 0; i < prefx.length; i++) {
-      if (prefx[i].spawnn.indexOf("S") > -1) {
+      if (prefx[i].spawnn.indexOf("S") > -1 && isPriceAffixAllowed(i, "prefix")) {
         document.SelectItm.Prefx.options[prefxIndex++] = new Option((prefx[i].cursd) ? prefx[i].name + " (c)" : prefx[i].name, i);
         if (previusP == prefx[i].name) {
           document.SelectItm.Prefx.options[prefxIndex - 1].selected = true;
@@ -633,7 +670,7 @@ function updateClas() {
     //suffix
     document.SelectItm.Suffx.options[0] = new Option("None", "None", true);
     for (i = 0; i < suffx.length; i++) {
-      if (suffx[i].spawnn.indexOf("S") > -1) {
+      if (suffx[i].spawnn.indexOf("S") > -1 && isPriceAffixAllowed(i, "suffix")) {
         document.SelectItm.Suffx.options[suffxIndex++] = new Option((suffx[i].cursd) ? suffx[i].name + " (c)" : suffx[i].name, i);
         if (previusS == document.SelectItm.Suffx.options[suffxIndex - 1].text) {
           document.SelectItm.Suffx.options[suffxIndex - 1].selected = true;
@@ -645,7 +682,7 @@ function updateClas() {
     //prefix
     document.SelectItm.Prefx.options[0] = new Option("None", "None", true);
     for (i = 0; i < prefx.length; i++) {
-      if (prefx[i].spawnn.indexOf("W") > -1) {
+      if (prefx[i].spawnn.indexOf("W") > -1 && isPriceAffixAllowed(i, "prefix")) {
         document.SelectItm.Prefx.options[prefxIndex++] = new Option((prefx[i].cursd) ? prefx[i].name + " (c)" : prefx[i].name, i);
         if (previusP == document.SelectItm.Prefx.options[prefxIndex - 1].text) {
           document.SelectItm.Prefx.options[prefxIndex - 1].selected = true;
@@ -661,7 +698,7 @@ function updateClas() {
     //suffix
     document.SelectItm.Suffx.options[0] = new Option("None", "None", true);
     for (i = 0; i < suffx.length; i++) {
-      if (suffx[i].spawnn.indexOf("W") > -1) {
+      if (suffx[i].spawnn.indexOf("W") > -1 && isPriceAffixAllowed(i, "suffix")) {
         document.SelectItm.Suffx.options[suffxIndex++] = new Option((suffx[i].cursd) ? suffx[i].name + " (c)" : suffx[i].name, i);
         if (previusS == document.SelectItm.Suffx.options[suffxIndex - 1].text) {
           document.SelectItm.Suffx.options[suffxIndex - 1].selected = true;
@@ -673,7 +710,7 @@ function updateClas() {
     //prefix
     document.SelectItm.Prefx.options[0] = new Option("None", "None", true);
     for (i = 0; i < prefx.length; i++) {
-      if (prefx[i].spawnn.indexOf("W") > -1) {
+      if (prefx[i].spawnn.indexOf("W") > -1 && isPriceAffixAllowed(i, "prefix")) {
         document.SelectItm.Prefx.options[prefxIndex++] = new Option((prefx[i].cursd) ? prefx[i].name + " (c)" : prefx[i].name, i);
         if (previusP == document.SelectItm.Prefx.options[prefxIndex - 1].text) {
           document.SelectItm.Prefx.options[prefxIndex - 1].selected = true;
@@ -689,7 +726,7 @@ function updateClas() {
     //suffix
     document.SelectItm.Suffx.options[0] = new Option("None", "None", true);
     for (i = 0; i < suffx.length; i++) {
-      if (suffx[i].spawnn.indexOf("W") > -1) {
+      if (suffx[i].spawnn.indexOf("W") > -1 && isPriceAffixAllowed(i, "suffix")) {
         document.SelectItm.Suffx.options[suffxIndex++] = new Option((suffx[i].cursd) ? suffx[i].name + " (c)" : suffx[i].name, i);
         if (previusS == document.SelectItm.Suffx.options[suffxIndex - 1].text) {
           document.SelectItm.Suffx.options[suffxIndex - 1].selected = true;
@@ -701,7 +738,7 @@ function updateClas() {
     //prefix
     document.SelectItm.Prefx.options[0] = new Option("None", "None", true);
     for (i = 0; i < prefx.length; i++) {
-      if (prefx[i].spawnn.indexOf("W") > -1) {
+      if (prefx[i].spawnn.indexOf("W") > -1 && isPriceAffixAllowed(i, "prefix")) {
         document.SelectItm.Prefx.options[prefxIndex++] = new Option((prefx[i].cursd) ? prefx[i].name + " (c)" : prefx[i].name, i);
         if (previusP == document.SelectItm.Prefx.options[prefxIndex - 1].text) {
           document.SelectItm.Prefx.options[prefxIndex - 1].selected = true;
@@ -717,7 +754,7 @@ function updateClas() {
     //suffix
     document.SelectItm.Suffx.options[0] = new Option("None", "None", true);
     for (i = 0; i < suffx.length; i++) {
-      if (suffx[i].spawnn.indexOf("W") > -1) {
+      if (suffx[i].spawnn.indexOf("W") > -1 && isPriceAffixAllowed(i, "suffix")) {
         document.SelectItm.Suffx.options[suffxIndex++] = new Option((suffx[i].cursd) ? suffx[i].name + " (c)" : suffx[i].name, i);
         if (previusS == document.SelectItm.Suffx.options[suffxIndex - 1].text) {
           document.SelectItm.Suffx.options[suffxIndex - 1].selected = true;
@@ -729,7 +766,7 @@ function updateClas() {
     //prefix
     document.SelectItm.Prefx.options[0] = new Option("None", "None", true);
     for (i = 0; i < prefx.length; i++) {
-      if (prefx[i].spawnn.indexOf("B") > -1) {
+      if (prefx[i].spawnn.indexOf("B") > -1 && isPriceAffixAllowed(i, "prefix")) {
         document.SelectItm.Prefx.options[prefxIndex++] = new Option((prefx[i].cursd) ? prefx[i].name + " (c)" : prefx[i].name, i);
         if (previusP == document.SelectItm.Prefx.options[prefxIndex - 1].text) {
           document.SelectItm.Prefx.options[prefxIndex - 1].selected = true;
@@ -745,7 +782,7 @@ function updateClas() {
     //suffix
     document.SelectItm.Suffx.options[0] = new Option("None", "None", true);
     for (i = 0; i < suffx.length; i++) {
-      if (suffx[i].spawnn.indexOf("B") > -1) {
+      if (suffx[i].spawnn.indexOf("B") > -1 && isPriceAffixAllowed(i, "suffix")) {
         document.SelectItm.Suffx.options[suffxIndex++] = new Option((suffx[i].cursd) ? suffx[i].name + " (c)" : suffx[i].name, i);
         if (previusS == document.SelectItm.Suffx.options[suffxIndex - 1].text) {
           document.SelectItm.Suffx.options[suffxIndex - 1].selected = true;
@@ -757,7 +794,7 @@ function updateClas() {
     //prefix
     document.SelectItm.Prefx.options[0] = new Option("None", "None", true);
     for (i = 0; i < prefx.length; i++) {
-      if (prefx[i].spawnn.indexOf("T") > -1) {
+      if (prefx[i].spawnn.indexOf("T") > -1 && isPriceAffixAllowed(i, "prefix")) {
         document.SelectItm.Prefx.options[prefxIndex++] = new Option((prefx[i].cursd) ? prefx[i].name + " (c)" : prefx[i].name, i);
         if (previusP == document.SelectItm.Prefx.options[prefxIndex - 1].text) {
           document.SelectItm.Prefx.options[prefxIndex - 1].selected = true;
@@ -773,7 +810,7 @@ function updateClas() {
     //suffix
     document.SelectItm.Suffx.options[0] = new Option("None", "None", true);
     for (i = 0; i < suffx.length; i++) {
-      if (suffx[i].spawnn.indexOf("T") > -1) {
+      if (suffx[i].spawnn.indexOf("T") > -1 && isPriceAffixAllowed(i, "suffix")) {
         document.SelectItm.Suffx.options[suffxIndex++] = new Option((suffx[i].cursd) ? suffx[i].name + " (c)" : suffx[i].name, i);
         if (previusS == document.SelectItm.Suffx.options[suffxIndex - 1].text) {
           document.SelectItm.Suffx.options[suffxIndex - 1].selected = true;
@@ -781,7 +818,7 @@ function updateClas() {
       }
     }
     for (i = 0; i < spel.length; i++) {
-      if (spel[i].spawnnStaff) {
+      if (spel[i].spawnnStaff && isPriceAffixAllowed(i, "spell")) {
         document.SelectItm.Suffx.options[suffxIndex++] = new Option(spel[i].name, "spell:" + i);
       }
     }
@@ -790,7 +827,7 @@ function updateClas() {
     //prefix
     document.SelectItm.Prefx.options[0] = new Option("None", "None", true);
     for (i = 0; i < prefx.length; i++) {
-      if (prefx[i].spawnn.indexOf("J") > -1) {
+      if (prefx[i].spawnn.indexOf("J") > -1 && isPriceAffixAllowed(i, "prefix")) {
         document.SelectItm.Prefx.options[prefxIndex++] = new Option((prefx[i].cursd) ? prefx[i].name + " (c)" : prefx[i].name, i);
         if (previusP == document.SelectItm.Prefx.options[prefxIndex - 1].text) {
           document.SelectItm.Prefx.options[prefxIndex - 1].selected = true;
@@ -805,7 +842,7 @@ function updateClas() {
     //suffix
     document.SelectItm.Suffx.options[0] = new Option("None", "None", true);
     for (i = 0; i < suffx.length; i++) {
-      if (suffx[i].spawnn.indexOf("J") > -1) {
+      if (suffx[i].spawnn.indexOf("J") > -1 && isPriceAffixAllowed(i, "suffix")) {
         document.SelectItm.Suffx.options[suffxIndex++] = new Option((suffx[i].cursd) ? suffx[i].name + " (c)" : suffx[i].name, i);
         if (previusS == document.SelectItm.Suffx.options[suffxIndex - 1].text) {
           document.SelectItm.Suffx.options[suffxIndex - 1].selected = true;
@@ -822,6 +859,10 @@ function updateClas() {
     //base item
     for (i = 0; i < unique.length; i++) {
       document.SelectItm.Bse.options[i] = new Option(unique[i].name, unique[i].name);
+    }
+    if (previousBase && Array.prototype.some.call(document.SelectItm.Bse.options,
+      function (option) { return option.value === previousBase; })) {
+      document.SelectItm.Bse.value = previousBase;
     }
 
     //suffix
@@ -853,6 +894,10 @@ function updateClas() {
   }
 
   //source
+  if (previousBase && Array.prototype.some.call(document.SelectItm.Bse.options,
+    function (option) { return option.value === previousBase; })) {
+    document.SelectItm.Bse.value = previousBase;
+  }
   enableSource(ADRIA_SOURCE, "Adria");
   enableSource(GRIS_SOURCE, "Gris");
   enableSource(WIRT_SOURCE, "Wirt");
@@ -1150,6 +1195,7 @@ function selectedHasOnlyCursedAffixes(prefxS, suffxS) {
 //change based on bse item
 function updateSource() {
   if (currentItemClass() != "Unique") {
+    var context = priceGameContext();
     var itemClass = currentItemClass();
     var bseS = bseEQ[document.SelectItm.Bse.options[document.SelectItm.Bse.selectedIndex].value];
     var prefxS = ((document.SelectItm.Prefx.options[document.SelectItm.Prefx.selectedIndex].value == "None") ? "None" : prefx[document.SelectItm.Prefx.options[document.SelectItm.Prefx.selectedIndex].value]);
@@ -1196,6 +1242,15 @@ function updateSource() {
 
     //rules for staff vendors
     if (itemClass == "Staff") {
+      if (context.gameVersion === "diablo") {
+        disableSource(GRIS_SOURCE, "Gris");
+        disableSource(WIRT_SOURCE, "Wirt");
+      } else if (!selectedSuffixIsSpell()) {
+        // Jarulf 1.62, 3.9: in Hellfire Adria sells staves with spells only.
+        disableSource(ADRIA_SOURCE, "Adria");
+        // Hellfire Wirt's GetItemBonus path always assigns a staff spell.
+        disableSource(WIRT_SOURCE, "Wirt");
+      }
       // Griswold can sell staves in Hellfire, but not charged spell staves.
       if (selectedSuffixIsSpell()) {
         disableSource(GRIS_SOURCE, "Gris");
@@ -1223,7 +1278,7 @@ function updateSource() {
         }
       }
     }
-    else if (itemClass == "Jewelry") {
+    else if (itemClass == "Jewelry" && context.gameMode === "multiplayer") {
       disableSource(ADRIA_SOURCE, "Adria");
       disableSource(GRIS_SOURCE, "Gris");
       disableSource(WIRT_SOURCE, "Wirt");
@@ -1421,6 +1476,8 @@ function validat() {
 
 //calculate price
 function calcPrice() {
+  var context = priceGameContext();
+  var vendorRules = vendorPriceRules(context);
   //check for valid item
   if (!validat()) {
     document.getElementById("Price").firstChild.nodeValue = "0";
@@ -1536,18 +1593,20 @@ function calcPrice() {
     return;
   }
   if (document.SelectItm.Source[ADRIA_SOURCE].checked == true || document.SelectItm.Source[GRIS_SOURCE].checked == true) {
-    if (price > 200000) {
-      document.getElementById("Price").firstChild.nodeValue = price + " - This item used to be too expensive to buy";
+    if (price > vendorRules.griswoldLimit) {
+      document.getElementById("Price").firstChild.nodeValue = price +
+        (context.gameVersion === "hellfire" ? " - Above the normal limit; a rare retry may offer it" : " - Above the Diablo vendor limit");
       return;
     }
     price = Math.floor(price);
   }
   else if (document.SelectItm.Source[WIRT_SOURCE].checked == true) {
-    if (price > 200000) {
-      document.getElementById("Price").firstChild.nodeValue = price = Math.round(price * 0.75) + " - This item used to be too expensive to buy";
+    if (price > vendorRules.wirtLimit) {
+      document.getElementById("Price").firstChild.nodeValue = Math.round(price * vendorRules.wirtMultiplier) +
+        (context.gameVersion === "hellfire" ? " - Possible only on a rare Hellfire retry" : " - Above Wirt's limit in Diablo");
       return;
     }
-    price = Math.round(price * 0.75);
+    price = Math.round(price * vendorRules.wirtMultiplier);
   }
   else if (document.SelectItm.Source[SALE_SOURCE].checked == true) {
     price = Math.floor(price / 4);
@@ -1594,11 +1653,23 @@ function initHellfirePriceCalculator() {
   form.Pvalue.addEventListener("change", calcPrice);
   form.Svalue.addEventListener("change", calcPrice);
 
+  form.elements.gameVersion.addEventListener("change", function () {
+    updateClas();
+    updatePriceModeNote();
+    calcPrice();
+  });
+  form.elements.gameMode.addEventListener("change", function () {
+    updateClas();
+    updatePriceModeNote();
+    calcPrice();
+  });
+
   Array.prototype.forEach.call(form.Source, function (sourceInput) {
     sourceInput.addEventListener("change", calcPrice);
   });
 
   reset();
+  updatePriceModeNote();
 }
 
 if (document.readyState === "loading") {

@@ -8,12 +8,16 @@ if (!in_array($hellfire_item_price_heading_level, ['h1', 'h2', 'h3'], true)) {
 <section class="section-panel calculator-page hellfire-item-price-page flow-lg" aria-labelledby="hellfire-item-price-title">
   <header class="flow">
     <p class="eyebrow">Calculator</p>
-    <<?= $hellfire_item_price_heading_level ?> id="hellfire-item-price-title">Hellfire Item Price Calculator</<?= $hellfire_item_price_heading_level ?>>
-    <p class="hero-copy">Estimate Hellfire item prices by selecting an item class, base item, optional prefix or suffix, variable affix values, and vendor source.</p>
+    <<?= $hellfire_item_price_heading_level ?> id="hellfire-item-price-title">Item Price Calculator</<?= $hellfire_item_price_heading_level ?>>
+    <p class="hero-copy">Estimate Diablo or Hellfire item prices by selecting an item class, base item, affixes, and vendor source.</p>
     <p class="warning-text">Original calculator by <a href="https://web.archive.org/web/20120530085023/http://www.dpsyche.com/price.html" target="_blank" rel="noopener noreferrer">Eso aka the_Langolier</a> hosted on <a href="https://mgpat-gm.github.io/calcs.html" target="_blank" rel="noopener noreferrer">Ghast's Grotto</a>. Updated for this compendium while preserving the calculator behavior and adding Hellfire affixes.</p>
   </header>
 
   <form id="hellfire-price-calculator" class="hellfire-price-form flow-lg" name="SelectItm">
+    <div class="calculator-context">
+      <div class="form-field calculator-field"><label for="price-game">Game</label><select id="price-game" name="gameVersion"><option value="hellfire">Hellfire</option><option value="diablo">Diablo</option></select></div>
+      <div class="form-field calculator-field"><label for="price-mode">Play mode</label><select id="price-mode" name="gameMode"><option value="multiplayer">Multiplayer</option><option value="single-player">Single Player</option></select></div>
+    </div>
     <div class="calculator-grid hellfire-class-row">
       <div class="form-field calculator-field calculator-field-narrow">
         <label for="item-class">Item Class</label>
@@ -99,6 +103,7 @@ if (!in_array($hellfire_item_price_heading_level, ['h1', 'h2', 'h3'], true)) {
     <section class="price-result" aria-labelledby="price-result-label" aria-live="polite">
       <p id="price-result-label" class="result-label">Price</p>
       <output id="Price" class="result-value" name="Price">0</output>
+      <p id="price-mode-note" class="warning-text">Hellfire uses a 200,000 gold underlying vendor limit; Wirt charges 75% of the underlying price. Jewelry is offered by Griswold and Wirt in single player only.</p>
     </section>
   </form>
 </section>

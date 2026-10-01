@@ -18,7 +18,6 @@ $page_styles = [
 $page_scripts = [
   'js/in-page-navigation.js',
   'calculators/hellfire-item-price/js/scripts.js',
-  'calculators/shop-qlvl/js/scripts.js',
   'calculators/warrior-repair/js/scripts.js',
   'calculators/hellfire-damage/js/scripts.js',
 ];

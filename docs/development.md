@@ -12,9 +12,11 @@ Run `npm ci` and `npx playwright install chromium` once, then `npm test` while t
 
 The Hellfire Premium Item Checker keeps its item tables in `calculators/premium-item-checker/js/data.mjs`, compatibility and slot rules in `rules.mjs`, vendor availability in `availability.mjs`, item and price calculations in `calculate.mjs` and `price.mjs`, and browser controls in `scripts.mjs`. Its direct regression cases are in `tests/premium-item-checker.test.mjs`; `tests/fixtures/premium-results.json` records representative outputs from the verified pre-refactor version. Keep a mechanics correction separate from a presentation refactor so output changes can be reviewed against that baseline.
 
+The Premium Checker, Item Price, and Shop Qlvl now default to Hellfire multiplayer and accept explicit Diablo/Hellfire and single-player/multiplayer context. Shop Qlvl and basic-town source ranges use deepest dungeon level visited in single player; Hive/Crypt visits in Hellfire also reach the maximum town level. The Damage Calculator has a Diablo/Hellfire switch for its validated class, spell, and Hellfire-only item controls; its modeled damage has no player-count input. Warrior Repair has no mode switch because it models a shared durability operation. Run the direct mode cases in `tests/mode-rules.test.mjs` and the standalone/combined browser cases in `tests/site.test.mjs` when changing these rules.
+
 ## Branches and pull requests
 
-Create a branch from current `main`, using `feature/`, `fix/`, `refactor/`, or `chore/` followed by a short topic. Keep the diff focused. Run the complete suite and inspect the diff for private data. Open a pull request to `main` describing behavior, affected versions, source evidence, and test results. Review and merge through the pull request process. No Hostinger deployment is currently configured; CI never deploys. Do not deploy a task branch as part of ordinary development.
+Create a branch from current `main`, using `feature/`, `fix/`, `refactor/`, or `chore/` followed by a short topic. Keep the diff focused. Run the complete suite and inspect the diff for private data. Open a pull request to `main` describing behavior, affected versions, source evidence, and test results. Review and merge through the pull request process. CI never deploys; keep Hostinger deployment separate from ordinary development. Do not deploy a task branch as part of ordinary development.
 
 ## Runtime deployment package
 

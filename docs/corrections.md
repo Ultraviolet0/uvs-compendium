@@ -17,9 +17,9 @@ Use one entry per discrepancy. `Proposed` means the evidence still needs review;
 - **Mechanic/topic:** Vendor price limits and generation retries in the Premium Item Checker.
 - **Affected game/version:** Hellfire and DevilutionX Hellfire mode; verify original Hellfire behavior separately before changing published results.
 - **Incorrect or incomplete source behavior:** The checker used Diablo-era `140000` for Griswold and `90000` for Wirt, then treated an empty modeled-source list as though the combination had no possible source.
-- **Corrected behavior:** The Hellfire checker now uses the `200000` underlying item-value limit for Griswold and Wirt. Where a Wirt combination exceeds that normal limit but meets the modeled item and affix level rules, it identifies the rare retry fallback instead of declaring the item impossible. Its result text states that class, attributes, carried gear, and game mode are not fully modeled. Adria's inherited `140000` remains unaudited.
+- **Corrected behavior:** Hellfire uses a `200000` underlying vendor value limit; Diablo uses `140000` for Griswold/Adria and `90000` for Wirt. A level-eligible Hellfire Wirt combination above the normal cap is marked as a rare retry possibility. Wirt's displayed level range now checks each selected affix qlvl directly, including the qlvl-25 lower-bound cap, rather than applying dungeon Source Level limits to Wirt.
 - **Evidence or reasoning:** Max's [Hellfire shopping differences](../reference/hellfire-shopping-differences.pdf) states both `200000` limits, the 150/250 attempt limits, and the conditions ignored on exhaustion. DevilutionX defines `MaxVendorValueHf = 200000` and `MaxBoyValueHf = 200000` in [items.h](https://github.com/diasurgical/DevilutionX/blob/master/Source/items.h); [SpawnOnePremium and SpawnBoy](https://github.com/diasurgical/DevilutionX/blob/master/Source/items.cpp) show the finite loops. Jarulf 1.62, sections 3.9 and 3.10, gives Wirt's base and affix levels and distinguishes these from Griswold's limits. Rob's Wirt screenshot of Godly Full Plate Mail of the Whale is a concrete counterexample to the old empty-source claim.
-- **Status:** Hellfire price limits and Wirt price-retry possibility verified and implemented in the follow-up branch. Full class, attribute, carried-inventory, Diablo, and multiplayer logic remains for the separate mode-system work; original Hellfire and DevilutionX edge cases still require game-specific regression review.
+- **Status:** Implemented with explicit game/mode context in the two follow-up branches. Class, attribute, and carried-inventory conditions remain described as unmodeled; original Hellfire and DevilutionX retry edge cases still warrant game-specific review.
 - **Affected Compendium components:** Hellfire Premium Item Checker vendor-availability rules and tests.
 
 ## Affix-pair alignment and exclusion review
@@ -35,12 +35,21 @@ Use one entry per discrepancy. `Proposed` means the evidence still needs review;
 ## Hellfire vendor item types by game mode
 
 - **Mechanic/topic:** Griswold and Wirt item-type availability, including staves and single-player jewelry.
-- **Affected game/version:** Hellfire Single Player and Multiplayer; compare with Diablo modes.
-- **Incorrect or incomplete source behavior:** The current checker does not expose game and player-count modes, so its vendor item-type availability cannot express every mode-specific rule.
-- **Proposed behavior:** Add explicit Diablo/Hellfire and Single Player/Multiplayer modes, then validate item-type availability against the appropriate game rules.
-- **Evidence or reasoning:** Independent PR #3 review identified the mode dependency; the current refactor preserves inherited vendor behavior pending a separate correction.
-- **Status:** Proposed for separate review. No vendor item-type mechanics changed in this PR stack.
-- **Affected Compendium components:** Premium Item Checker vendor availability, mode controls, and tests.
+- **Affected game/version:** Diablo and Hellfire, single player and multiplayer.
+- **Incorrect or incomplete source behavior:** One implicit Hellfire/multiplayer context could not express mode-specific vendor stock or single-player town levels.
+- **Corrected behavior:** Premium Checker, Item Price, and Shop Qlvl have explicit game and play-mode controls. Diablo Griswold has six premium slots; Hellfire has fifteen. Griswold and Wirt sell jewelry in single player only, and staves in Hellfire only. In Hellfire, Griswold's premium staves have no spell while Wirt's staves are charged; Adria's Hellfire staves are charged. Heal Other and Resurrect staff spells are absent in single player. Basic Griswold and Adria item levels use character level in multiplayer and deepest dungeon level visited in single player. Diablo single player excludes Nightmare and Hell dungeon rows.
+- **Evidence or reasoning:** [Jarulf 1.62, sections 2.7.1, 3.9–3.10](../reference/jarulf162.pdf), and DevilutionX [SpawnPremium/SpawnOnePremium/SpawnBoy](https://github.com/diasurgical/DevilutionX/blob/master/Source/items.cpp), `PremiumItemOk`, `GetItemBonus`, `GetStaffSpell`, and `WitchItemOk`. Jarulf gives the 140k/90k Diablo and 200k Hellfire underlying vendor caps, Wirt's 150%/75% price modifiers, and SP/MP stock rules. DevilutionX confirms the separate staff-spell paths and multiplayer-only Heal Other/Resurrect generation.
+- **Status:** Implemented in `feat/game-and-mode-toggles` for review, with direct and browser regression cases. Exact offer probability, Hellfire Wirt class/attribute/inventory retry state, quest triggers, and some unique acquisition conditions are outside this level-and-value model.
+- **Affected Compendium components:** Premium Checker, Item Price, Shop Qlvl, shared town-level rule, and tests.
+
+## Diablo and Hellfire damage scope
+
+- **Mechanic/topic:** Game-specific class, spell, item-effect, and Holy Bolt damage options.
+- **Affected game/version:** Diablo and Hellfire; player-count differences are outside the calculator's direct-damage inputs.
+- **Corrected behavior:** The Damage Calculator uses a game selection. Diablo offers Warrior, Rogue, and Sorcerer; Hellfire adds Monk, Bard, and Barbarian. Diablo excludes Immolation, Lightning Wall, Ring of Fire, Devastation, Jester's, Peril, and the Hellfire adjacent quarter-damage option. Only Hellfire displays the 75%-reduced Holy Bolt case for Diablo and Bone Demons.
+- **Evidence or reasoning:** [Jarulf 1.62, sections 2.1, 3.3, 4, 5.2, and 6.3](../reference/jarulf162.pdf) identifies Hellfire classes, spells and affixes and explicitly states the Hellfire Holy Bolt resistance. The existing damage formulas are retained for spells shared by both games.
+- **Status:** Implemented in `feat/game-and-mode-toggles` for review. The calculator remains a direct-damage model; it does not infer monster HP or resistances from single-player/multiplayer mode.
+- **Affected Compendium components:** Damage Calculator controls, output notes, and browser tests.
 
 ## Entry template
 
