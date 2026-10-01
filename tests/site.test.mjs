@@ -6,6 +6,31 @@ const base = process.env.SITE_URL || 'http://localhost:8080';
 let browser;
 let context;
 
+async function assertNoHorizontalOverflow(page, route, stage) {
+  const layout = await page.evaluate(() => {
+    const documentWidth = document.documentElement.scrollWidth;
+    const viewportWidth = document.documentElement.clientWidth;
+    const elements = [...document.querySelectorAll('*')].flatMap((element) => {
+      const style = getComputedStyle(element);
+      if (style.display === 'none' || style.visibility === 'hidden') return [];
+      const rect = element.getBoundingClientRect();
+      if (rect.right <= viewportWidth && rect.left >= 0
+        && (element.scrollWidth <= element.clientWidth || style.overflowX !== 'visible')) return [];
+      return [{
+        tag: element.tagName.toLowerCase(), id: element.id,
+        className: typeof element.className === 'string' ? element.className : '',
+        left: rect.left, right: rect.right, width: rect.width,
+        scrollWidth: element.scrollWidth, clientWidth: element.clientWidth,
+        overflowX: style.overflowX, minWidth: style.minWidth
+      }];
+    });
+    return { documentWidth, viewportWidth, elements };
+  });
+  assert.ok(layout.documentWidth <= layout.viewportWidth,
+    `${route} (${stage}): document scrollWidth=${layout.documentWidth}, clientWidth=${layout.viewportWidth}; `
+      + `out-of-viewport elements=${JSON.stringify(layout.elements)}`);
+}
+
 before(async () => {
   let ready = false;
   for (let attempt = 0; attempt < 40; attempt += 1) {
@@ -77,6 +102,15 @@ test('development files are denied by Apache', async () => {
   assert.equal((await context.request.get(new URL('/reference/jarulf162.pdf', base).href)).status(), 200);
 });
 
+test('premium modules are JavaScript and revalidate their cache', async () => {
+  for (const module of ['scripts.mjs', 'rules.mjs', 'calculate.mjs', 'data.mjs']) {
+    const response = await context.request.get(new URL(`/calculators/premium-item-checker/js/${module}`, base).href);
+    assert.equal(response.status(), 200, module);
+    assert.match(response.headers()['content-type'], /^(?:text|application)\/javascript\b/i, module);
+    assert.match(response.headers()['cache-control'], /(?:^|,)\s*no-cache\b/i, module);
+  }
+});
+
 test('guide navigation and shared menu respond to interaction', async () => {
   const page = await context.newPage();
   await page.goto(new URL('/guides/shopping/', base).href);
@@ -136,6 +170,48 @@ test('premium checker: base-item data populates from selection', async () => {
   await page.close();
 });
 
+test('premium checker: quest items have no magic-affix choices and plain bases name the basic shop', async () => {
+  const page = await context.newPage();
+  await page.goto(new URL('/calculators/premium-item-checker/', base).href);
+  await page.locator('#premium-base-item').selectOption({ label: 'Cap' });
+  assert.equal(await page.locator('#premium-availability li').first().locator('strong').textContent(),
+    'Griswold (basic items)');
+  for (const name of ['Auric Amulet', 'Bovine Plate']) {
+    await page.locator('#premium-base-item').selectOption({ label: name });
+    assert.deepEqual(await page.locator('#premium-prefix option').evaluateAll((options) =>
+      options.map((option) => option.value)), ['0']);
+    assert.deepEqual(await page.locator('#premium-suffix option').evaluateAll((options) =>
+      options.map((option) => option.value)), ['0']);
+  }
+  await page.close();
+});
+
+test('premium checker announces affix changes and incompatible selections cleared', async () => {
+  const page = await context.newPage();
+  await page.goto(new URL('/calculators/premium-item-checker/', base).href);
+  await page.locator('#premium-base-item').selectOption({ label: 'Bastard Sword' });
+  await page.locator('#premium-prefix').selectOption({ label: "Knight's" });
+  await page.locator('#premium-suffix').selectOption({ label: 'Speed' });
+  assert.match(await page.locator('#premium-status').textContent(),
+    /Knight's Bastard Sword of Speed/);
+  await page.locator('#premium-suffix').selectOption({ label: 'Haste' });
+  assert.match(await page.locator('#premium-status').textContent(),
+    /Knight's Bastard Sword of Haste/);
+  await page.locator('#premium-price-mode').selectOption({ label: 'On' });
+  assert.match(await page.locator('#premium-status').textContent(), /Detailed prices on/);
+  await page.evaluate(() => {
+    const baseSelect = document.getElementById('premium-base-item');
+    baseSelect.add(new Option('Auric Amulet', '157'));
+    baseSelect.value = '157';
+    baseSelect.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  assert.equal(await page.locator('#premium-prefix').inputValue(), '0');
+  assert.equal(await page.locator('#premium-suffix').inputValue(), '0');
+  assert.match(await page.locator('#premium-status').textContent(),
+    /Incompatible prefix and suffix cleared/);
+  await page.close();
+});
+
 test('premium checker: Hellfire Griswold +3 slot reaches affixes one level earlier', async () => {
   const page = await context.newPage();
   await page.goto(new URL('/calculators/premium-item-checker/', base).href);
@@ -148,10 +224,10 @@ test('premium checker: Hellfire Griswold +3 slot reaches affixes one level earli
   ]) {
     await page.locator('#premium-prefix').selectOption({ label: prefix });
     await page.locator('#premium-suffix').selectOption({ label: suffix });
-    assert.match(await page.locator('#display1').textContent(),
-      new RegExp(`Griswold\\s+Char Level: ${firstLevel} - 50`), `${prefix} / ${suffix}`);
+    assert.equal(await page.locator('#premium-availability li').first().locator('.premium-availability-range').textContent(),
+      `${firstLevel} - 50`, `${prefix} / ${suffix}`);
   }
-  assert.match(await page.locator('.premium-level-note').textContent(), /item generation level \(ilvl\)/);
+  assert.match(await page.locator('.premium-level-note').textContent(), /Item level \(ilvl\)/);
   await page.close();
 });
 
@@ -160,9 +236,69 @@ test('premium checker: sub-30 Griswold source levels expire after level 31', asy
   await page.goto(new URL('/calculators/premium-item-checker/', base).href);
   await page.locator('#premium-base-item').selectOption({ label: 'Helm' });
   await page.locator('#premium-prefix').selectOption({ label: 'Glorious' });
-  assert.match(await page.locator('#display1').textContent(),
-    /Griswold\s+Char Level: 11 - 31/);
+  assert.equal(await page.locator('#premium-availability li').first()
+    .locator('.premium-availability-range').textContent(), '11 - 31');
   await page.close();
+});
+
+test('premium checker: controls, reset, and combined page work by keyboard and on narrow screens', async () => {
+  for (const route of ['/calculators/premium-item-checker/', '/calculators/']) {
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.deepEqual(page.viewportSize(), { width: 390, height: 844 });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.goto(new URL(route, base).href);
+    await assertNoHorizontalOverflow(page, route, 'initial');
+    assert.match(await page.locator('#display1').textContent(), /^$/);
+    await page.locator('#premium-base-item').selectOption({ label: 'Bastard Sword' });
+    await page.locator('#premium-prefix').selectOption({ label: "Knight's" });
+    await page.locator('#premium-suffix').selectOption({ label: 'Speed' });
+    assert.match(await page.locator('#display1').textContent(), /Knight's Sword of Speed/);
+    assert.equal(await page.locator('#premium-availability li').first().locator('strong').textContent(), 'Griswold');
+    await assertNoHorizontalOverflow(page, route, 'selected');
+    await page.locator('#premium-prefix').focus();
+    await page.keyboard.press('Tab');
+    assert.ok(await page.locator('#premium-base-item').evaluate((el) => el === document.activeElement));
+    await page.keyboard.press('Tab');
+    assert.ok(await page.locator('#premium-suffix').evaluate((el) => el === document.activeElement));
+    await page.locator('#premium-price-mode').selectOption({ label: 'On' });
+    const detailedPrices = await page.locator('#display3').textContent();
+    assert.match(detailedPrices, /Knight's/);
+    assert.ok(detailedPrices.length > 200, `${route}: detailed price result is unexpectedly short`);
+    await assertNoHorizontalOverflow(page, route, 'detailed prices');
+    await page.locator('#premium-reset').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#premium-base-item').inputValue(), '0');
+    assert.equal(await page.locator('#premium-price-mode').inputValue(), 'Off');
+    assert.match(await page.locator('#premium-availability').textContent(), /Choose a base item/);
+    assert.ok(await page.locator('#premium-base-item').evaluate((el) => el === document.activeElement));
+    await assertNoHorizontalOverflow(page, route, 'after keyboard reset');
+    assert.deepEqual(errors, [], route);
+    await page.close();
+  }
+});
+
+test('premium checker: standalone and combined layouts fit a desktop viewport with detailed results', async () => {
+  for (const route of ['/calculators/premium-item-checker/', '/calculators/']) {
+    const page = await context.newPage({ viewport: { width: 1440, height: 900 } });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.goto(new URL(route, base).href);
+    await assertNoHorizontalOverflow(page, route, 'desktop initial');
+    await page.locator('#premium-base-item').selectOption({ label: 'Bastard Sword' });
+    await page.locator('#premium-prefix').selectOption({ label: "Knight's" });
+    await page.locator('#premium-suffix').selectOption({ label: 'Speed' });
+    await page.locator('#premium-price-mode').selectOption({ label: 'On' });
+    const detailedPrices = await page.locator('#display3').textContent();
+    assert.match(detailedPrices, /Knight's/);
+    assert.ok(detailedPrices.length > 200, `${route}: detailed price result is unexpectedly short`);
+    await assertNoHorizontalOverflow(page, route, 'desktop detailed prices');
+    assert.deepEqual(errors, [], route);
+    await page.close();
+  }
 });
 
 test('damage calculator: class preset changes deterministic output', async () => {

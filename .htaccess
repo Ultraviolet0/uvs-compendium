@@ -1,5 +1,15 @@
 Options -Indexes
 
+<IfModule mod_mime.c>
+  AddType text/javascript .mjs
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "(?i)\.mjs$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteRule ^(?:\.git|\.github|docs|tests|scripts|includes|node_modules|vendor|test-results|playwright-report|coverage)(?:/|$) - [F,NC]
