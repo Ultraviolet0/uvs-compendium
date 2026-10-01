@@ -258,7 +258,8 @@ test('previous Shop Qlvl script URL stays available for cached pages', async () 
 
 test('shopping guide shows the Wirt example and remains usable at narrow and desktop widths', async () => {
   for (const width of [390, 1440]) {
-    const page = await context.newPage({ viewport: { width, height: 844 } });
+    const page = await context.newPage();
+    await page.setViewportSize({ width, height: 844 });
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
@@ -266,7 +267,25 @@ test('shopping guide shows the Wirt example and remains usable at narrow and des
     const example = page.locator('#godly-plate-of-the-whale img');
     await example.scrollIntoViewIfNeeded();
     await page.waitForFunction(() => document.querySelector('#godly-plate-of-the-whale img')?.naturalWidth > 0);
-    assert.match(await page.locator('#godly-plate-of-the-whale figcaption').textContent(), /offered by Wirt/);
+    const imageLayout = await example.evaluate((image) => {
+      const bounds = image.getBoundingClientRect();
+      return {
+        width: bounds.width,
+        height: bounds.height,
+        naturalRatio: image.naturalWidth / image.naturalHeight,
+        objectFit: getComputedStyle(image).objectFit,
+        sectionWidth: image.closest('section').getBoundingClientRect().width,
+      };
+    });
+    assert.ok(Math.abs(imageLayout.width / imageLayout.height - imageLayout.naturalRatio) < 0.02,
+      `${width}px: the full screenshot should retain its natural landscape ratio`);
+    assert.notEqual(imageLayout.objectFit, 'cover');
+    if (width === 1440) assert.ok(imageLayout.width < imageLayout.sectionWidth,
+      'the desktop screenshot should be smaller than the article width');
+    const fullSizeLink = page.locator('#godly-plate-of-the-whale figure > a');
+    assert.equal(await fullSizeLink.getAttribute('href'), await example.getAttribute('src'));
+    assert.equal(await fullSizeLink.getAttribute('target'), '_blank');
+    assert.match(await page.locator('#godly-plate-of-the-whale figcaption').textContent(), /Wirt offered.*\+200% armor.*\+97 hit points/);
     assert.match(await page.locator('#building-better-anchors').textContent(), /deterministic sequence/);
     await assertNoHorizontalOverflow(page, '/guides/shopping/', `${width}px example`);
     assert.deepEqual(errors, [], `${width}px guide`);
