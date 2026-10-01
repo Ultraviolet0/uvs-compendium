@@ -12,6 +12,16 @@ Use one entry per discrepancy. `Proposed` means the evidence still needs review;
 - **Status:** Accepted by Rob on September 30, 2026. This correction takes precedence over Jarulf's Guide.
 - **Affected Compendium components:** Hellfire Item Price Calculator; Hellfire Premium Item Checker; README.
 
+## Jewelry base qlvl variants in premium source checks
+
+- **Mechanic/topic:** Internal Ring and Amulet base qlvls used by source eligibility.
+- **Affected game/version:** Diablo and Hellfire, especially single-player Griswold premiums.
+- **Incorrect or incomplete source behavior:** The checker collapsed each visible jewelry type to one base qlvl (Ring 5, Amulet 8), falsely excluding some premium rings at high item levels.
+- **Corrected behavior:** Ring retains one visible choice with base qlvls 5, 10, 15; Amulet retains one visible choice with base qlvls 8, 16. A source accepts the choice when any internal base qlvl satisfies its base-item window. The item summary lists all variants.
+- **Evidence or reasoning:** [Jarulf 1.62, base-item table and section 3.9](../reference/jarulf162.pdf) lists these qlvls and Griswold's premium base window of floor(ilvl / 4) through ilvl. DevilutionX [itemdat.tsv](https://github.com/diasurgical/DevilutionX/blob/master/assets/txtdata/items/itemdat.tsv) has the corresponding separate jewelry rows. At ilvl 30, Ring qlvl 10 or 15 fits although qlvl 5 does not.
+- **Status:** Implemented in `fix/premium-jewelry-qlvls` with direct and browser regression cases.
+- **Affected Compendium components:** Premium Item Checker base data, source availability, item summary, and tests.
+
 ## Hellfire town-vendor availability limits and retries
 
 - **Mechanic/topic:** Vendor price limits and generation retries in the Premium Item Checker.

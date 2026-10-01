@@ -27,7 +27,12 @@ function getDiabloPremiumItemLevels(characterLevel) {
     Math.min(Math.max(characterLevel + offset, 1), maxPremiumItemLevel));
 }
 
-function getGriswoldMagicCharacterLevels(baseQlvl, sourceLevelMin, sourceLevelMax, gameVersion = 'hellfire') {
+function baseQlvlInRange(baseQlvls, minimum, maximum) {
+  return (Array.isArray(baseQlvls) ? baseQlvls : [baseQlvls])
+    .some((qlvl) => qlvl >= minimum && qlvl <= maximum);
+}
+
+function getGriswoldMagicCharacterLevels(baseQlvls, sourceLevelMin, sourceLevelMax, gameVersion = 'hellfire') {
   const characterLevels = [];
   for (let characterLevel = 1; characterLevel <= maxCharacterLevel; characterLevel++) {
     const itemLevels = gameVersion === 'diablo'
@@ -35,7 +40,7 @@ function getGriswoldMagicCharacterLevels(baseQlvl, sourceLevelMin, sourceLevelMa
       : getHellfirePremiumItemLevels(characterLevel);
     if (itemLevels.some((itemLevel) =>
       itemLevel >= sourceLevelMin && itemLevel <= sourceLevelMax &&
-        baseQlvl >= Math.floor(itemLevel / 4) && baseQlvl <= itemLevel)) {
+        baseQlvlInRange(baseQlvls, Math.floor(itemLevel / 4), itemLevel))) {
       characterLevels.push(characterLevel);
     }
   }
@@ -138,6 +143,7 @@ export {
   getDiabloPremiumItemLevels,
   getGriswoldMagicCharacterLevels,
   getHellfireGriswoldMagicCharacterLevels,
+  baseQlvlInRange,
   formatCharacterLevels,
   isBaseAvailable,
   isPrefixAvailable,

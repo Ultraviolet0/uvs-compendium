@@ -61,6 +61,27 @@ test('single-player jewelry, Hellfire staves, and Adria staff rules change actua
     context('hellfire', 'single-player')), RangeError);
 });
 
+test('jewelry variants allow high-level Griswold premiums only in single player', () => {
+  for (const [gameVersion, firstLevel] of [['hellfire', 27], ['diablo', 28]]) {
+    for (const [baseIndex, qlvls] of [[68, '5, 10, 15'], [69, '8, 16']]) {
+      const singlePlayer = calculatePremiumItem(baseIndex, 28, 35, false,
+        context(gameVersion, 'single-player'));
+      const multiplayer = calculatePremiumItem(baseIndex, 28, 35, false,
+        context(gameVersion, 'multiplayer'));
+      assert.deepEqual(vendors(singlePlayer), [
+        { source: 'Griswold', levelType: 'Character level', range: `${firstLevel} - 50` },
+        { source: 'Wirt', levelType: 'Character level', range: '15 - 50' }
+      ]);
+      assert.deepEqual(vendors(multiplayer), []);
+      assert.match(singlePlayer.itemSummary, new RegExp(`Base qlvl:\\s+${qlvls}`));
+      assert.match(singlePlayer.display2, new RegExp(`qlvl:\\s+${qlvls}`));
+    }
+  }
+  assert.match(calculatePremiumItem(39, 62, 86).itemSummary, /Base qlvl:\s+10\b/);
+  assert.match(calculatePremiumItem(68, 0, 0).itemSummary, /Base qlvl:\s+5, 10, 15/);
+  assert.match(calculatePremiumItem(69, 0, 0).itemSummary, /Base qlvl:\s+8, 16/);
+});
+
 test('Wirt has separate Diablo/Hellfire price caps and exact affix qlvl boundaries', () => {
   assert.deepEqual(getWirtCharacterLevels(10, 23, 19), Array.from({ length: 8 }, (_, i) => i + 12));
   const diablo = vendors(calculatePremiumItem(23, 77, 45, false, context('diablo', 'multiplayer')));

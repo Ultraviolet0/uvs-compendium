@@ -250,6 +250,29 @@ test('premium checker: sub-30 Griswold source levels expire after level 31', asy
   await page.close();
 });
 
+test('premium checker: jewelry variants show Griswold and all base qlvls without mobile overflow', async () => {
+  for (const route of ['/calculators/premium-item-checker/', '/calculators/']) {
+    const page = await context.newPage({ viewport: { width: 390, height: 844 } });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.goto(new URL(route, base).href);
+    await page.locator('#premium-mode').selectOption('single-player');
+    await page.locator('#premium-base-item').selectOption({ label: 'Ring' });
+    await page.locator('#premium-prefix').selectOption({ label: "Dragon's" });
+    await page.locator('#premium-suffix').selectOption({ label: 'the Zodiac' });
+    assert.match(await page.locator('#display1').textContent(), /Base qlvl:\s+5, 10, 15/);
+    assert.match(await page.locator('#premium-availability').textContent(), /Griswold.*27 - 50/s);
+    await assertNoHorizontalOverflow(page, route, 'jewelry result');
+    await page.locator('#premium-base-item').selectOption({ label: 'Amulet' });
+    assert.match(await page.locator('#display1').textContent(), /Base qlvl:\s+8, 16/);
+    assert.match(await page.locator('#premium-availability').textContent(), /Griswold.*27 - 50/s);
+    await assertNoHorizontalOverflow(page, route, 'amulet result');
+    assert.deepEqual(errors, [], route);
+    await page.close();
+  }
+});
+
 test('previous Shop Qlvl script URL stays available for cached pages', async () => {
   const response = await context.request.get(new URL('/calculators/shop-qlvl/js/scripts.js', base).href);
   assert.equal(response.status(), 200);

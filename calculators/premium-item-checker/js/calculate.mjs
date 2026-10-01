@@ -51,7 +51,8 @@ function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false,
 
   var prelvl = prefixx[SelPref].level;
   var suflvl = suffixx[SelSuff].level;
-  var baslvl = basee[SelBasee].level;
+  const baseQlvls = basee[SelBasee].qlvls;
+  const baseQlvlDisplay = baseQlvls.join(', ');
 
   var psmulti = premulti + sufmulti;
   var multi_sign = 1;
@@ -152,10 +153,11 @@ function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false,
       pricemax = basee[SelBasee].price;
       if (SelBasee >= premiumIndex.firstUniqueBase) {
         dspbase = basee[SelBasee].name + " (" + uniq[SelBasee - premiumIndex.firstUniqueBase].basee + ")";
-        dspbase += "\n    " + basee[SelBasee].effect + "\n    G/A Price:  " + basee[SelBasee].price + "    Source Level:  " + slvldsp + "    Base qlvl:  " + baslvl;
+        dspbase += "\n    " + basee[SelBasee].effect + "\n    G/A Price:  " + basee[SelBasee].price + "    Source Level:  " + slvldsp + "    Base qlvl:  " + baseQlvlDisplay;
         baseefc = "\n\n    " + uniq[SelBasee - premiumIndex.firstUniqueBase].effect + "\n";
       } else {
-        dspbase = basee[SelBasee].name + "\n    " + basee[SelBasee].effect + "\n    G/A Price:  " + basee[SelBasee].price + "    qlvl:  " + basee[SelBasee].level;
+        const qlvlLabel = baseQlvls.length > 1 ? 'Base qlvl:  ' : 'qlvl:  ';
+        dspbase = basee[SelBasee].name + "\n    " + basee[SelBasee].effect + "\n    G/A Price:  " + basee[SelBasee].price + "    " + qlvlLabel + baseQlvlDisplay;
         baseefc = "";
       }
     } else {
@@ -174,14 +176,14 @@ function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false,
         pricemin = multi_sign * Math.floor(basee[SelBasee].price * psmulti) + preaddmin + sufaddmin;
         pricemax = multi_sign * Math.floor(basee[SelBasee].price * psmulti) + preaddmax + sufaddmax;
       }
-      dsp2base = basee[SelBasee].name + "\n    qlvl: " + basee[SelBasee].level + "    " + basee[SelBasee].effect + "    G/A Price:  " + basee[SelBasee].price;
-      totalefc = "\n\n    G/A Price: " + pricemin + " - " + pricemax + "    Source Level: " + slvldsp + "    Base qlvl:  " + basee[SelBasee].level + "\n";
+      dsp2base = basee[SelBasee].name + "\n    qlvl: " + baseQlvlDisplay + "    " + basee[SelBasee].effect + "    G/A Price:  " + basee[SelBasee].price;
+      totalefc = "\n\n    G/A Price: " + pricemin + " - " + pricemax + "    Source Level: " + slvldsp + "    Base qlvl:  " + baseQlvlDisplay + "\n";
     }
   }
 
 
   const vendorAvailability = calculateAvailability({
-    SelBasee, SelPref, SelSuff, baslvl, prelvl, suflvl, slvlmin, slvlmax, pricemin,
+    SelBasee, SelPref, SelSuff, baseQlvls, prelvl, suflvl, slvlmin, slvlmax, pricemin,
     premulti, sufmulti, gameVersion, gameMode
   });
 
