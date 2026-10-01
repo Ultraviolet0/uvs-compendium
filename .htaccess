@@ -1,0 +1,25 @@
+Options -Indexes
+
+<IfModule mod_mime.c>
+  AddType text/javascript .mjs
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "(?i)\.mjs$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(?:\.git|\.github|docs|tests|scripts|includes|node_modules|vendor|test-results|playwright-report|coverage)(?:/|$) - [F,NC]
+  RewriteRule ^(?:AGENTS\.md|README\.md|Dockerfile|compose\.ya?ml|package(?:-lock)?\.json|\.env(?:\..*)?|\.gitignore|\.htaccess)$ - [F,NC]
+</IfModule>
+
+<FilesMatch "(?i)(?:^\.|\.local\.|\.(?:bak|cache|env|ini|key|log|pem|pfx|p12|sql|tmp)$|credentials|secret)">
+  Require all denied
+</FilesMatch>
+
+<FilesMatch "(?i)^(?:breadcrumbs|calculator)\.php$">
+  Require all denied
+</FilesMatch>

@@ -1,0 +1,104 @@
+/* Hellfire Warrior Repair Calculator styles */
+
+.warrior-repair-form {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.warrior-repair-controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.warrior-repair-loss {
+  margin: 0;
+}
+
+.warrior-repair-results {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.repair-result-section {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.repair-table-scroll {
+  overflow-x: auto;
+}
+
+.repair-results-table {
+  border-collapse: collapse;
+  color: var(--color-text-soft);
+  font-size: 0.9rem;
+  min-width: 100%;
+  width: 100%;
+}
+
+.repair-results-table th,
+.repair-results-table td {
+  border: 1px solid rgb(95 95 95 / 0.75);
+  padding: 0.45rem 0.55rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.repair-results-table th {
+  background-color: rgb(188 168 108 / 0.08);
+  color: var(--color-text-muted);
+  font-weight: 800;
+}
+
+.calculator-details {
+  border-top: 1px solid rgb(188 168 108 / 0.2);
+  padding-top: var(--space-md);
+}
+
+.calculator-details summary {
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.calculator-details-body {
+  margin-top: var(--space-sm);
+}
+
+.mechanics-code {
+  border-left: 4px solid var(--color-text-muted);
+  color: #9f9;
+  font-family: Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  margin: 0;
+  overflow-x: auto;
+  padding: 0.55rem 0.75rem;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 560px) {
+  .warrior-repair-controls {
+    gap: 0.55rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+
+  .repair-results-table {
+    font-size: 0.78rem;
+  }
+
+  .repair-results-table th,
+  .repair-results-table td {
+    padding: 0.35rem 0.4rem;
+  }
+}
+
+@media (max-width: 412px) {
+  .warrior-repair-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .repair-results-table {
+    font-size: 0.72rem;
+  }
+}
