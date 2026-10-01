@@ -55,7 +55,7 @@ const routes = [
   '/calculators/shop-qlvl/', '/calculators/premium-item-checker/',
   '/calculators/warrior-repair/', '/calculators/hellfire-damage/',
   '/guides/', '/guides/shopping/', '/guides/fast-character-development/',
-  '/guides/max-shopping-video/'
+  '/guides/max-shopping-video/', '/guides/template/'
 ];
 
 test('public routes, shared layout, local assets, and browser scripts', async () => {
@@ -63,6 +63,9 @@ test('public routes, shared layout, local assets, and browser scripts', async ()
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
+    page.on('console', (message) => {
+      if (message.type() === 'error') pageErrors.push(message.text());
+    });
     const response = await page.goto(new URL(route, base).href, { waitUntil: 'load' });
     assert.equal(response.status(), 200, route);
     assert.equal(await page.locator('h1').count(), 1, route);
@@ -70,7 +73,7 @@ test('public routes, shared layout, local assets, and browser scripts', async ()
     assert.equal(await page.locator('footer.site-footer').count(), 1, route);
     assert.equal(await page.locator('a.skip-link[href="#main-content"]').count(), 1, route);
     assert.deepEqual(pageErrors, [], route);
-    const assets = await page.locator('link[rel="stylesheet"][href], script[src], img[src]')
+    const assets = await page.locator('link[rel="stylesheet"][href], link[rel="icon"][href], script[src], img[src], video[src], source[src], a[href$=".pdf"], a[href$=".mp4"]')
       .evaluateAll((nodes) => nodes.map((node) => node.href || node.src)
         .filter((url) => new URL(url).origin === location.origin));
     for (const asset of assets) {
@@ -88,7 +91,7 @@ test('public routes, shared layout, local assets, and browser scripts', async ()
 
 test('development files are denied by Apache', async () => {
   for (const path of [
-    '/.git/config', '/.github/workflows/ci.yml', '/.dockerignore', '/.gitignore',
+    '/.git/config', '/.github/workflows/ci.yml', '/.dockerignore', '/.gitignore', '/.htaccess',
     '/.env.example', '/AGENTS.md', '/README.md', '/Dockerfile', '/compose.yaml',
     '/package.json', '/package-lock.json', '/docs/development.md',
     '/docs/game-data.md', '/docs/corrections.md', '/tests/site.test.mjs',
@@ -103,7 +106,7 @@ test('development files are denied by Apache', async () => {
 });
 
 test('premium modules are JavaScript and revalidate their cache', async () => {
-  for (const module of ['scripts.mjs', 'rules.mjs', 'calculate.mjs', 'data.mjs']) {
+  for (const module of ['scripts.mjs', 'rules.mjs', 'calculate.mjs', 'data.mjs', 'availability.mjs', 'price.mjs']) {
     const response = await context.request.get(new URL(`/calculators/premium-item-checker/js/${module}`, base).href);
     assert.equal(response.status(), 200, module);
     assert.match(response.headers()['content-type'], /^(?:text|application)\/javascript\b/i, module);

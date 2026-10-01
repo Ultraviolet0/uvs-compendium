@@ -27,5 +27,7 @@ jobs:
         run: npm test
         env:
           PHP_LINT_CONTAINER: '1'
+      - name: Validate packaged site as Apache document root
+        run: npm run test:runtime
       - if: always()
         run: docker compose down

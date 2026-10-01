@@ -3,7 +3,7 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { phpLintCommand } from './php-lint.mjs';
 
-const excluded = new Set(['.git', 'node_modules', 'vendor', 'test-results', 'playwright-report', 'coverage']);
+const excluded = new Set(['.git', 'build', 'node_modules', 'vendor', 'test-results', 'playwright-report', 'coverage']);
 function files(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     if (excluded.has(entry.name)) return [];

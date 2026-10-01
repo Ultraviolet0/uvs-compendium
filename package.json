@@ -2,7 +2,9 @@
   "name": "uvs-compendium-development",
   "private": true,
   "scripts": {
-    "test": "node scripts/check.mjs"
+    "test": "node scripts/check.mjs",
+    "build:runtime": "node scripts/build-runtime.mjs",
+    "test:runtime": "node scripts/test-runtime.mjs"
   },
   "devDependencies": {
     "playwright": "1.63.0"
