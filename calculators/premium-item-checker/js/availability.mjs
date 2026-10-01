@@ -1,18 +1,62 @@
-import { getHellfireGriswoldMagicCharacterLevels, formatCharacterLevels } from './rules.mjs';
+import { getGriswoldMagicCharacterLevels, formatCharacterLevels } from './rules.mjs';
 import { premiumIndex } from './data.mjs';
+import { townItemLevel } from '../../town-level.mjs';
 
-// Preserve the checker’s existing vendor limits while keeping them independent
-// of DOM rendering and the item-price calculation.
-// These inherited thresholds need a separate Hellfire review; see docs/corrections.md.
-const legacyGriswoldPriceLimit = 140000;
-const legacyWirtPriceLimit = 90000;
-const legacyAdriaPriceLimit = 140000;
+// Max's Hellfire shopping differences and DevilutionX items.h agree on these
+// underlying item-value limits. The final Hellfire retry may bypass them.
+const hellfireVendorPriceLimit = 200000;
+const diabloGriswoldPriceLimit = 140000;
+const diabloWirtPriceLimit = 90000;
 
-function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slvlmin, slvlmax, pricemin, premulti, sufmulti }) {
+function getWirtCharacterLevels(baseQlvl, prefixQlvl, suffixQlvl) {
+  const levels = [];
+  for (let level = 1; level <= 50; level++) {
+    const minimumAffixQlvl = Math.min(level, 25);
+    const maximumAffixQlvl = Math.min(level * 2, 60);
+    const validAffix = (qlvl) => qlvl === 0 ||
+      (qlvl >= minimumAffixQlvl && qlvl <= maximumAffixQlvl);
+    if (baseQlvl <= Math.min(level, 25) && validAffix(prefixQlvl) &&
+        validAffix(suffixQlvl)) levels.push(level);
+  }
+  return levels;
+}
+
+function getAdriaLevels(baseQlvl, prefixQlvl, suffixQlvl, charged, gameVersion, gameMode) {
+  const levels = [];
+  const highest = gameMode === 'single-player' ? 16 : 50;
+  for (let level = 1; level <= highest; level++) {
+    const itemLevel = townItemLevel({
+      gameMode,
+      characterLevel: level,
+      dungeonLevel: level
+    });
+    if (baseQlvl > itemLevel) continue;
+    if (charged) {
+      if (suffixQlvl <= itemLevel && prefixQlvl <= itemLevel * 2) levels.push(level);
+    } else if (gameVersion === 'diablo' &&
+        (prefixQlvl === 0 || (prefixQlvl >= itemLevel && prefixQlvl <= itemLevel * 2)) &&
+        (suffixQlvl === 0 || (suffixQlvl >= itemLevel && suffixQlvl <= itemLevel * 2))) {
+      levels.push(level);
+    }
+  }
+  return levels;
+}
+
+function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, prelvl, suflvl, slvlmin, slvlmax, pricemin, premulti, sufmulti, gameVersion = 'hellfire', gameMode = 'multiplayer' }) {
   var clvl_min, clvl_max, clvl_dsp;
   var minusitem = false;
   var grisdsp = "", wirtdsp = "", adradsp = "";
   const availability = [];
+  const hellfire = gameVersion === 'hellfire';
+  const singlePlayer = gameMode === 'single-player';
+  const staff = SelBasee >= premiumIndex.firstStaffBase && SelBasee <= premiumIndex.lastStaffBase;
+  const jewelry = SelBasee === 68 || SelBasee === 69;
+  const premiumVendorBase = SelBasee > 0 && SelBasee <= premiumIndex.lastNormalBase &&
+    (!staff || hellfire) && (!jewelry || singlePlayer);
+  const griswoldPriceLimit = hellfire ? hellfireVendorPriceLimit : diabloGriswoldPriceLimit;
+  const wirtPriceLimit = hellfire ? hellfireVendorPriceLimit : diabloWirtPriceLimit;
+  const chargedStaff = SelSuff >= premiumIndex.firstChargedSpellSuffix &&
+    SelSuff <= premiumIndex.lastChargedSpellSuffix;
   //-- Minus Item Check ------
   if ((premulti < 0) || (sufmulti < 0) || (SelSuff == 94) || (SelPref == 57)) {
     minusitem = true;
@@ -20,11 +64,19 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
 
 
   //-- Griswold ----------
-  if ((SelBasee <= premiumIndex.lastGriswoldBase) && (SelBasee > 0) && (slvlmin <= 30) && (pricemin <= legacyGriswoldPriceLimit) && (minusitem == false)) {
+  if (premiumVendorBase && !chargedStaff && (!jewelry || SelPref + SelSuff > 0) &&
+      (slvlmin <= 30) && (pricemin <= griswoldPriceLimit) && (minusitem == false)) {
     if (SelPref + SelSuff == 0) {
       clvl_min = baslvl;
       if (baslvl > 16) {
         clvl_max = -1;
+      } else if (singlePlayer) {
+        const dungeonLevels = Array.from({ length: 16 }, (_, index) => index + 1)
+          .filter((level) => baslvl <= townItemLevel({
+            gameMode, characterLevel: 1, dungeonLevel: level
+          }));
+        clvl_min = dungeonLevels[0];
+        clvl_max = dungeonLevels[dungeonLevels.length - 1];
       } else {
         if (clvl_min <= 6) {
           clvl_min = 1;
@@ -34,7 +86,7 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
         clvl_max = 50;
       }
     } else {
-      var griswoldLevels = getHellfireGriswoldMagicCharacterLevels(baslvl, slvlmin, slvlmax);
+      var griswoldLevels = getGriswoldMagicCharacterLevels(baslvl, slvlmin, slvlmax, gameVersion);
       clvl_min = griswoldLevels[0];
       clvl_max = griswoldLevels[griswoldLevels.length - 1];
     }
@@ -47,75 +99,39 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
       } else {
         clvl_dsp = clvl_max;
       }
-      grisdsp = "\n    Griswold     Char Level: " + clvl_dsp;
+      const levelType = SelPref + SelSuff === 0 && singlePlayer
+        ? 'Deepest dungeon level' : 'Character level';
+      grisdsp = "\n    Griswold     " + (singlePlayer && SelPref + SelSuff === 0 ? 'Dungeon Level: ' : 'Char Level: ') + clvl_dsp;
       availability.push({ source: SelPref + SelSuff === 0 ? 'Griswold (basic items)' : 'Griswold',
-        levelType: 'Character level', range: String(clvl_dsp) });
+        levelType, range: String(clvl_dsp) });
     }
   }
 
   //-- Wirt --------------
-  if ((SelBasee <= premiumIndex.lastGriswoldBase) && (SelBasee > 0) && (SelPref + SelSuff > 0) && (pricemin <= legacyWirtPriceLimit) && (minusitem == false)) {
-    clvl_min = Math.ceil(slvlmin * 0.5);
-    clvl_max = Math.floor(slvlmax * 0.5);
-
-    if (clvl_min < baslvl) {
-      clvl_min = baslvl;
-    }
-
-    if (clvl_max >= 30) {
-      clvl_max = 50;
-    }
-
-    if (clvl_min <= clvl_max) {
-      if (clvl_min < clvl_max) {
-        clvl_dsp = clvl_min + " - " + clvl_max;
-      } else {
-        clvl_dsp = clvl_max;
-      }
-      wirtdsp = "\n    Wirt         Char Level: " + clvl_dsp;
-      availability.push({ source: 'Wirt', levelType: 'Character level', range: String(clvl_dsp) });
+  if (premiumVendorBase && (!staff || chargedStaff) &&
+      (SelPref + SelSuff > 0) && (minusitem == false) &&
+      (hellfire || pricemin <= wirtPriceLimit)) {
+    const wirtLevels = getWirtCharacterLevels(baslvl, prelvl, suflvl);
+    if (wirtLevels.length) {
+      clvl_dsp = formatCharacterLevels(wirtLevels);
+      const source = pricemin <= wirtPriceLimit ? 'Wirt' : 'Wirt (rare retry fallback)';
+      wirtdsp = source === 'Wirt'
+        ? "\n    Wirt         Char Level: " + clvl_dsp
+        : "\n    Wirt (rare retry fallback)    Char Level: " + clvl_dsp;
+      availability.push({ source, levelType: 'Character level', range: String(clvl_dsp) });
     }
   }
 
   //-- Adria -------------
-  if ((SelBasee >= premiumIndex.firstStaffBase) && (SelBasee <= premiumIndex.lastStaffBase) && (SelPref + SelSuff > 0) && (slvlmin <= 32) && (pricemin <= legacyAdriaPriceLimit) && (minusitem == false)) {
-    if (slvlmin > 4) {
-      clvl_min = slvlmin - 4;
-    } else {
-      clvl_min = 1;
-    }
-
-    if (slvlmax < 12) {
-      clvl_max = 0;
-    } else {
-      clvl_max = slvlmax - 4;
-    }
-
-    if (((SelSuff >= premiumIndex.firstChargedSpellSuffix) &&
-      (SelSuff <= premiumIndex.lastChargedSpellSuffix)) && (suflvl > baslvl)) {
-      baslvl = suflvl;
-    }
-
-    if (clvl_min + 4 < baslvl * 2) {
-      clvl_min = baslvl * 2 - 4;
-    }
-
-    if (clvl_min < 9) {
-      clvl_min = 1;
-    }
-
-    if (clvl_max > 28) {
-      clvl_max = 50;
-    }
-
-    if (clvl_min <= clvl_max) {
-      if (clvl_min < clvl_max) {
-        clvl_dsp = clvl_min + " - " + clvl_max;
-      } else {
-        clvl_dsp = clvl_max;
-      }
-      adradsp = "\n    Adria        Char Level: " + clvl_dsp;
-      availability.push({ source: 'Adria', levelType: 'Character level', range: String(clvl_dsp) });
+  if (staff && SelPref + SelSuff > 0 && (chargedStaff || !hellfire) &&
+      pricemin <= griswoldPriceLimit && !minusitem) {
+    const adriaLevels = getAdriaLevels(baslvl, prelvl, suflvl,
+      chargedStaff, gameVersion, gameMode);
+    if (adriaLevels.length) {
+      clvl_dsp = formatCharacterLevels(adriaLevels);
+      const levelType = singlePlayer ? 'Deepest dungeon level' : 'Character level';
+      adradsp = '\n    Adria        ' + (singlePlayer ? 'Dungeon Level: ' : 'Char Level: ') + clvl_dsp;
+      availability.push({ source: 'Adria', levelType, range: clvl_dsp });
     }
   }
 
@@ -127,7 +143,7 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
       ['Normal', baslvl, 'Normal     '],
       ['Nightmare', baslvl < 16 ? 1 : baslvl - 15, 'Nightmare  '],
       ['Hell', 1, 'Hell       ']
-    ];
+    ].filter(([source]) => !(gameVersion === 'diablo' && singlePlayer && source !== 'Normal'));
     for (const [source, minimumBaseLevel, paddedName] of dungeonSources) {
       const minimum = plainBase ? minimumBaseLevel : Math.max(slvlmin, minimumBaseLevel);
       const maximum = plainBase ? 34 : Math.min(slvlmax, 34);
@@ -144,4 +160,4 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
   };
 }
 
-export { calculateAvailability };
+export { calculateAvailability, getWirtCharacterLevels, getAdriaLevels };

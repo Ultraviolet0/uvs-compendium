@@ -10,12 +10,15 @@ $hellfire_damage_section_heading_level = $hellfire_damage_heading_level === 'h1'
 <section class="section-panel calculator-page hellfire-damage-page flow-lg" aria-labelledby="hellfire-damage-title">
   <header class="flow">
     <p class="eyebrow">Calculator</p>
-    <<?= $hellfire_damage_heading_level ?> id="hellfire-damage-title">Hellfire Damage Calculator</<?= $hellfire_damage_heading_level ?>>
-    <p class="hero-copy">Calculate physical attack damage and direct spell damage ranges for Diablo: Hellfire. Class selection auto-fills naked max Strength, Magic, Dexterity, and Vitality, but every stat remains manually editable.</p>
-    <p class="warning-text"><strong>Physical order used:</strong> weapon roll → weapon % → flat +damage → character damage → crit/type/Civerb/Devastation/Jester/quarter/Peril.</p>
+    <<?= $hellfire_damage_heading_level ?> id="hellfire-damage-title">Damage Calculator</<?= $hellfire_damage_heading_level ?>>
+    <p class="hero-copy">Calculate physical attack and direct spell damage ranges in Diablo or Hellfire. Class selection fills naked maximum stats, and every stat remains editable.</p>
+    <p class="warning-text" id="damage-order-note"><strong>Physical order used:</strong> weapon roll → weapon % → flat +damage → character damage → crit/type/Civerb/Devastation/Jester/quarter/Peril.</p>
   </header>
 
   <form id="hellfire-damage-calculator" class="hellfire-damage-form" action="#" novalidate>
+    <div class="calculator-context">
+      <div class="form-field calculator-field"><label for="gameVersion">Game</label><select id="gameVersion" name="gameVersion"><option value="hellfire">Hellfire</option><option value="diablo">Diablo</option></select></div>
+    </div>
     <section class="damage-section" aria-labelledby="hellfire-damage-character-heading">
       <<?= $hellfire_damage_section_heading_level ?> id="hellfire-damage-character-heading" class="result-heading">Character</<?= $hellfire_damage_section_heading_level ?>>
       <p class="damage-section-note">Changing class auto-fills naked max Strength, Magic, Dexterity, and Vitality.</p>

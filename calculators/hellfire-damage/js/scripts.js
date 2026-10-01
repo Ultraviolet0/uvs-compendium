@@ -18,7 +18,7 @@
   const $ = (id) => root.querySelector(`#${id}`);
 
   const fields = [
-    'characterClass', 'characterLevel', 'strength', 'magic', 'dexterity', 'vitality',
+    'gameVersion', 'characterClass', 'characterLevel', 'strength', 'magic', 'dexterity', 'vitality',
     'weaponType', 'hasShield', 'weaponMin', 'weaponMax', 'weaponPercent',
     'flatDamage', 'autoSpecialDamage', 'bardHasSword', 'criticalHit',
     'civerbDemons', 'devastation', 'jester', 'quarterDamage', 'peril',
@@ -264,6 +264,8 @@
       notes: ['Does the same damage as Fire Wall and lasts the same amount of time. Creates 22 flames.']
     }
   };
+  const hellfireOnlySpells = new Set(['immolation', 'lightningWall', 'ringOfFire']);
+  const hellfireOnlyClasses = new Set(['monk', 'bard', 'barbarian']);
 
   function allNeutralLabels(label) {
     return {
@@ -581,6 +583,7 @@
     const slvl = clamp(Math.trunc(Number(state.spellLevel.value) || 0), 0, 20);
 
     return {
+      gameVersion: state.gameVersion.value,
       cls: state.characterClass.value,
       clvl,
       str: numericValue('strength'),
@@ -786,7 +789,7 @@
   function calculateSpell(inputs) {
     const def = spellDefinitions[inputs.spellKey] || spellDefinitions.fireball;
     const base = def.calc(inputs);
-    const rows = spellRowsFor(def, base);
+    const rows = spellRowsFor(def, base, inputs.gameVersion);
     return { def, base, rows };
   }
 
@@ -798,7 +801,7 @@
     };
   }
 
-  function spellRowsFor(def, base) {
+  function spellRowsFor(def, base, gameVersion) {
     if (def.ignoresResistance) {
       return [
         { label: 'All monsters', values: base, rule: 'Apocalypse ignores normal resistance/immunity checks.' }
@@ -806,11 +809,12 @@
     }
 
     if (def.holyBolt) {
-      return [
+      const rows = [
         { label: 'Valid undead / Diablo, not resistant', values: base, rule: 'Full Holy Bolt damage.' },
-        { label: 'Diablo or Bone Demon in Hellfire', values: scaleRange(base, 0.25), rule: 'Resistant to Holy Bolt: damage reduced by 75%.' },
+        ...(gameVersion === 'hellfire' ? [{ label: 'Diablo or Bone Demon in Hellfire', values: scaleRange(base, 0.25), rule: 'Resistant to Holy Bolt: damage reduced by 75%.' }] : []),
         { label: 'Invalid target', values: fixed(0), rule: 'Holy Bolt only works on undead monsters and Diablo.' }
       ];
+      return rows;
     }
 
     return [
@@ -823,6 +827,9 @@
   function updateAvailability(inputs) {
     const type = inputs.weaponType;
     const cls = inputs.cls;
+    document.getElementById('damage-order-note').innerHTML = inputs.gameVersion === 'hellfire'
+      ? '<strong>Physical order used:</strong> weapon roll → weapon % → flat +damage → character damage → crit/type/Civerb/Devastation/Jester/quarter/Peril.'
+      : '<strong>Physical order used:</strong> weapon roll → weapon % → flat +damage → character damage → crit/type/Civerb.';
 
     const weaponIsTwoHanded = type === 'bow' || type === 'staff' || type === 'unarmed';
     if (type === 'shield') {
@@ -842,9 +849,14 @@
 
     setCheckAvailability('criticalHit', 'criticalRow', canUseCritical(cls, type));
     setCheckAvailability('civerbDemons', 'civerbRow', type !== 'bow');
-    setCheckAvailability('devastation', 'devastationRow', canUseMeleeTotalItem(type));
-    setCheckAvailability('jester', 'jesterRow', canUseJester(type));
-    setCheckAvailability('peril', 'perilRow', canUseMeleeTotalItem(type));
+    const hellfire = inputs.gameVersion === 'hellfire';
+    setCheckAvailability('devastation', 'devastationRow', hellfire && canUseMeleeTotalItem(type));
+    setCheckAvailability('jester', 'jesterRow', hellfire && canUseJester(type));
+    setCheckAvailability('quarterDamage', 'quarterRow', hellfire);
+    setCheckAvailability('peril', 'perilRow', hellfire && canUseMeleeTotalItem(type));
+    for (const rowId of ['devastationRow', 'jesterRow', 'quarterRow', 'perilRow']) {
+      $(rowId).style.display = hellfire ? '' : 'none';
+    }
 
     const autoSpecial = state.autoSpecialDamage.checked && (type === 'unarmed' || type === 'shield');
     state.weaponMin.disabled = autoSpecial;
@@ -921,10 +933,12 @@
   function renderPhysicalNotes(inputs) {
     const notes = [];
 
-    notes.push('Physical damage keeps fractional precision internally and is displayed without forced flooring. Diablo/Hellfire may round down in some UI contexts.');
+    notes.push('Physical damage keeps fractional precision internally and is displayed without forced flooring. The game may round down in some UI contexts.');
 
     if (inputs.weaponType === 'bow') {
-      notes.push('Bow attacks use bow character damage. Civerb-style demon damage, critical hit, Devastation, and Peril are disabled because these melee/item effects do not apply to bows in Jarulf\'s damage steps.');
+      notes.push(inputs.gameVersion === 'hellfire'
+        ? 'Bow attacks use bow character damage. Civerb-style demon damage, critical hit, Devastation, and Peril are disabled because these melee/item effects do not apply to bows in Jarulf\'s damage steps.'
+        : 'Bow attacks use bow character damage. Civerb-style demon damage and melee critical hits do not apply to bows.');
     }
 
     if (inputs.cls === 'barbarian') {
@@ -946,7 +960,7 @@
   function renderSpellNotes(def, inputs) {
     const notes = [];
 
-    notes.push('Spell output uses the Jarulf “real damage” formula where Jarulf gives one. For walls, beams, Flash, Chain Lightning, Lightning, Inferno, Ring of Fire, and similar spells, the numbers are per tick/hit, not a full-duration total.');
+    notes.push('Spell output uses the Jarulf “real damage” formula where Jarulf gives one. For walls, beams, Flash, Chain Lightning, Lightning, Inferno, and similar spells, the numbers are per tick/hit, not a full-duration total.');
 
     if (!def.ignoresResistance && !def.holyBolt) {
       notes.push('The resistance table is generic. It does not look up individual monster resistances by difficulty; it simply applies full damage, resistant damage, and immune damage.');
@@ -957,7 +971,19 @@
     }
 
     if (def.notes) {
-      def.notes.forEach((note) => notes.push(note));
+      def.notes.forEach((note) => {
+        if (inputs.gameVersion === 'diablo' && def === spellDefinitions.apocalypse) {
+          notes.push('Works against all monsters, including normally immune monsters.');
+        } else if (inputs.gameVersion === 'diablo' && def === spellDefinitions.holyBolt) {
+          notes.push('Works on undead monsters and Diablo.');
+        } else if (inputs.gameVersion === 'diablo' && def === spellDefinitions.fireWall) {
+          notes.push('The center flame is doubled. Each flame tries to hit once every 0.05 seconds.');
+        } else if (inputs.gameVersion === 'diablo' && def === spellDefinitions.nova) {
+          notes.push('Creates 92 bolts.');
+        } else {
+          notes.push(note);
+        }
+      });
     }
 
     if (inputs.slvl > 15) {
@@ -975,21 +1001,41 @@
   }
 
   function populateSpellControls() {
-    state.spellKey.innerHTML = Object.entries(spellDefinitions).map(([key, def]) => (
+    const previous = state.spellKey.value;
+    const previousLevel = state.spellLevel.value;
+    const hellfire = state.gameVersion.value === 'hellfire';
+    state.spellKey.innerHTML = Object.entries(spellDefinitions)
+      .filter(([key]) => hellfire || !hellfireOnlySpells.has(key)).map(([key, def]) => (
       `<option value="${key}">${def.label}</option>`
     )).join('');
-    state.spellKey.value = 'fireball';
+    state.spellKey.value = [...state.spellKey.options].some((option) => option.value === previous)
+      ? previous : 'fireball';
 
     const levels = [];
     for (let i = 0; i <= 20; i += 1) {
       levels.push(`<option value="${i}">${i}</option>`);
     }
     state.spellLevel.innerHTML = levels.join('');
-    state.spellLevel.value = '15';
+    state.spellLevel.value = previousLevel || '15';
   }
 
   populateSpellControls();
   applyClassMaxStats();
+
+  state.gameVersion.addEventListener('change', () => {
+    const hellfire = state.gameVersion.value === 'hellfire';
+    for (const option of state.characterClass.options) {
+      const unavailable = !hellfire && hellfireOnlyClasses.has(option.value);
+      option.hidden = unavailable;
+      option.disabled = unavailable;
+    }
+    if (!hellfire && hellfireOnlyClasses.has(state.characterClass.value)) {
+      state.characterClass.value = 'warrior';
+      applyClassMaxStats();
+    }
+    populateSpellControls();
+    render();
+  });
 
   state.characterClass.addEventListener('change', () => {
     applyClassMaxStats();
@@ -1026,7 +1072,7 @@
   });
 
   fields.forEach((id) => {
-    if (id === 'characterClass' || id === 'weaponType' || id === 'autoSpecialDamage' || numericInputIds.has(id)) return;
+    if (id === 'gameVersion' || id === 'characterClass' || id === 'weaponType' || id === 'autoSpecialDamage' || numericInputIds.has(id)) return;
     $(id).addEventListener('input', render);
     $(id).addEventListener('change', render);
   });

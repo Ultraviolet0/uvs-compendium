@@ -134,11 +134,11 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
 
               <ul id="nav-calculators-menu" class="nav-submenu" aria-label="Calculator links">
                 <li><a class="nav-submenu-link" href="<?= site_url('calculators/') ?>">All Calculators</a></li>
-                <li><a class="nav-submenu-link" href="<?= site_url('calculators/premium-item-checker/') ?>">Hellfire Premium Item Checker</a></li>
-                <li><a class="nav-submenu-link" href="<?= site_url('calculators/hellfire-item-price/') ?>">Hellfire Item Price Calculator</a></li>
-                <li><a class="nav-submenu-link" href="<?= site_url('calculators/shop-qlvl/') ?>">Hellfire Shop Qlvl Calculator</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('calculators/premium-item-checker/') ?>">Premium Item Checker</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('calculators/hellfire-item-price/') ?>">Item Price Calculator</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('calculators/shop-qlvl/') ?>">Shop Qlvl Calculator</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('calculators/warrior-repair/') ?>">Warrior Repair Calculator</a></li>
-                <li><a class="nav-submenu-link" href="<?= site_url('calculators/hellfire-damage/') ?>">Hellfire Damage Calculator</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('calculators/hellfire-damage/') ?>">Damage Calculator</a></li>
               </ul>
             </li>
 
