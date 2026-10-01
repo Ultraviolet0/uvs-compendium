@@ -10,7 +10,6 @@ if (!in_array($premium_item_checker_heading_level, ['h1', 'h2', 'h3'], true)) {
     <p class="eyebrow">Calculator</p>
     <<?= $premium_item_checker_heading_level ?> id="premium-item-checker-title">Hellfire Premium Item Checker</<?= $premium_item_checker_heading_level ?>>
     <p class="hero-copy">Check valid Hellfire premium item combinations, affix data, source availability, and detailed price ranges.</p>
-    <p class="premium-level-note" id="premium-level-note"><strong>Reading the levels:</strong> Character level is your character's level. Item level (ilvl) is the level used to generate an item; base and affix qlvls are separate requirements. “Source Level” in the item summary is the eligible ilvl range before each source's limits. Griswold's 15 Hellfire premium slots use different ilvls, including one current character level + 3 slot after leveling. Listed availability means a combination can be generated, not that it is guaranteed in stock.</p>
     <p class="warning-text">Original by <a href="https://web.archive.org/web/20120125114431/http://www.red-wolf.sakura.ne.jp/dia/premiumchk.html" target="_blank" rel="noopener noreferrer">King aka Red-Wolf</a>, hosted on <a href="https://mgpat-gm.github.io/calcs.html" target="_blank" rel="noopener noreferrer">Ghast's Grotto</a>. Updated for this compendium with Hellfire affixes, Hellfire unique items, and quest item rows.</p>
   </header>
 
@@ -54,7 +53,8 @@ if (!in_array($premium_item_checker_heading_level, ['h1', 'h2', 'h3'], true)) {
 
       <section class="premium-result-section" aria-labelledby="premium-availability-heading">
         <h3 id="premium-availability-heading" class="result-heading">Where it can appear</h3>
-        <ul id="premium-availability" class="premium-availability" aria-describedby="premium-level-note"></ul>
+        <ul id="premium-availability" class="premium-availability" aria-describedby="premium-level-hint"></ul>
+        <p class="premium-level-hint" id="premium-level-hint">Source Level is the item's generation level (ilvl). Vendor ranges show possible rolls, not guaranteed stock; class, stats, carried gear, and rare Hellfire retries can affect offers.</p>
       </section>
 
       <section class="premium-result-section" aria-labelledby="premium-data-heading">

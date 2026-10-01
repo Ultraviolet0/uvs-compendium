@@ -50,7 +50,8 @@ test('public entries, references, and literal runtime dependencies are packaged'
     'shopqlvl/index.php',
     'reference/jarulf162.pdf', 'reference/d1-hf-shrines.pdf',
     'reference/hellfire-shopping-differences.pdf',
-    'images/shopping-guide-header.png', 'videos/warlord-of-blood.mp4',
+    'images/shopping-guide-header.png', 'images/godly-plate-of-the-whale.png',
+    'videos/warlord-of-blood.mp4',
     'favicon.ico', 'uvicon-32x32.png', 'uvicon-48x48.png',
   ]) assert.ok(existsSync(join(root, file)), `Missing public file: ${file}`);
 

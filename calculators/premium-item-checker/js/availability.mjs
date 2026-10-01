@@ -1,11 +1,9 @@
 import { getHellfireGriswoldMagicCharacterLevels, formatCharacterLevels } from './rules.mjs';
 import { premiumIndex } from './data.mjs';
 
-// Preserve the checker’s existing vendor limits while keeping them independent
-// of DOM rendering and the item-price calculation.
-// These inherited thresholds need a separate Hellfire review; see docs/corrections.md.
-const legacyGriswoldPriceLimit = 140000;
-const legacyWirtPriceLimit = 90000;
+// Max's Hellfire shopping differences and DevilutionX items.h agree on these
+// underlying item-value limits. The final Hellfire retry may bypass them.
+const hellfireVendorPriceLimit = 200000;
 const legacyAdriaPriceLimit = 140000;
 
 function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slvlmin, slvlmax, pricemin, premulti, sufmulti }) {
@@ -20,7 +18,7 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
 
 
   //-- Griswold ----------
-  if ((SelBasee <= premiumIndex.lastGriswoldBase) && (SelBasee > 0) && (slvlmin <= 30) && (pricemin <= legacyGriswoldPriceLimit) && (minusitem == false)) {
+  if ((SelBasee <= premiumIndex.lastGriswoldBase) && (SelBasee > 0) && (slvlmin <= 30) && (pricemin <= hellfireVendorPriceLimit) && (minusitem == false)) {
     if (SelPref + SelSuff == 0) {
       clvl_min = baslvl;
       if (baslvl > 16) {
@@ -54,7 +52,7 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
   }
 
   //-- Wirt --------------
-  if ((SelBasee <= premiumIndex.lastGriswoldBase) && (SelBasee > 0) && (SelPref + SelSuff > 0) && (pricemin <= legacyWirtPriceLimit) && (minusitem == false)) {
+  if ((SelBasee <= premiumIndex.lastGriswoldBase) && (SelBasee > 0) && (SelPref + SelSuff > 0) && (minusitem == false)) {
     clvl_min = Math.ceil(slvlmin * 0.5);
     clvl_max = Math.floor(slvlmax * 0.5);
 
@@ -72,8 +70,11 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baslvl, suflvl, slv
       } else {
         clvl_dsp = clvl_max;
       }
-      wirtdsp = "\n    Wirt         Char Level: " + clvl_dsp;
-      availability.push({ source: 'Wirt', levelType: 'Character level', range: String(clvl_dsp) });
+      const source = pricemin <= hellfireVendorPriceLimit ? 'Wirt' : 'Wirt (rare retry fallback)';
+      wirtdsp = source === 'Wirt'
+        ? "\n    Wirt         Char Level: " + clvl_dsp
+        : "\n    Wirt (rare retry fallback)    Char Level: " + clvl_dsp;
+      availability.push({ source, levelType: 'Character level', range: String(clvl_dsp) });
     }
   }
 
