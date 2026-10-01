@@ -6,6 +6,7 @@ import { basee, prefixx, suffixx, uniq, premiumIndex } from '../calculators/prem
 import {
   getHellfirePremiumItemLevels,
   getHellfireGriswoldMagicCharacterLevels,
+  baseQlvlInRange,
   getAvailableOptions,
   isBaseAvailable,
   isPrefixAvailable,
@@ -78,6 +79,23 @@ test('base qlvl and the 30 ilvl cap still constrain Griswold availability', () =
   assert.equal(availableLevels(3, 28, 30).length, 0);
   assert.equal(availableLevels(10, 31, 60).length, 0);
   assert.deepEqual(availableLevels(10, 27, 27), [24, 25, 26, 27, 28, 29]);
+});
+
+test('visible jewelry types retain every internal base qlvl for source windows', () => {
+  assert.deepEqual(basee[68].qlvls, [5, 10, 15]);
+  assert.deepEqual(basee[69].qlvls, [8, 16]);
+  assert.equal(basee.filter((item) => item?.name === 'Ring').length, 1);
+  assert.equal(basee.filter((item) => item?.name === 'Amulet').length, 1);
+  assert.equal(baseQlvlInRange(basee[68].qlvls, 7, 30), true);
+  assert.equal(baseQlvlInRange([5], 7, 30), false);
+  assert.equal(baseQlvlInRange(basee[69].qlvls, 15, 16), true);
+  assert.equal(baseQlvlInRange([8], 15, 16), false);
+  assert.equal(baseQlvlInRange(basee[68].qlvls, 16, 30), false);
+  assert.deepEqual(basee[39].qlvls, [10]);
+  assert.deepEqual(availableLevels(basee[68].qlvls, 30, 30),
+    Array.from({ length: 24 }, (_, index) => index + 27));
+  assert.deepEqual(availableLevels([5], 30, 30), []);
+  assert.deepEqual(availableLevels(basee[39].qlvls, 28, 39), availableLevels(10, 28, 39));
 });
 
 test('selection rules keep incompatible equipment and excluded affix pairs out', () => {

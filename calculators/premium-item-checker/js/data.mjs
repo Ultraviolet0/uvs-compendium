@@ -15,10 +15,11 @@ function MakePremium(name, effect, level, equip, multi, addmin, addmax, min, ste
 
 // Base item data and displayed properties.
 
-function MakeBasee(name, kind, level, price, effect) {
+function MakeBasee(name, kind, level, price, effect, qlvls = [level]) {
   this.name = name;
   this.kind = kind;
   this.level = level;
+  this.qlvls = qlvls;
   this.price = price;
   this.effect = effect;
 }
@@ -397,8 +398,8 @@ basee[64] = new MakeBasee("Long Staff", new GetKind(3, "Staff"), 4, 100, "Damage
 basee[65] = new MakeBasee("Composite Staff", new GetKind(3, "Staff"), 6, 500, "Damage: 5 - 10    DUR:  45");
 basee[66] = new MakeBasee("Quarter Staff", new GetKind(3, "Staff"), 9, 1000, "Damage: 6 - 12    DUR:  55    Required:  STR 20");
 basee[67] = new MakeBasee("War Staff", new GetKind(3, "Staff"), 12, 1500, "Damage: 8 - 16    DUR:  75    Required:  STR 30");
-basee[68] = new MakeBasee("Ring", new GetKind(0, "Ring"), 5, 1000, "Indestructible");
-basee[69] = new MakeBasee("Amulet", new GetKind(0, "Amulet"), 8, 1200, "Indestructible");
+basee[68] = new MakeBasee("Ring", new GetKind(0, "Ring"), 5, 1000, "Indestructible", [5, 10, 15]);
+basee[69] = new MakeBasee("Amulet", new GetKind(0, "Amulet"), 8, 1200, "Indestructible", [8, 16]);
 basee[70] = new MakeBasee("Aguinara's Hatchet", new GetKind(7, "Unique"), 2, 24800, "Damage: 2 - 10    DUR:  24");
 basee[71] = new MakeBasee("Baranar's Star", new GetKind(7, "Unique"), 3, 6850, "Damage: 1 - 10    DUR:  60    Required:  STR 26");
 basee[72] = new MakeBasee("Black Razor", new GetKind(7, "Unique"), 1, 2000, "Damage: 1 - 4    DUR:   5");
