@@ -577,7 +577,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
             <a href="<?= site_url('images/godly-plate-of-the-whale.png') ?>?v=<?= asset_version('images/godly-plate-of-the-whale.png') ?>" target="_blank" rel="noopener noreferrer" aria-label="Open the full-size Godly Plate of the Whale screenshot (opens in a new tab)">
               <img class="guide-gpow-image" src="<?= site_url('images/godly-plate-of-the-whale.png') ?>?v=<?= asset_version('images/godly-plate-of-the-whale.png') ?>" alt="Wirt offering Godly Plate of the Whale with 200% armor and 97 extra hit points" width="1920" height="1080" loading="lazy">
             </a>
-            <figcaption class="guide-figcaption">Wirt offered this Godly Plate of the Whale with +200% armor and +97 hit points despite the normal shop filters. Select the image to read the full-size item text.</figcaption>
+            <figcaption class="guide-figcaption">Wirt offered this Godly Plate of the Whale with +200% armor and +97 hit points despite the normal shop filters. Select the image to read the full-size item text. Photo credit: Maxpire.</figcaption>
           </figure>
           <section id="gpow-shopping-setup">
             <h4>GPoW Shopping Setup</h4>
