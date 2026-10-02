@@ -451,7 +451,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
           <p>will show a resale value around:</p>
           <p><strong>31,593 gold</strong></p>
           <p>That makes resale price a convenient way to estimate an anchor's real value.</p>
-          <p>Alternatively, enter the item's exact stats into the <a class="guide-tool-link" href="<?= site_url('calculators/hellfire-item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a>.</p>
+          <p>Alternatively, enter the item's exact stats into the <a class="guide-tool-link" href="<?= site_url('calculators/item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a>.</p>
           <p>The calculator is especially useful when planning around theoretical equipment you do not own yet.</p>
         </section>
       </section>
@@ -460,7 +460,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
         <p>A magical item can satisfy all of the qlvl and affix rules and still fail to appear because its price is too high.</p>
         <p>Hellfire normally caps town-generated items at <strong>200,000 gold</strong> in underlying item value.</p>
         <p>Wirt applies his own pricing modifier afterward, which is why his displayed prices differ.</p>
-        <p>The <a class="guide-tool-link" href="<?= site_url('calculators/hellfire-item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a> reports when a theoretical item exceeds the normal shop limit.</p>
+        <p>The <a class="guide-tool-link" href="<?= site_url('calculators/item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a> reports when a theoretical item exceeds the normal shop limit.</p>
         <p>That doesn't necessarily make the item absolutely unobtainable in DevilutionX, but it means you are no longer doing normal shopping.</p>
         <p>You are trying to break the shop's normal generation rules.</p>
       </section>
@@ -851,7 +851,7 @@ Long War Bow:  1–31</code></pre>
           <p>Do not blindly apply every old Diablo/Hellfire price example to DevilutionX.</p>
           <p>For example, old references sometimes use <strong>Merciless Long War Bow of the Heavens</strong> as an example of an item that cannot be sold because of its price.</p>
           <p>Under DevilutionX Hellfire's pricing and 200,000-gold shop limit, Merciless bows of the Heavens can fit within the normal rules.</p>
-          <p>Use the <a class="guide-tool-link" href="<?= site_url('calculators/hellfire-item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a> rather than relying on an old example.</p>
+          <p>Use the <a class="guide-tool-link" href="<?= site_url('calculators/item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a> rather than relying on an old example.</p>
           <p>If the calculator reports that an item exceeds the normal shop limit, you can still theoretically attempt to force it through DevilutionX fallback behavior, but the odds become dramatically worse.</p>
         </section>
       </section>
@@ -1071,7 +1071,7 @@ Affix qlvl:     clvl through 2 × clvl</code></pre>
           <li><strong>Check the <a class="guide-tool-link" href="<?= site_url('calculators/premium-item-checker/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Premium Item Checker (opens in a new tab)">Premium Item Checker</a> to make sure the combination is valid.</strong></li>
           <li><strong>Use Jarulf's Guide for detailed affix and item information when needed.</strong></li>
           <li><strong>Use the <a class="guide-tool-link" href="<?= site_url('calculators/shop-qlvl/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Shop Qlvl Calculator (opens in a new tab)">Shop Qlvl Calculator</a> to find the best shopper level and Griswold slots.</strong></li>
-          <li><strong>Use the <a class="guide-tool-link" href="<?= site_url('calculators/hellfire-item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)">Hellfire Item Price Calculator</a> if the item is expensive.</strong></li>
+          <li><strong>Use the <a class="guide-tool-link" href="<?= site_url('calculators/item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)">Hellfire Item Price Calculator</a> if the item is expensive.</strong></li>
           <li><strong>Choose the shopper class that removes the most unwanted equipment without removing your target.</strong></li>
           <li><strong>Set the shopper's stats carefully.</strong></li>
           <li><strong>Carry the best price anchors you have for every relevant item type.</strong></li>
