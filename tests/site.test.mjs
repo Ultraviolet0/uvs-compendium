@@ -332,6 +332,7 @@ test('shopping guide shows the Wirt example and remains usable at narrow and des
     assert.equal(await fullSizeLink.getAttribute('href'), await example.getAttribute('src'));
     assert.equal(await fullSizeLink.getAttribute('target'), '_blank');
     assert.match(await page.locator('#godly-plate-of-the-whale figcaption').textContent(), /Wirt offered.*\+200% armor.*\+97 hit points/);
+    assert.match(await page.locator('#godly-plate-of-the-whale figcaption').textContent(), /Photo credit: Maxpire/);
     assert.match(await page.locator('#building-better-anchors').textContent(), /deterministic sequence/);
     await assertNoHorizontalOverflow(page, '/guides/shopping/', `${width}px example`);
     assert.deepEqual(errors, [], `${width}px guide`);
