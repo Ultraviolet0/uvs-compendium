@@ -14,6 +14,8 @@ The Hellfire Premium Item Checker keeps its item tables in `calculators/premium-
 
 The Premium Checker, Item Price, and Shop Qlvl now default to Hellfire multiplayer and accept explicit Diablo/Hellfire and single-player/multiplayer context. Shop Qlvl and basic-town source ranges use deepest dungeon level visited in single player; Hive/Crypt visits in Hellfire also reach the maximum town level. The Damage Calculator has a Diablo/Hellfire switch for its validated class, spell, and Hellfire-only item controls; its modeled damage has no player-count input. Warrior Repair has no mode switch because it models a shared durability operation. Run the direct mode cases in `tests/mode-rules.test.mjs` and the standalone/combined browser cases in `tests/site.test.mjs` when changing these rules.
 
+The Item Price and Damage Calculator page URLs are `/calculators/item-price/` and `/calculators/damage/`. Their previous `/calculators/hellfire-item-price/` and `/calculators/hellfire-damage/` page URLs redirect permanently with query strings preserved; the old directories still hold shared calculator assets for cached pages.
+
 ## Branches and pull requests
 
 Create a branch from current `main`, using `feature/`, `fix/`, `refactor/`, or `chore/` followed by a short topic. Keep the diff focused. Run the complete suite and inspect the diff for private data. Open a pull request to `main` describing behavior, affected versions, source evidence, and test results. Review and merge through the pull request process. CI never deploys; keep Hostinger deployment separate from ordinary development. Do not deploy a task branch as part of ordinary development.

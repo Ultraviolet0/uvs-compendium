@@ -184,11 +184,13 @@ calculators/
   css/
     styles.css
 
-  hellfire-item-price/
+  item-price/
+  hellfire-item-price/  # legacy redirect and shared calculator assets
   shop-qlvl/
   premium-item-checker/
   warrior-repair/
-  hellfire-damage/
+  damage/
+  hellfire-damage/      # legacy redirect and shared calculator assets
 
 guides/
   index.php

@@ -92,7 +92,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
         <ul class="guide-list">
           <li><a class="guide-tool-link" href="<?= site_url('calculators/premium-item-checker/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Premium Item Checker (opens in a new tab)">Hellfire Premium Item Checker</a> checks whether an item and affix combination is valid.</li>
           <li><a class="guide-tool-link" href="<?= site_url('calculators/shop-qlvl/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Shop Qlvl Calculator (opens in a new tab)">Hellfire Shop Qlvl Calculator</a> compares shopper levels and available vendor slots.</li>
-          <li><a class="guide-tool-link" href="<?= site_url('calculators/hellfire-item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)">Hellfire Item Price Calculator</a> estimates value and checks the normal shop-price limit.</li>
+          <li><a class="guide-tool-link" href="<?= site_url('calculators/item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)">Hellfire Item Price Calculator</a> estimates value and checks the normal shop-price limit.</li>
         </ul>
       </section>
     </div>
