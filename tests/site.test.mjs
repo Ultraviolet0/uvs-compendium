@@ -51,9 +51,9 @@ before(async () => {
 after(async () => { await browser?.close(); });
 
 const routes = [
-  '/', '/calculators/', '/calculators/hellfire-item-price/',
+  '/', '/calculators/', '/calculators/item-price/',
   '/calculators/shop-qlvl/', '/calculators/premium-item-checker/',
-  '/calculators/warrior-repair/', '/calculators/hellfire-damage/',
+  '/calculators/warrior-repair/', '/calculators/damage/',
   '/guides/', '/guides/shopping/', '/guides/fast-character-development/',
   '/guides/max-shopping-video/', '/guides/template/'
 ];
@@ -86,6 +86,29 @@ test('public routes, shared layout, local assets, and browser scripts', async ()
       .evaluateAll((nodes) => nodes.filter((node) => !node.labels?.length && !node.getAttribute('aria-label')).length);
     assert.equal(unlabeled, 0, route);
     await page.close();
+  }
+});
+
+test('calculator links use canonical URLs and old page URLs redirect permanently', async () => {
+  for (const route of ['/', '/calculators/', '/guides/shopping/', '/guides/max-shopping-video/']) {
+    const page = await context.newPage();
+    await page.goto(new URL(route, base).href);
+    const links = await page.locator('a[href]').evaluateAll((anchors) =>
+      anchors.map((anchor) => new URL(anchor.href).pathname));
+    assert.ok(links.includes('/calculators/item-price/'), `${route}: item price link missing`);
+    assert.ok(links.includes('/calculators/damage/'), `${route}: damage link missing`);
+    assert.ok(!links.includes('/calculators/hellfire-item-price/'), `${route}: old item price link`);
+    assert.ok(!links.includes('/calculators/hellfire-damage/'), `${route}: old damage link`);
+    await page.close();
+  }
+  for (const [oldPath, newPath] of [
+    ['/calculators/hellfire-item-price/', '/calculators/item-price/'],
+    ['/calculators/hellfire-damage/', '/calculators/damage/']
+  ]) {
+    const response = await context.request.get(new URL(`${oldPath}?source=bookmark`, base).href,
+      { maxRedirects: 0 });
+    assert.equal(response.status(), 301, oldPath);
+    assert.equal(response.headers().location, `${newPath}?source=bookmark`, oldPath);
   }
 });
 
@@ -160,7 +183,7 @@ test('Warrior repair: documented deterministic path', async () => {
 
 test('item price: base value and resale update', async () => {
   const page = await context.newPage();
-  await page.goto(new URL('/calculators/hellfire-item-price/', base).href);
+  await page.goto(new URL('/calculators/item-price/', base).href);
   await page.locator('#item-class').selectOption('Helm');
   await page.locator('#base-item').selectOption({ label: 'Skull Cap' });
   assert.equal((await page.locator('#Price').textContent()).trim(), '25');
@@ -405,7 +428,7 @@ test('premium checker: standalone and combined layouts fit a desktop viewport wi
 
 test('game and play-mode controls change checker, shop, and price behavior on standalone and combined pages', async () => {
   for (const route of ['/calculators/premium-item-checker/', '/calculators/shop-qlvl/',
-    '/calculators/hellfire-item-price/', '/calculators/hellfire-damage/', '/calculators/']) {
+    '/calculators/item-price/', '/calculators/damage/', '/calculators/']) {
     for (const width of [390, 1440]) {
       const page = await context.newPage({ viewport: { width, height: 844 } });
       const errors = [];
@@ -433,7 +456,7 @@ test('game and play-mode controls change checker, shop, and price behavior on st
         await page.locator('#shop-depth').fill('5');
         assert.match(await page.locator('#adriaresult').textContent(), /staves with spell:\s+1-14/);
       }
-      if (route.includes('hellfire-item-price') || route === '/calculators/') {
+      if (route.includes('item-price') || route === '/calculators/') {
         await page.locator('#item-class').selectOption('Jewelry');
         await page.locator('#item-prefix').selectOption({ label: 'Pearl' });
         assert.equal(await page.locator('input[name="Source"][value="Gris"]').isDisabled(), true);
@@ -447,7 +470,7 @@ test('game and play-mode controls change checker, shop, and price behavior on st
         await page.locator('#price-game').selectOption('hellfire');
         assert.ok(await page.locator('#item-prefix option').filter({ hasText: "Doppelganger's" }).count() > 0);
       }
-      if (route.includes('hellfire-damage') || route === '/calculators/') {
+      if (route.includes('/damage/') || route === '/calculators/') {
         await page.locator('#characterClass').selectOption('monk');
         await page.locator('#gameVersion').selectOption('diablo');
         assert.equal(await page.locator('#characterClass').inputValue(), 'warrior');
@@ -470,7 +493,7 @@ test('item price preserves selection and applies Diablo Wirt pricing and limit',
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto(new URL('/calculators/hellfire-item-price/', base).href);
+  await page.goto(new URL('/calculators/item-price/', base).href);
   await page.locator('#item-class').selectOption('Helm');
   await page.locator('#base-item').selectOption({ label: 'Cap' });
   await page.locator('#item-prefix').selectOption({ label: 'White' });
@@ -493,11 +516,46 @@ test('item price preserves selection and applies Diablo Wirt pricing and limit',
 
 test('damage calculator: class preset changes deterministic output', async () => {
   const page = await context.newPage();
-  await page.goto(new URL('/calculators/hellfire-damage/', base).href);
+  await page.goto(new URL('/calculators/damage/', base).href);
   assert.equal((await page.locator('#characterDamageOut').textContent()).trim(), '125');
   await page.locator('#characterClass').selectOption('rogue');
   assert.equal((await page.locator('#characterDamageOut').textContent()).trim(), '76.25');
   await page.close();
+});
+
+test('DevilutionX Bard and Barbarian remain selectable in Diablo with explicit labels', async () => {
+  for (const route of ['/calculators/damage/', '/calculators/']) {
+    for (const width of [390, 1440]) {
+      const page = await context.newPage({ viewport: { width, height: 844 } });
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+      await page.goto(new URL(route, base).href);
+      await page.locator('#gameVersion').selectOption('diablo');
+      assert.deepEqual(await page.locator('#characterClass option[value="monk"]')
+        .evaluate((option) => ({ hidden: option.hidden, disabled: option.disabled })),
+      { hidden: true, disabled: true });
+      for (const [value, label, strength] of [
+        ['bard', 'Bard (DevX only)', '120'],
+        ['barbarian', 'Barbarian (DevX only)', '255']
+      ]) {
+        const option = page.locator(`#characterClass option[value="${value}"]`);
+        assert.equal(await option.textContent(), label);
+        assert.equal(await option.isEnabled(), true);
+        await page.locator('#characterClass').selectOption(value);
+        assert.equal(await page.locator('#strength').inputValue(), strength);
+        assert.notEqual((await page.locator('#characterDamageOut').textContent()).trim(), '');
+      }
+      await page.locator('#gameVersion').selectOption('hellfire');
+      assert.equal(await page.locator('#characterClass').inputValue(), 'barbarian');
+      assert.equal(await page.locator('#characterClass option[value="bard"]').textContent(), 'Bard');
+      assert.equal(await page.locator('#characterClass option[value="barbarian"]').textContent(), 'Barbarian');
+      assert.equal(await page.locator('#characterClass option[value="monk"]').isEnabled(), true);
+      await assertNoHorizontalOverflow(page, route, `${width}px DevX classes`);
+      assert.deepEqual(errors, [], `${route} ${width}px`);
+      await page.close();
+    }
+  }
 });
 
 test('legacy shop URL redirects to the canonical route', async () => {

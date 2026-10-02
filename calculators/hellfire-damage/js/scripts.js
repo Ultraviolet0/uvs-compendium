@@ -265,7 +265,8 @@
     }
   };
   const hellfireOnlySpells = new Set(['immolation', 'lightningWall', 'ringOfFire']);
-  const hellfireOnlyClasses = new Set(['monk', 'bard', 'barbarian']);
+  const hellfireOnlyClasses = new Set(['monk']);
+  const devxDiabloClasses = new Set(['bard', 'barbarian']);
 
   function allNeutralLabels(label) {
     return {
@@ -1028,6 +1029,8 @@
       const unavailable = !hellfire && hellfireOnlyClasses.has(option.value);
       option.hidden = unavailable;
       option.disabled = unavailable;
+      option.textContent = classLabels[option.value] +
+        (!hellfire && devxDiabloClasses.has(option.value) ? ' (DevX only)' : '');
     }
     if (!hellfire && hellfireOnlyClasses.has(state.characterClass.value)) {
       state.characterClass.value = 'warrior';

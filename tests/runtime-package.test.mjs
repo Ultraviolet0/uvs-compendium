@@ -43,7 +43,8 @@ test('runtime package contains only reviewed site files and cannot escape its ro
 test('public entries, references, and literal runtime dependencies are packaged', () => {
   for (const file of [
     '.htaccess', 'index.php', 'calculators/index.php',
-    ...['premium-item-checker', 'hellfire-item-price', 'shop-qlvl', 'warrior-repair', 'hellfire-damage']
+    ...['premium-item-checker', 'item-price', 'shop-qlvl', 'warrior-repair', 'damage',
+      'hellfire-item-price', 'hellfire-damage']
       .map((name) => `calculators/${name}/index.php`),
     'guides/index.php', 'guides/template/index.php', 'guides/shopping/index.php',
     'guides/fast-character-development/index.php', 'guides/max-shopping-video/index.php',
