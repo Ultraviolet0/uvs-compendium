@@ -361,7 +361,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
       <section id="hellfires-80-value-rule" class="guide-section">
         <h2>Hellfire's 80% Value Rule</h2>
         <p>Hellfire adds one of the most useful shopping mechanics in the game.</p>
-        <p>When Griswold generates premium equipment, he tries to make the item worth more than <strong>80% of the most expensive item of the same type that you already possess</strong>.</p>
+        <p>In Hellfire, Griswold's premium items and Wirt's items normally need to meet <strong>the rounded-down 80% value threshold</strong> set by the most valuable item of the same type that you already possess: <strong>minimum value = floor(anchor value × 4 / 5)</strong>. An item worth exactly that minimum passes.</p>
         <p>This is checked separately for:</p>
         <ul class="guide-list">
           <li>Armor</li>
@@ -380,8 +380,9 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
         <p>It becomes <strong>shopping gear</strong>.</p>
         <aside class="guide-callout guide-callout-note" aria-label="Hellfire value rule summary">
           <p class="guide-callout-title">The 80% rule</p>
-          <p>For each item category, Griswold tries to generate premium equipment worth more than 80% of the most valuable matching item you carry or equip.</p>
+          <p>For each item category, Griswold and Wirt normally accept a generated item whose value is at least floor(4 × the matching anchor's value / 5). The normal shop price ceiling is a separate check.</p>
         </aside>
+        <p>For example, a 1,000-gold target remains eligible with a 1,250-gold anchor: the minimum is exactly 1,000, not 1,001. Even a 1,251-gold anchor rounds down to the same minimum. At 1,252 gold, the minimum becomes 1,001 and the 1,000-gold target fails the normal value check.</p>
         <section id="building-better-anchors">
           <h3>Building Better Anchors</h3>
           <p>You do not need ideal shopping anchors immediately.</p>
@@ -400,10 +401,10 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
         <section id="armor-anchor-demonspike-coat">
           <h3>Armor Anchor: Demonspike Coat</h3>
           <p><strong>Demonspike Coat</strong> is one of the strongest possible shopping anchors because its value is over 250,000 gold.</p>
-          <p>Its 80% threshold is therefore higher than Hellfire's normal 200,000-gold shop limit.</p>
+          <p>Its 80% threshold is <strong>200,940 gold</strong>, higher than Hellfire's normal 200,000-gold shop limit.</p>
           <p>Under the normal rules, no newly generated armor can simultaneously:</p>
           <ul class="guide-list">
-            <li>Be worth more than 80% of Demonspike Coat</li>
+            <li>Meet the 200,940-gold minimum set by Demonspike Coat</li>
             <li>Stay under the normal shop price ceiling</li>
           </ul>
           <p>That forces Griswold's armor generation into its retry/fallback behavior.</p>
@@ -445,14 +446,10 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
         </section>
         <section id="item-value-vs-resale-value">
           <h3>Item Value vs. Resale Value</h3>
-          <p>When Griswold buys equipment from you, he normally offers <strong>one quarter of its actual item value</strong>.</p>
-          <p>So an item worth:</p>
-          <p><strong>126,375 gold</strong></p>
-          <p>will show a resale value around:</p>
-          <p><strong>31,593 gold</strong></p>
-          <p>That makes resale price a convenient way to estimate an anchor's real value.</p>
-          <p>Alternatively, enter the item's exact stats into the <a class="guide-tool-link" href="<?= site_url('calculators/item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a>.</p>
-          <p>The calculator is especially useful when planning around theoretical equipment you do not own yet.</p>
+          <p>For identified magical equipment, Griswold's resale quote is <strong>floor(actual item value / 4)</strong>. The missing fraction matters when tuning an anchor precisely: a 250-gold resale quote could mean an actual value of <strong>1,000, 1,001, 1,002, or 1,003 gold</strong>.</p>
+          <p>If the target is really worth 1,003 gold, its highest normally eligible anchor is worth <strong>1,254 gold</strong>: floor(1,254 × 4 / 5) = 1,003. Treating the resale quote as an exact 1,000-gold value and choosing a 1,250-gold anchor would leave some filtering power unused.</p>
+          <p>The uncertainty works in the other direction when checking an anchor: a resale quote of 49,600 could represent an anchor worth as much as 198,403 gold, not just 198,400. That can exclude a target right at the intended cutoff. If you know only an anchor's resale quote, use <strong>four times the quote plus three</strong> as its possible maximum value. The resale ceilings in the setups below use that conservative bound; lower quotes may filter less strongly.</p>
+          <p>For precise shopping, use the item's full value when available, or enter its exact stats into the <a class="guide-tool-link" href="<?= site_url('calculators/item-price/') ?>" target="_blank" rel="noopener" aria-label="Hellfire Item Price Calculator (opens in a new tab)"><strong>Hellfire Item Price Calculator</strong></a>. The calculator is also useful when planning around theoretical equipment you do not own yet.</p>
         </section>
       </section>
       <section id="shop-price-limits" class="guide-section">
@@ -531,7 +528,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
             <p>Carry the most expensive practical equipment you can in every category.</p>
             <p>For armor, use an anchor worth approximately:</p>
             <p><strong>198,400 gold</strong><br />
-              <strong>Resale: approximately 49,600</strong>
+              <strong>Conservative resale ceiling: 49,599</strong>
             </p>
             <p>This eliminates most cheaper armor while still leaving the main targets available.</p>
             <p>With this setup, <strong>Awesome Full Plate Mail of Harmony can appear in any Griswold premium slot</strong>.</p>
@@ -542,7 +539,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
             </ul>
             <p>If you also want <strong>Awesome Full Plate Mail of Sorcery</strong> to remain eligible, lower the armor anchor to around:</p>
             <p><strong>184,275 gold</strong><br />
-              <strong>Resale: approximately 46,068</strong>
+              <strong>Conservative resale ceiling: 46,068</strong>
             </p>
           </section>
           <section id="awesome-full-plate-mail-of-stars">
@@ -620,12 +617,12 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
             <p>That allows the 60-Strength Tower Shield requirement while continuing to exclude heavier equipment.</p>
             <p>A shield anchor around:</p>
             <p><strong>55,612 gold</strong><br />
-              <strong>Resale: approximately 13,903</strong>
+              <strong>Conservative resale ceiling: 13,902</strong>
             </p>
             <p>is useful for eliminating many lower-value shields and tends to filter out weaker Obsidian rolls, although a shield with weaker resistances and a very high Life roll can occasionally still be expensive enough to pass.</p>
             <p>If you're specifically hunting a perfect Obsidian Tower Shield of the Tiger, an anchor around:</p>
             <p><strong>76,312 gold</strong><br />
-              <strong>Resale: approximately 19,078</strong>
+              <strong>Conservative resale ceiling: 19,077</strong>
             </p>
             <p>can eliminate anything cheaper than the perfect target.</p>
             <p>The combination becomes available from Griswold around <strong>clvl 22+</strong>.</p>
@@ -682,7 +679,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
           <p>These King's Sword combinations can appear in <strong>any of Griswold's 15 premium slots</strong>.</p>
           <p>Carry a sword worth around:</p>
           <p><strong>97,625 gold</strong><br />
-            <strong>Resale: approximately 24,406</strong>
+            <strong>Conservative resale ceiling: 24,405</strong>
           </p>
           <p>and use the most expensive practical anchors you own in the other equipment categories.</p>
           <p>This filters out large amounts of unrelated cheap equipment without widening the high-Strength base pool.</p>
@@ -707,7 +704,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
           <p>The combination can appear in <strong>any Griswold premium slot</strong>.</p>
           <p>A strong axe-category anchor is worth around:</p>
           <p><strong>177,000 gold</strong><br />
-            <strong>Resale: approximately 44,250</strong>
+            <strong>Conservative resale ceiling: 44,249</strong>
           </p>
           <p>Carry the most expensive equipment you can in the other categories as well.</p>
         </section>
@@ -729,7 +726,7 @@ require_once dirname(__DIR__, 2) . '/includes/public_header.php';
           <p>The target can appear in <strong>all 15 Griswold premium slots</strong>.</p>
           <p>A good staff anchor is worth around:</p>
           <p><strong>126,375 gold</strong><br />
-            <strong>Resale: approximately 31,593</strong>
+            <strong>Conservative resale ceiling: 31,593</strong>
           </p>
         </section>
       </section>
