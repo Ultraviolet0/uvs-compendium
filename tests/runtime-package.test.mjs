@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { test } from 'node:test';
-import { buildRuntime, runtimeFiles } from '../scripts/build-runtime.mjs';
+import { applicationFiles, buildRuntime, generatedFiles, privateDirectories, runtimeFiles } from '../scripts/build-runtime.mjs';
 
 const root = resolve('build/runtime');
 
@@ -26,7 +26,19 @@ function fingerprint() {
 
 test('runtime package contains only reviewed site files and cannot escape its root', () => {
   buildRuntime();
-  assert.deepEqual(packageFiles(), runtimeFiles);
+  const files = packageFiles();
+  const expected = [...new Set([...applicationFiles(), ...generatedFiles])].sort();
+  assert.deepEqual(files.filter((file) => !file.startsWith('vendor/') || file === 'vendor/.htaccess'), expected);
+  const vendor = files.filter((file) => file.startsWith('vendor/'));
+  assert.ok(vendor.includes('vendor/autoload.php'));
+  assert.ok(vendor.some((file) => file.startsWith('vendor/league/commonmark/src/')));
+  for (const devOnly of ['vendor/phpunit/', 'vendor/sebastian/', 'vendor/bin/']) {
+    assert.ok(!vendor.some((file) => file.startsWith(devOnly)), `${devOnly} must not be packaged`);
+  }
+  assert.ok(!vendor.some((file) => /(?:^|\/)\.git(?:\/|$)/.test(file)), 'no VCS metadata in vendor');
+  for (const directory of privateDirectories) {
+    assert.match(readFileSync(join(root, directory, '.htaccess'), 'utf8'), /Require all denied/, directory);
+  }
   for (const file of packageFiles()) {
     const full = resolve(root, file);
     const within = relative(root, full);
@@ -38,6 +50,8 @@ test('runtime package contains only reviewed site files and cannot escape its ro
     '.github/workflows/ci.yml', 'docs/development.md', 'tests/site.test.mjs',
     'scripts/check.mjs', 'AGENTS.md', 'README.md', 'Dockerfile', 'compose.yaml',
     'package.json', 'package-lock.json', '.env.example', '.dockerignore', '.gitignore',
+    'composer.json', 'composer.lock', 'phpunit.xml.dist', 'docker/mariadb/01-databases.sql', 'tests/php/bootstrap.php',
+    'tests/community.test.mjs', 'storage', 'docs/configuration.md',
   ]) assert.ok(!existsSync(join(root, file)), `${file} was packaged`);
 });
 
@@ -55,14 +69,18 @@ test('public entries, references, and literal runtime dependencies are packaged'
     'images/shopping-guide-header.png', 'images/godly-plate-of-the-whale.png',
     'videos/warlord-of-blood.mp4',
     'favicon.ico', 'uvicon-32x32.png', 'uvicon-48x48.png',
+    'router.php', 'bin/console', 'privacy/index.php', 'css/app.css', 'js/theme.js', 'js/app.js', 'js/guide-editor.js',
+    'src/bootstrap.php', 'src/Http/Kernel.php', 'templates/guides/editor.php', 'migrations/0001_community_schema.php',
   ]) assert.ok(existsSync(join(root, file)), `Missing public file: ${file}`);
 
-  for (const file of runtimeFiles) {
+  for (const file of applicationFiles()) {
     if (!/\.(?:php|css|mjs)$/.test(file)) continue;
     const content = readFileSync(join(root, file), 'utf8');
     if (file.endsWith('.php')) {
       for (const match of content.matchAll(/\b(?:site_url|asset_version)\s*\(\s*['"]([^'"]+)['"]/g)) {
         const path = match[1].replace(/^\//, '');
+        // Community URLs are served by router.php rather than by files.
+        if (/^(?:account|members|admin|media)\//.test(path)) continue;
         const target = path.endsWith('/') ? `${path}index.php` : path;
         assert.ok(existsSync(join(root, target)), `${file} refers to missing ${target}`);
       }

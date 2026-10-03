@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, lstatSync, mkdirSync, realpathSync, renameSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, realpathSync, renameSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -65,15 +65,115 @@ export const runtimeFiles = [
   'images/godly-plate-of-the-whale.png',
   'includes/public_footer.php',
   'includes/public_header.php',
+  'includes/helpers.php',
+  'includes/account_navigation.php',
   guideDatesFile,
+  'css/app.css',
+  'js/app.js',
+  'js/guide-editor.js',
   'js/in-page-navigation.js',
   'js/scripts.js',
+  'js/theme.js',
+  'js/turnstile.js',
+  'privacy/index.php',
+  'router.php',
+  'bin/console',
   'reference/d1-hf-shrines.pdf',
   'reference/hellfire-shopping-differences.pdf',
   'reference/jarulf162.pdf',
   'shopqlvl/index.php',
   'videos/warlord-of-blood.mp4',
 ].sort();
+
+// Reviewed application directories: every PHP file inside is server code that
+// the front controller loads. Nothing else in these directories is published.
+export const applicationDirectories = ['src', 'templates', 'migrations'];
+
+// Server-only directories receive a deny-all .htaccess as a second line of
+// defence behind the root rewrite rules.
+export const privateDirectories = ['bin', 'includes', 'migrations', 'src', 'templates', 'vendor'];
+const denyAll = '# Server-side code only; never served over HTTP.\nRequire all denied\n';
+
+function phpFilesIn(directory) {
+  const root = join(repositoryRoot, directory);
+  return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    if (entry.isSymbolicLink()) throw new Error(`Refusing symlink in application directory: ${path}`);
+    if (entry.isDirectory()) return phpFilesIn(path);
+    return entry.name.endsWith('.php') ? [path.split(sep).join('/')] : [];
+  });
+}
+
+/** Every reviewed source file the package contains, excluding vendor/ and generated files. */
+export function applicationFiles() {
+  return [...runtimeFiles, ...applicationDirectories.flatMap(phpFilesIn)].sort();
+}
+
+/** Files generated during the build rather than copied from the repository. */
+export const generatedFiles = [guideDatesFile, ...privateDirectories.map((directory) => `${directory}/.htaccess`)].sort();
+
+function lockDate() {
+  const date = execFileSync('git', ['log', '-1', '--format=%cI', '--', 'composer.lock'], { cwd: repositoryRoot, encoding: 'utf8' }).trim();
+  return date === '' ? new Date('2026-01-01T00:00:00Z') : new Date(date);
+}
+
+function composerAvailable() {
+  try {
+    execFileSync(process.env.COMPOSER_BIN || 'composer', ['--version'], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Package metadata, tests, and documentation are not needed on the server.
+// Source (git) installs include them; dist archives usually omit them.
+const prunedVendorNames = new Set(['.git', '.github', 'tests', 'test', 'Tests', 'docs', 'doc', 'examples']);
+
+/** Removes VCS data, tests, docs, dotfiles, and symlinks; stamps a fixed time. */
+function normalizeVendor(directory, time, depth = 0) {
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    const packageLevel = depth >= 2;
+    if (entry.isSymbolicLink() || (entry.name.startsWith('.') && entry.name !== '.htaccess')
+      || (packageLevel && entry.isDirectory() && prunedVendorNames.has(entry.name) && depth === 2)) {
+      rmSync(path, { recursive: true, force: true });
+      continue;
+    }
+    if (entry.isDirectory()) normalizeVendor(path, time, depth + 1);
+    utimesSync(path, time, time);
+  }
+}
+
+/**
+ * Installs production dependencies (no dev packages) from composer.lock into
+ * the staging tree. Uses a local Composer when available, otherwise the
+ * project's Docker tools image.
+ */
+function installVendor() {
+  for (const file of ['composer.json', 'composer.lock']) {
+    copyFileSync(join(repositoryRoot, file), join(stagingRoot, file));
+  }
+  const args = ['install', '--no-dev', '--prefer-dist', '--optimize-autoloader', '--no-interaction', '--no-progress', '--no-scripts'];
+  // RUNTIME_COMPOSER=docker uses the project's pinned PHP image; the default uses a local Composer when present.
+  if (process.env.RUNTIME_COMPOSER !== 'docker' && composerAvailable()) {
+    execFileSync(process.env.COMPOSER_BIN || 'composer', [...args, `--working-dir=${stagingRoot}`], { stdio: ['ignore', 'ignore', 'inherit'] });
+  } else {
+    const workdir = `/app/${relative(repositoryRoot, stagingRoot).split(sep).join('/')}`;
+    execFileSync('docker', ['compose', 'run', '--rm', '--no-deps', '-T', '-w', workdir, 'composer', ...args],
+      { cwd: repositoryRoot, stdio: ['ignore', 'ignore', 'inherit'] });
+  }
+  for (const file of ['composer.json', 'composer.lock']) {
+    rmSync(join(stagingRoot, file));
+  }
+  const vendor = join(stagingRoot, 'vendor');
+  for (const devOnly of ['phpunit', 'sebastian', 'myclabs', 'nikic', 'phar-io', 'theseer']) {
+    if (existsSync(join(vendor, devOnly))) throw new Error(`Development dependency ${devOnly} in runtime vendor`);
+  }
+  // Console entry points of dependencies are not needed on the server.
+  rmSync(join(vendor, 'bin'), { recursive: true, force: true });
+  normalizeVendor(vendor, lockDate());
+}
 
 function inside(parent, child) {
   const path = relative(parent, child);
@@ -115,8 +215,9 @@ export function buildRuntime() {
   removeBuildDirectory(runtimeRoot);
   removeBuildDirectory(stagingRoot);
   if (new Set(runtimeFiles).size !== runtimeFiles.length) throw new Error('Duplicate runtime file');
+  const sources = applicationFiles();
   const realRepositoryRoot = realpathSync(repositoryRoot);
-  for (const file of runtimeFiles) {
+  for (const file of sources) {
     if (file === guideDatesFile) continue;
     const source = resolve(repositoryRoot, file);
     if (!inside(repositoryRoot, source) || !existsSync(source)
@@ -126,7 +227,7 @@ export function buildRuntime() {
   }
 
   try {
-    for (const file of runtimeFiles) {
+    for (const file of sources) {
       if (file === guideDatesFile) continue;
       const source = resolve(repositoryRoot, file);
       const destination = resolve(stagingRoot, file);
@@ -137,6 +238,13 @@ export function buildRuntime() {
       utimesSync(destination, modified, modified);
     }
     writeGuideDates();
+    installVendor();
+    const generatedTime = lockDate();
+    for (const directory of privateDirectories) {
+      const file = join(stagingRoot, directory, '.htaccess');
+      writeFileSync(file, denyAll);
+      utimesSync(file, generatedTime, generatedTime);
+    }
     // A complete staging tree becomes the only deployable output.
     renameSync(stagingRoot, runtimeRoot);
   } catch (error) {
@@ -147,5 +255,5 @@ export function buildRuntime() {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  console.log(`Built ${runtimeFiles.length} runtime files in ${buildRuntime()}`);
+  console.log(`Built ${applicationFiles().length} reviewed files plus production dependencies in ${buildRuntime()}`);
 }

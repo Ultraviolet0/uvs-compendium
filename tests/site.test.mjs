@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { chromium } from 'playwright';
+import { launchBrowser } from './support/browser.mjs';
 
-const base = process.env.SITE_URL || 'http://localhost:8080';
+const base = process.env.SITE_URL || 'http://localhost:8082';
 let browser;
 let context;
 
@@ -43,9 +43,7 @@ before(async () => {
     }
   }
   assert.ok(ready, `Local site did not start at ${base}`);
-  browser = await chromium.launch(process.env.BROWSER_CHANNEL
-    ? { channel: process.env.BROWSER_CHANNEL }
-    : {});
+  browser = await launchBrowser();
   context = await browser.newContext();
 });
 after(async () => { await browser?.close(); });
@@ -55,7 +53,8 @@ const routes = [
   '/calculators/shop-qlvl/', '/calculators/premium-item-checker/',
   '/calculators/warrior-repair/', '/calculators/damage/',
   '/guides/', '/guides/shopping/', '/guides/fast-character-development/',
-  '/guides/max-shopping-video/', '/guides/template/'
+  '/guides/max-shopping-video/', '/guides/template/',
+  '/privacy/', '/members/', '/account/login/', '/account/signup/', '/account/password/forgot/'
 ];
 
 test('public routes, shared layout, local assets, and browser scripts', async () => {
@@ -121,7 +120,9 @@ test('development files are denied by Apache', async () => {
     '/scripts/check.mjs', '/includes/public_header.php',
     '/includes/guide-update-dates.php', '/css/',
     '/calculators/breadcrumbs.php', '/calculators/shop-qlvl/calculator.php',
-    '/calculators/hellfire-item-price/calculator.php'
+    '/calculators/hellfire-item-price/calculator.php',
+    '/src/App.php', '/vendor/autoload.php', '/templates/auth/login.php', '/migrations/0001_community_schema.php',
+    '/bin/console', '/composer.json', '/composer.lock', '/includes/helpers.php', '/includes/account_navigation.php'
   ]) {
     const response = await context.request.get(new URL(path, base).href);
     assert.ok([403, 404].includes(response.status()), `${path}: ${response.status()}`);

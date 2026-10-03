@@ -144,9 +144,12 @@ final class AccountService
         if (mb_strlen($reason) > 500) {
             throw new ValidationException(['reason' => 'Keep the member-facing message under 500 characters.']);
         }
+        // Losing access revokes every session at once; gaining access keeps the
+        // member signed in (their session identifier is rotated on their next request).
+        $revoke = $to !== 'active' ? ', auth_epoch = auth_epoch + 1' : '';
         $this->db->execute(
             'UPDATE users SET status = :status, status_reason = :reason, status_changed_at = :now, status_changed_by = :actor,
-                              auth_epoch = auth_epoch + 1, updated_at = :now WHERE id = :id AND status = :previous',
+                              updated_at = :now' . $revoke . ' WHERE id = :id AND status = :previous',
             [
                 'status' => $to,
                 'reason' => $reason === '' ? null : $reason,

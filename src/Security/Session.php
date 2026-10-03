@@ -167,7 +167,7 @@ final class Session
 
     public function get(string $key, mixed $default = null): mixed
     {
-        return $this->isActive() ? ($_SESSION[$key] ?? $default) : $default;
+        return $this->resumeIfPresent() ? ($_SESSION[$key] ?? $default) : $default;
     }
 
     public function set(string $key, mixed $value): void
@@ -178,7 +178,7 @@ final class Session
 
     public function remove(string $key): void
     {
-        if ($this->isActive()) {
+        if ($this->resumeIfPresent()) {
             unset($_SESSION[$key]);
         }
     }

@@ -49,6 +49,7 @@ final class Console
                 'user:delete' => $this->deleteUser($args, $options),
                 'media:cleanup' => $this->cleanupMedia($options),
                 'maintenance:prune' => $this->prune(),
+                'rate-limits:clear' => $this->clearRateLimits(),
                 'config:check' => $this->checkConfig(),
                 default => $this->help(),
             };
@@ -100,6 +101,7 @@ UV's Compendium operator console
                                        Permanently delete an account, its profile, and its media
   media:cleanup [--dry-run]            Delete abandoned uploads and their files
   maintenance:prune                    Remove expired rate-limit and token rows
+  rate-limits:clear                    Reset all throttling counters (for example after a false lockout)
   config:check                         Report configuration problems without printing secrets
 TEXT);
         return 0;
@@ -253,6 +255,13 @@ TEXT);
         $limits = $this->app->rateLimiter()->purgeExpired();
         $tokens = $this->app->passwordResets()->purgeExpired();
         $this->line("Removed {$limits} expired rate-limit row(s) and {$tokens} expired or used token(s).");
+        return 0;
+    }
+
+    private function clearRateLimits(): int
+    {
+        $removed = $this->app->db()->execute('DELETE FROM rate_limits');
+        $this->line("Cleared {$removed} rate-limit counter(s).");
         return 0;
     }
 

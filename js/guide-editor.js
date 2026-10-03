@@ -77,10 +77,11 @@
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
+  // Blocks go after the current selection on their own lines; selected text is kept.
   const insertBlock = (text) => {
-    const { selectionStart: start, value } = textarea;
+    const { selectionEnd: start, value } = textarea;
     const needsBreak = start > 0 && value[start - 1] !== '\n' ? '\n\n' : (start > 1 && value[start - 2] !== '\n' ? '\n' : '');
-    textarea.setRangeText(`${needsBreak}${text}\n`, start, textarea.selectionEnd, 'end');
+    textarea.setRangeText(`${needsBreak}${text}\n`, start, start, 'end');
     textarea.focus();
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   };
@@ -89,26 +90,36 @@
 
   const openDialog = (id, onInsert) => {
     const dialog = document.getElementById(id);
-    if (!dialog || typeof dialog.showModal !== 'function') return false;
+    const dialogForm = dialog?.querySelector('form');
+    if (!dialog || !dialogForm || typeof dialog.showModal !== 'function') return false;
     const error = dialog.querySelector('[data-dialog-error]');
     if (error) { error.hidden = true; error.textContent = ''; }
     const selection = [textarea.selectionStart, textarea.selectionEnd];
-    const handleClose = async () => {
-      dialog.removeEventListener('close', handleClose);
+    let busy = false;
+
+    const handleSubmit = async (event) => {
+      if (event.submitter?.value !== 'insert') return;
+      event.preventDefault();
+      if (busy) return;
+      busy = true;
       textarea.setSelectionRange(...selection);
-      if (dialog.returnValue === 'insert') {
-        const problem = await onInsert(dialog);
-        if (problem) {
-          dialog.showModal();
-          if (error) { error.textContent = problem; error.hidden = false; }
-          dialog.addEventListener('close', handleClose);
-          return;
-        }
+      const problem = await onInsert(dialog);
+      busy = false;
+      if (problem) {
+        if (error) { error.textContent = problem; error.hidden = false; }
+        dialog.querySelector('input')?.focus();
+        return;
       }
+      dialog.close('insert');
+    };
+    const handleClose = () => {
+      dialogForm.removeEventListener('submit', handleSubmit);
+      dialog.removeEventListener('close', handleClose);
       textarea.focus();
     };
-    dialog.returnValue = '';
+    dialogForm.addEventListener('submit', handleSubmit);
     dialog.addEventListener('close', handleClose);
+    dialog.returnValue = '';
     dialog.showModal();
     dialog.querySelector('input')?.focus();
     return true;

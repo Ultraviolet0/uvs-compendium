@@ -332,7 +332,8 @@ input[type="file"]::file-selector-button {
   display: grid;
   gap: var(--space-md);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
-  margin: 0;
+  margin-bottom: 0;
+  margin-inline: 0;
 }
 
 .stat-card {

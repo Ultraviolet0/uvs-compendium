@@ -53,6 +53,19 @@ The guide catalog at `/guides/` currently includes:
 
 The reusable template remains available at `/guides/template/`, but it is deliberately omitted from the public navigation and guide catalog.
 
+## Community Publishing
+
+Members can now contribute guides alongside the curated ones, without changing how the calculators and existing guides work — none of them require an account.
+
+- **Accounts:** signup protected by Cloudflare Turnstile, a honeypot, and rate limits; manual approval by default (optional automatic approval); password reset by email; optional two-factor authentication with recovery codes.
+- **Member profiles:** avatar, short bio, preferred game, website, Discord name, and a list of Diablo/Hellfire characters at `/members/<username>/`. Email addresses are never public.
+- **Guide editor:** Markdown with a formatting toolbar, live server-rendered preview, autosave, image uploads, privacy-enhanced YouTube embeds, and callouts. Raw HTML is never rendered.
+- **Moderation:** drafts are private; submissions go to an admin review queue where guides can be approved, published, sent back for changes, rejected, hidden, restored, or deleted, with immutable revision history and diffs. Published community guides appear at `/guides/<slug>/` and in a Community Guides section of `/guides/`; curated guide URLs always take precedence.
+- **Administration:** dashboard, user management, guide moderation, site settings, and an audit log at `/admin/`.
+- **Themes:** the dark theme remains the default; a parchment light theme is available from the sidebar toggle on every page.
+
+See [architecture](docs/architecture.md), [publishing and administration](docs/publishing.md), [configuration and deployment](docs/configuration.md) (including creating the first administrator), and the [security model](docs/security.md).
+
 ## Calculator Architecture
 
 Calculators are organized so the reusable calculator body lives in one place and can be included wherever needed.
@@ -167,16 +180,30 @@ The root homepage intentionally has no breadcrumb because it has no parent page.
 
 ```text
 css/
-  styles.css
+  styles.css             # global layout and design tokens (dark default, light theme)
   in-page-navigation.css
+  app.css                # community pages
 
 js/
   scripts.js
   in-page-navigation.js
+  theme.js               # theme selection before first paint and the toggle
+  app.js                 # community form enhancements
+  guide-editor.js
+  turnstile.js
 
 includes/
   public_header.php
   public_footer.php
+  helpers.php
+  account_navigation.php
+
+router.php               # front controller for community URLs (only when no file matches)
+bin/console              # operator CLI: migrations, first admin, recovery, cleanup
+src/                     # community application (PHP, namespace Uvs\)
+templates/               # community page templates
+migrations/              # database migrations
+privacy/
 
 calculators/
   index.php
@@ -227,7 +254,7 @@ Modern coding practices are used where they help maintainability, accessibility,
 
 ## Development
 
-See [development setup and workflow](docs/development.md) for local startup, validation, branching, and deployment boundaries. The [game-data source hierarchy](docs/game-data.md) and [corrections record](docs/corrections.md) govern mechanics changes.
+See [development setup and workflow](docs/development.md) for local startup (PHP/Apache, MariaDB, and an isolated test service in Docker Compose), validation, branching, and deployment boundaries. The [game-data source hierarchy](docs/game-data.md) and [corrections record](docs/corrections.md) govern mechanics changes.
 
 ## Credits and Sources
 

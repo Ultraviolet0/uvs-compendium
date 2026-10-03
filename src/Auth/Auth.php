@@ -51,8 +51,15 @@ final class Auth
             $this->endSession('Your session has ended. Please sign in again.');
             return null;
         }
-        // Keep the shorter administrator idle timeout in step with the current role.
-        if (($auth['admin'] ?? false) !== ($user['role'] === 'admin')) {
+        // Privilege changes (approval, role change) rotate the session identifier and
+        // keep the shorter administrator idle timeout in step with the current role.
+        $privilege = $user['status'] . ':' . $user['role'];
+        if (($auth['privilege'] ?? null) !== $privilege) {
+            if (isset($auth['privilege'])) {
+                $session->regenerate();
+                (new Csrf($session))->rotate();
+            }
+            $auth['privilege'] = $privilege;
             $auth['admin'] = $user['role'] === 'admin';
             $session->set('auth', $auth);
         }
@@ -160,6 +167,7 @@ final class Auth
             'user_id' => (int) $user['id'],
             'epoch' => (int) $user['auth_epoch'],
             'admin' => $user['role'] === 'admin',
+            'privilege' => $user['status'] . ':' . $user['role'],
             'at' => time(),
         ]);
         (new Csrf($session))->rotate();
