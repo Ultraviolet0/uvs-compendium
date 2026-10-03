@@ -32,6 +32,24 @@ function asset_version(string $path): int
   return is_file($full_path) ? filemtime($full_path) : time();
 }
 
+function guide_updated_date(string $guide_path, string $source_file): string
+{
+  $manifest = __DIR__ . '/guide-update-dates.php';
+  if (is_file($manifest)) {
+    $dates = require $manifest;
+    if (is_array($dates) && isset($dates[$guide_path])) {
+      return $dates[$guide_path];
+    }
+  }
+
+  // The source checkout has no build manifest; show its local file date.
+  $modified = filemtime($source_file);
+  if ($modified === false) {
+    throw new RuntimeException('Cannot read guide modification time');
+  }
+  return date('Y-m-d', $modified);
+}
+
 $css_version = asset_version('css/styles.css');
 $js_version = asset_version('js/scripts.js');
 
