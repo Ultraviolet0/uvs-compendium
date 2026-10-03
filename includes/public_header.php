@@ -8,46 +8,20 @@ $base_path = $base_path ?? '';
 $current_page = $current_page ?? '';
 $page_styles = $page_styles ?? [];
 $page_scripts = $page_scripts ?? [];
+$page_robots = $page_robots ?? null;
 
-function h(string $value): string
-{
-  return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
+require_once __DIR__ . '/helpers.php';
 
-function site_url(string $path = ''): string
-{
-  global $base_path;
-
-  if ($path === '') {
-    return h($base_path !== '' ? $base_path : './');
+$viewer_context = uvs_page_context();
+$viewer = $viewer_context['user'];
+$viewer_theme = $viewer !== null && in_array($viewer['theme'] ?? null, ['dark', 'light'], true) ? $viewer['theme'] : '';
+uvs_security_headers();
+if (!headers_sent()) {
+  header('Vary: Cookie');
+  if ($viewer !== null || (session_status() === PHP_SESSION_ACTIVE)) {
+    // Personalised pages must never be stored by shared caches.
+    header('Cache-Control: private, no-store');
   }
-
-  return h($base_path . ltrim($path, '/'));
-}
-
-function asset_version(string $path): int
-{
-  $full_path = dirname(__DIR__) . '/' . ltrim($path, '/');
-
-  return is_file($full_path) ? filemtime($full_path) : time();
-}
-
-function guide_updated_date(string $guide_path, string $source_file): string
-{
-  $manifest = __DIR__ . '/guide-update-dates.php';
-  if (is_file($manifest)) {
-    $dates = require $manifest;
-    if (is_array($dates) && isset($dates[$guide_path])) {
-      return $dates[$guide_path];
-    }
-  }
-
-  // The source checkout has no build manifest; show its local file date.
-  $modified = filemtime($source_file);
-  if ($modified === false) {
-    throw new RuntimeException('Cannot read guide modification time');
-  }
-  return date('Y-m-d', $modified);
 }
 
 $css_version = asset_version('css/styles.css');
@@ -65,13 +39,20 @@ $page_styles = array_values(array_unique(array_filter($page_styles, 'is_string')
 $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string')));
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="<?= h($viewer_theme !== '' ? $viewer_theme : 'dark') ?>"<?php if ($viewer_theme !== ''): ?> data-theme-preference="<?= h($viewer_theme) ?>"<?php endif; ?>>
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="<?= h($page_description) ?>">
   <title><?= h($page_title) ?></title>
+  <?php if (is_string($page_robots) && $page_robots !== ''): ?>
+    <meta name="robots" content="<?= h($page_robots) ?>">
+  <?php endif; ?>
+  <?php if ($viewer_context['csrf'] !== null): ?>
+    <meta name="csrf-token" content="<?= h($viewer_context['csrf']) ?>">
+  <?php endif; ?>
+  <script src="<?= site_url('js/theme.js') ?>?v=<?= asset_version('js/theme.js') ?>"></script>
 
   <link rel="icon" href="<?php echo site_url('/favicon.ico'); ?>" sizes="any">
   <link rel="stylesheet" href="<?= site_url('css/styles.css') ?>?v=<?= $css_version ?>">
@@ -175,10 +156,17 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
                 <li><a class="nav-submenu-link" href="<?= site_url('guides/fast-character-development/') ?>">Fast Character Development</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('guides/shopping/') ?>">UV's Shopping &amp; Affixes</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('guides/max-shopping-video/') ?>">Max's Hellfire Shopping Video</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('guides/') ?>#community-guides">Community Guides</a></li>
               </ul>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link nav-page-link" href="<?= site_url('members/') ?>">Members</a>
             </li>
           </ul>
         </section>
+
+        <?php require __DIR__ . '/account_navigation.php'; ?>
       </nav>
     </header>
 

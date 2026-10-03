@@ -36,3 +36,6 @@ playwright-report/
 *.tmp
 *.bak
 *.cache
+
+# Local application storage (uploads, sessions, logs, captured mail)
+storage/
