@@ -2,6 +2,16 @@
 
 Use one entry per discrepancy. `Proposed` means the evidence still needs review; `Accepted` means Rob confirmed it. Do not elevate an entry to source level 2 or change published mechanics solely because it is proposed. Include affected components and a regression case when practical.
 
+## Hellfire shopping value threshold and resale rounding
+
+- **Mechanic/topic:** Griswold and Wirt value anchors and Griswold resale quotes.
+- **Affected game/version:** Hellfire shopping; the guide's examples use DevilutionX's integer arithmetic.
+- **Incorrect or incomplete source behavior:** The shopping guide said a generated item must be worth *more than* 80% of its anchor and treated a resale quote as one exact underlying item value.
+- **Corrected behavior:** Under the normal vendor filters, a generated item passes when its value is at least `floor(anchor value * 4 / 5)`, including equality. An identified magical item's resale quote is `floor(item value / 4)`, so a quote of `R` may conceal an actual value from `4R` through `4R + 3` (for ordinary positive values). The guide's resale ceilings account for the highest possible hidden value; exact item values permit tighter anchors.
+- **Evidence or reasoning:** Maxpire reported the boundary and 1,003-gold example. DevilutionX [SpawnOnePremium and SpawnBoy](https://github.com/diasurgical/DevilutionX/blob/master/Source/items.cpp) compute the 80% threshold with integer division and reject values below it. [StartSmithSell](https://github.com/diasurgical/DevilutionX/blob/master/Source/stores.cpp) uses integer division by four for identified magical equipment resale. Thus a 1,003-gold target can pass with a 1,254-gold anchor, but fails with 1,255.
+- **Status:** Implemented in `fix/shopping-anchor-price-guidance` for review.
+- **Affected Compendium components:** Shopping guide value-rule explanation and anchor resale examples.
+
 ## Decay affix classification
 
 - **Mechanic/topic:** Decay affix classification.
