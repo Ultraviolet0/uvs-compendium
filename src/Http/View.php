@@ -45,7 +45,6 @@ final class View
         $GLOBALS['page_styles'] = array_merge(['css/app.css'], $page['styles'] ?? []);
         $GLOBALS['page_scripts'] = array_merge(['js/app.js'], $page['scripts'] ?? []);
         $GLOBALS['page_robots'] = $page['robots'] ?? 'noindex';
-        $GLOBALS['page_flashes'] = $this->app->session()->pullFlashes();
 
         $view = $this;
         $render = static function (string $__file, array $__data) use ($view): void {
@@ -57,7 +56,6 @@ final class View
             if (($page['layout'] ?? true) === true) {
                 global $page_title, $page_description, $base_path, $current_page, $page_styles, $page_scripts, $page_robots;
                 require $this->app->root . '/includes/public_header.php';
-                require $this->app->root . '/templates/partials/flashes.php';
                 $render($file, $data);
                 require $this->app->root . '/includes/public_footer.php';
             } else {

@@ -128,7 +128,7 @@ final class Config
                 'avatar_dimension' => 256,
                 'max_quota_bytes' => 200 * 1024 * 1024,
                 'max_images_per_guide' => 40,
-                'orphan_grace_hours' => 24,
+                'orphan_grace_hours' => 72,
             ],
             'guides' => [
                 'max_drafts' => 25,

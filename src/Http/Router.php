@@ -28,7 +28,7 @@ final class Router
     private function add(string $method, string $pattern, array $handler): void
     {
         $names = [];
-        $regex = preg_replace_callback('/\{([a-z_]+)(?::([^}]+))?\}/', static function (array $match) use (&$names): string {
+        $regex = preg_replace_callback('/\{([a-z_]+)(?::((?:[^{}]|\{[^{}]*\})+))?\}/', static function (array $match) use (&$names): string {
             $names[] = $match[1];
             return '(' . ($match[2] ?? '[^/]+') . ')';
         }, $pattern);

@@ -129,8 +129,8 @@ final class MarkdownRenderer
             }
             $node = $walkerEvent->getNode();
             if ($node instanceof Heading) {
-                // The page title is the only h1; guide sections start at h2.
-                $node->setLevel(min(6, $node->getLevel() + 1));
+                // The page title is the only h1; a level-one heading becomes a section heading.
+                $node->setLevel(max(2, $node->getLevel()));
             } elseif ($node instanceof ListBlock) {
                 $class = $node->getListData()->type === ListBlock::TYPE_ORDERED ? 'guide-list guide-list-ordered' : 'guide-list';
                 $node->data->set('attributes/class', $class);
@@ -251,7 +251,7 @@ final class MarkdownRenderer
         if (str_starts_with($url, '/')) {
             return str_starts_with($url, '//') || str_contains($url, '\\') ? null : $url;
         }
-        if (preg_match('#^(https?)://[^/\s?#@]+#i', $url)) {
+        if (preg_match('~^https?://[^/\s?#@]+~i', $url)) {
             $parts = parse_url($url);
             if ($parts === false || !isset($parts['host']) || isset($parts['user']) || isset($parts['pass'])) {
                 return null;

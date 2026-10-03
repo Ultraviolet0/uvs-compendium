@@ -194,3 +194,60 @@ if (!function_exists('uvs_avatar')) {
       . ($decorative ? ' aria-hidden="true"' : ' role="img" aria-label="' . h($alt) . '"') . '>' . h($initial) . '</span>';
   }
 }
+
+if (!function_exists('uvs_published_community_guides')) {
+  /**
+   * Published community guides for the static guide index, newest first.
+   * Returns null when the community application is unavailable so the curated
+   * catalog still renders on its own.
+   *
+   * @return list<array<string, mixed>>|null
+   */
+  function uvs_published_community_guides(int $limit = 60): ?array
+  {
+    try {
+      $context = uvs_page_context();
+      if (!$context['available']) {
+        return null;
+      }
+      return \Uvs\App::instance()->guides()->listPublished($limit);
+    } catch (\Throwable $error) {
+      try {
+        \Uvs\App::instance()->logger()->exception($error, 'Community guide list unavailable');
+      } catch (\Throwable) {
+        error_log("UV's Compendium: community guide list unavailable");
+      }
+      return null;
+    }
+  }
+}
+
+if (!function_exists('uvs_render_flashes')) {
+  /**
+   * Prints one-time status messages for the current session, if any. Static pages
+   * show them too, so a message survives a redirect to the home page.
+   */
+  function uvs_render_flashes(): void
+  {
+    $flashes = [];
+    try {
+      if (class_exists(\Uvs\App::class, false)) {
+        $session = \Uvs\App::instance()->session();
+        if ($session->isActive()) {
+          $flashes = $session->pullFlashes();
+        }
+      }
+    } catch (\Throwable) {
+      $flashes = [];
+    }
+    if ($flashes === []) {
+      return;
+    }
+    echo '<div class="flash-stack" role="status">';
+    foreach ($flashes as $flash) {
+      $type = in_array($flash['type'] ?? '', ['success', 'info', 'warning', 'error'], true) ? $flash['type'] : 'info';
+      echo '<p class="notice notice-' . h($type) . '">' . h((string) ($flash['message'] ?? '')) . '</p>';
+    }
+    echo '</div>';
+  }
+}

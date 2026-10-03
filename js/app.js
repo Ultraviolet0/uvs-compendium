@@ -9,14 +9,12 @@
       summary.focus();
     }
 
-    document.querySelectorAll('form[data-confirm]').forEach((form) => {
-      form.addEventListener('submit', (event) => {
-        const submitter = event.submitter;
-        const message = submitter?.dataset.confirm || form.dataset.confirm;
-        if (message && !window.confirm(message)) {
-          event.preventDefault();
-        }
-      });
+    document.addEventListener('submit', (event) => {
+      const form = event.target;
+      const message = event.submitter?.dataset.confirm || form.dataset?.confirm;
+      if (message && !window.confirm(message)) {
+        event.preventDefault();
+      }
     });
 
     document.querySelectorAll('[data-counter-for]').forEach((counter) => {

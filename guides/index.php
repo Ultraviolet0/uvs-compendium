@@ -6,6 +6,7 @@ $current_page = 'guides';
 $page_styles = ['guides/css/styles.css'];
 
 require_once __DIR__ . '/../includes/public_header.php';
+$community_guides = uvs_published_community_guides();
 ?>
 
 <nav class="guide-breadcrumbs" aria-label="Breadcrumb">
@@ -45,5 +46,51 @@ require_once __DIR__ . '/../includes/public_header.php';
     <p class="guide-card-action"><a class="button button-secondary" href="<?= site_url('guides/max-shopping-video/') ?>">Watch the Video</a></p>
   </article>
 </section>
+
+<?php if ($community_guides !== null): ?>
+  <section class="section-panel flow-lg community-guides" id="community-guides" aria-labelledby="community-guides-title">
+    <div class="section-heading-row">
+      <div class="flow">
+        <p class="eyebrow">From the community</p>
+        <h2 id="community-guides-title">Community Guides</h2>
+        <p>Guides written by members and reviewed before publication.</p>
+      </div>
+      <a class="button button-secondary" href="<?= site_url('account/guides/new/') ?>">Write a guide</a>
+    </div>
+
+    <?php if ($community_guides === []): ?>
+      <div class="empty-state">
+        <p class="empty-state-title">No community guides yet</p>
+        <p>Approved members can submit guides for review. Yours could be the first.</p>
+      </div>
+    <?php else: ?>
+      <ul class="community-guide-list">
+        <?php foreach ($community_guides as $community_guide): ?>
+          <li class="card community-guide-card flow">
+            <p class="card-label">Community Guide</p>
+            <h3><a href="<?= site_url('guides/' . $community_guide['slug'] . '/') ?>"><?= h((string) $community_guide['title']) ?></a></h3>
+            <?php if ((string) $community_guide['summary'] !== ''): ?>
+              <p><?= h((string) $community_guide['summary']) ?></p>
+            <?php endif; ?>
+            <p class="community-guide-byline">
+              <?php if ($community_guide['author_username'] !== null): ?>
+                <?php uvs_avatar(['username' => $community_guide['author_username'], 'avatar_public_id' => $community_guide['author_avatar_public_id'], 'avatar_extension' => $community_guide['author_avatar_extension']], 'xs'); ?>
+                <?php if ($community_guide['author_status'] === 'active'): ?>
+                  <a href="<?= site_url('members/' . rawurlencode((string) $community_guide['author_username']) . '/') ?>"><?= h((string) $community_guide['author_username']) ?></a>
+                <?php else: ?>
+                  <span><?= h((string) $community_guide['author_username']) ?></span>
+                <?php endif; ?>
+              <?php else: ?>
+                <span>A former member</span>
+              <?php endif; ?>
+              <span aria-hidden="true">·</span>
+              <time datetime="<?= h(substr((string) $community_guide['first_published_at'], 0, 10)) ?>"><?= h(date('M j, Y', strtotime((string) $community_guide['first_published_at'] . ' UTC'))) ?></time>
+            </p>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
+  </section>
+<?php endif; ?>
 
 <?php require_once __DIR__ . '/../includes/public_footer.php'; ?>

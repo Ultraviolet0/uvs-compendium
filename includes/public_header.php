@@ -171,3 +171,4 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
     </header>
 
     <main id="main-content" class="site-main">
+      <?php uvs_render_flashes(); ?>

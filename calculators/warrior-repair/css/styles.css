@@ -37,20 +37,20 @@
 
 .repair-results-table th,
 .repair-results-table td {
-  border: 1px solid rgb(95 95 95 / 0.75);
+  border: 1px solid rgb(var(--rgb-gray) / 0.75);
   padding: 0.45rem 0.55rem;
   text-align: center;
   vertical-align: middle;
 }
 
 .repair-results-table th {
-  background-color: rgb(188 168 108 / 0.08);
+  background-color: rgb(var(--rgb-gold) / 0.08);
   color: var(--color-text-muted);
   font-weight: 800;
 }
 
 .calculator-details {
-  border-top: 1px solid rgb(188 168 108 / 0.2);
+  border-top: 1px solid rgb(var(--rgb-gold) / 0.2);
   padding-top: var(--space-md);
 }
 
@@ -66,7 +66,7 @@
 
 .mechanics-code {
   border-left: 4px solid var(--color-text-muted);
-  color: #9f9;
+  color: var(--color-code-bright);
   font-family: Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.86rem;
   line-height: 1.45;
