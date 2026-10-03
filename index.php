@@ -12,7 +12,7 @@ require_once __DIR__ . '/includes/public_header.php';
   <p class="hero-copy">This site is a growing collection of tools, references, and strategy guides for players who want clearer access to the underlying mechanics of Diablo I & Hellfire in modern DevilutionX play.</p>
   <div class="button-row">
     <a class="button button-primary" href="calculators/">Explore Calculators</a>
-    <!-- <a class="button button-secondary" href="guides/">Read Guides</a> -->
+    <a class="button button-secondary" href="guides/">Read Guides</a>
   </div>
 </section>
 
