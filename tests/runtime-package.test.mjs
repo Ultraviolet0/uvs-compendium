@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -82,6 +83,21 @@ test('public entries, references, and literal runtime dependencies are packaged'
         assert.ok(existsSync(resolve(root, dirname(file), path)), `${file} refers to missing ${path}`);
       }
     }
+  }
+});
+
+test('packaged guide update dates come from Git history', () => {
+  const manifest = readFileSync(join(root, 'includes/guide-update-dates.php'), 'utf8');
+  for (const file of [
+    'guides/fast-character-development/index.php',
+    'guides/shopping/index.php',
+    'guides/template/index.php',
+  ]) {
+    const date = execFileSync('git', ['log', '-1', '--format=%cs', '--', file], {
+      encoding: 'utf8',
+    }).trim();
+    assert.match(date, /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok(manifest.includes(`'${file}' => '${date}'`), `${file}: incorrect package update date`);
   }
 });
 

@@ -26,6 +26,8 @@ Run `npm run build:runtime` to rebuild the ignored `build/runtime/` directory. T
 
 Run `npm run test:runtime` to rebuild the package and test it as a separate local Apache document root on port 8081. This checks PHP and JavaScript syntax and runs the browser site tests against the packaged files. The command stops its test container afterward. The regular `npm test` also checks the package's contents and repeatability.
 
+Guide "Updated" dates in the runtime package come from each guide page's latest Git commit, so a checkout or redeploy does not change them. Build from a full Git checkout; CI fetches the full history. The source-only local site falls back to each guide file's filesystem date. "Published" dates remain editorial metadata.
+
 Only this runtime package should be considered for future Hostinger staging or production deployment. The full repository contains development and internal files and must not be copied into the public document root. This package does not configure Hostinger or deploy anything; the target mapping and production server behavior still need staging verification.
 
 ## Security and public files

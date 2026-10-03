@@ -11,6 +11,7 @@ $page_styles = ["css/in-page-navigation.css", "guides/css/styles.css"];
 $page_scripts = ["js/in-page-navigation.js"];
 
 require_once dirname(__DIR__, 2) . "/includes/public_header.php";
+$updated_on = guide_updated_date('guides/fast-character-development/index.php', __FILE__);
 ?>
 
 <nav class="guide-breadcrumbs" aria-label="Breadcrumb">
@@ -54,7 +55,7 @@ require_once dirname(__DIR__, 2) . "/includes/public_header.php";
         </div>
         <div class="guide-meta-item">
           <dt>Updated</dt>
-          <dd><time datetime="2026-08-10">August 10, 2026</time></dd>
+          <dd><time datetime="<?= h($updated_on) ?>"><?= h((new DateTimeImmutable($updated_on))->format('F j, Y')) ?></time></dd>
         </div>
         <div class="guide-meta-item">
           <dt>Applies to</dt>

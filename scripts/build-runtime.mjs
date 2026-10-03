@@ -1,4 +1,5 @@
-import { copyFileSync, existsSync, lstatSync, mkdirSync, realpathSync, renameSync, rmSync, statSync, utimesSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { copyFileSync, existsSync, lstatSync, mkdirSync, realpathSync, renameSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -6,6 +7,12 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const buildRoot = join(repositoryRoot, 'build');
 const runtimeRoot = join(buildRoot, 'runtime');
 const stagingRoot = join(buildRoot, '.runtime-staging');
+const guideDatesFile = 'includes/guide-update-dates.php';
+const datedGuides = [
+  'guides/fast-character-development/index.php',
+  'guides/shopping/index.php',
+  'guides/template/index.php',
+];
 
 // Exact, reviewed runtime files. New files in these directories are not published automatically.
 export const runtimeFiles = [
@@ -58,6 +65,7 @@ export const runtimeFiles = [
   'images/godly-plate-of-the-whale.png',
   'includes/public_footer.php',
   'includes/public_header.php',
+  guideDatesFile,
   'js/in-page-navigation.js',
   'js/scripts.js',
   'reference/d1-hf-shrines.pdf',
@@ -80,6 +88,24 @@ function removeBuildDirectory(path) {
   rmSync(path, { recursive: true, force: true });
 }
 
+function writeGuideDates() {
+  const entries = datedGuides.map((file) => {
+    const date = execFileSync('git', ['log', '-1', '--format=%cs', '--', file], {
+      cwd: repositoryRoot, encoding: 'utf8',
+    }).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw new Error(`Cannot determine last committed guide update for ${file}; build from a full Git checkout`);
+    }
+    return [file, date];
+  });
+  const destination = resolve(stagingRoot, guideDatesFile);
+  mkdirSync(dirname(destination), { recursive: true });
+  writeFileSync(destination, `<?php\nreturn [\n${entries.map(([file, date]) => `  '${file}' => '${date}',`).join('\n')}\n];\n`);
+  const newestDate = entries.map(([, date]) => date).sort().at(-1);
+  const modified = new Date(`${newestDate}T00:00:00Z`);
+  utimesSync(destination, modified, modified);
+}
+
 export function buildRuntime() {
   if (existsSync(buildRoot) && lstatSync(buildRoot).isSymbolicLink()) {
     throw new Error(`Refusing symlinked build directory: ${buildRoot}`);
@@ -91,6 +117,7 @@ export function buildRuntime() {
   if (new Set(runtimeFiles).size !== runtimeFiles.length) throw new Error('Duplicate runtime file');
   const realRepositoryRoot = realpathSync(repositoryRoot);
   for (const file of runtimeFiles) {
+    if (file === guideDatesFile) continue;
     const source = resolve(repositoryRoot, file);
     if (!inside(repositoryRoot, source) || !existsSync(source)
       || !lstatSync(source).isFile() || !inside(realRepositoryRoot, realpathSync(source))) {
@@ -100,6 +127,7 @@ export function buildRuntime() {
 
   try {
     for (const file of runtimeFiles) {
+      if (file === guideDatesFile) continue;
       const source = resolve(repositoryRoot, file);
       const destination = resolve(stagingRoot, file);
       if (!inside(stagingRoot, destination)) throw new Error(`Unsafe runtime path: ${file}`);
@@ -108,6 +136,7 @@ export function buildRuntime() {
       const modified = statSync(source).mtime;
       utimesSync(destination, modified, modified);
     }
+    writeGuideDates();
     // A complete staging tree becomes the only deployable output.
     renameSync(stagingRoot, runtimeRoot);
   } catch (error) {
