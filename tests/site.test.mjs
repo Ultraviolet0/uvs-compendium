@@ -118,7 +118,8 @@ test('development files are denied by Apache', async () => {
     '/.env.example', '/AGENTS.md', '/README.md', '/Dockerfile', '/compose.yaml',
     '/package.json', '/package-lock.json', '/docs/development.md',
     '/docs/game-data.md', '/docs/corrections.md', '/tests/site.test.mjs',
-    '/scripts/check.mjs', '/includes/public_header.php', '/css/',
+    '/scripts/check.mjs', '/includes/public_header.php',
+    '/includes/guide-update-dates.php', '/css/',
     '/calculators/breadcrumbs.php', '/calculators/shop-qlvl/calculator.php',
     '/calculators/hellfire-item-price/calculator.php'
   ]) {
@@ -126,6 +127,22 @@ test('development files are denied by Apache', async () => {
     assert.ok([403, 404].includes(response.status()), `${path}: ${response.status()}`);
   }
   assert.equal((await context.request.get(new URL('/reference/jarulf162.pdf', base).href)).status(), 200);
+});
+
+test('guide update dates have matching machine-readable and visible values', async () => {
+  for (const route of ['/guides/fast-character-development/', '/guides/shopping/']) {
+    const page = await context.newPage();
+    await page.goto(new URL(route, base).href);
+    const updated = page.locator('.guide-meta-item')
+      .filter({ has: page.locator('dt', { hasText: 'Updated' }) }).locator('time');
+    const iso = await updated.getAttribute('datetime');
+    assert.match(iso, /^\d{4}-\d{2}-\d{2}$/, route);
+    const visible = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
+    }).format(new Date(`${iso}T12:00:00Z`));
+    assert.equal(await updated.textContent(), visible, route);
+    await page.close();
+  }
 });
 
 test('calculator modules are JavaScript and revalidate their cache', async () => {
