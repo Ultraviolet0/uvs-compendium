@@ -164,4 +164,113 @@ final class AccountServiceTest extends DatabaseTestCase
         self::assertNull($mfa->verify($user, $codes[0]), 'recovery codes work once');
         self::assertSame(9, $mfa->remainingRecoveryCodes((int) $member['id']));
     }
+
+    private function accountsWithLockTimeout(int $seconds): \Uvs\Users\AccountService
+    {
+        $app = $this->application;
+        return new \Uvs\Users\AccountService($app->db(), $app->users(), $app->settings(), $app->audit(), $app->passwordPolicy(), $seconds);
+    }
+
+    private function activeAdmins(): int
+    {
+        return (int) $this->db->value("SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'");
+    }
+
+    public function testCompetingAdministratorsCanNeverRemoveEveryAdministrator(): void
+    {
+        $accounts = $this->application->accounts();
+        foreach ([['suspend', 'suspend'], ['demote', 'demote'], ['suspend', 'demote'], ['demote', 'suspend']] as $round => [$firstMove, $secondMove]) {
+            $this->db->pdo()->exec('SET FOREIGN_KEY_CHECKS = 0');
+            $this->db->pdo()->exec('DELETE FROM users');
+            $this->db->pdo()->exec('SET FOREIGN_KEY_CHECKS = 1');
+            // Both administrators loaded their pages while both were still active admins.
+            $first = $this->user("First{$round}", 'active', 'admin');
+            $second = $this->user("Second{$round}", 'active', 'admin');
+            $move = static function (array $actor, array $target, string $how) use ($accounts): void {
+                $how === 'demote'
+                    ? $accounts->changeRole($actor, (int) $target['id'], 'member')
+                    : $accounts->changeStatus($actor, (int) $target['id'], 'suspend');
+            };
+            $move($first, $second, $firstMove);
+            try {
+                $move($second, $first, $secondMove);
+                self::fail("Round {$round}: the second, stale administrator must be refused");
+            } catch (ValidationException $error) {
+                self::assertStringContainsString('administrator access changed', $error->first());
+            }
+            self::assertSame(1, $this->activeAdmins(), "round {$round}");
+        }
+    }
+
+    public function testInvariantRollsBackAChangeThatWouldLeaveNoAdministrator(): void
+    {
+        $this->user('OnlyAdmin', 'active', 'admin');
+        $this->user('Bystander');
+        try {
+            $this->application->accounts()->withAdminInvariant(function (): void {
+                $this->db->execute("UPDATE users SET status = 'suspended' WHERE role = 'admin'");
+                $this->db->execute("UPDATE users SET admin_note = 'changed' WHERE username = 'Bystander'");
+            });
+            self::fail('A change that removes the last administrator must be refused');
+        } catch (ValidationException $error) {
+            self::assertStringContainsString('without an active administrator', $error->first());
+        }
+        self::assertSame(1, $this->activeAdmins());
+        self::assertNull($this->db->value("SELECT admin_note FROM users WHERE username = 'Bystander'"), 'the whole change was rolled back');
+    }
+
+    public function testAdministrativeChangesAreSerialisedByTheAdminLock(): void
+    {
+        $admin = $this->user('Boss', 'active', 'admin');
+        $member = $this->user('Member', 'active', 'member');
+        $other = \Uvs\Database::connect($this->application->config);
+        self::assertSame(1, (int) $other->value("SELECT GET_LOCK('uvs_compendium_admin_invariant', 0)"));
+        try {
+            $this->accountsWithLockTimeout(0)->changeRole($admin, (int) $member['id'], 'admin');
+            self::fail('A change must not proceed while another administrative change holds the lock');
+        } catch (ValidationException $error) {
+            self::assertStringContainsString('in progress', $error->first());
+        } finally {
+            $other->value("SELECT RELEASE_LOCK('uvs_compendium_admin_invariant')");
+        }
+        self::assertSame('member', $this->application->users()->find((int) $member['id'])['role']);
+        $this->accountsWithLockTimeout(0)->changeRole($admin, (int) $member['id'], 'admin');
+        self::assertSame('admin', $this->application->users()->find((int) $member['id'])['role']);
+        // The lock is released after both success and failure.
+        self::assertSame(1, (int) $other->value("SELECT IS_FREE_LOCK('uvs_compendium_admin_invariant')"));
+    }
+
+    public function testChangingEmailVoidsOutstandingRecoveryTokens(): void
+    {
+        $member = $this->user('Mover');
+        $bystander = $this->user('Bystander');
+        $reset = $this->application->passwordResets();
+        $insert = function (int $userId): string {
+            $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+            $this->db->execute("INSERT INTO account_tokens (user_id, purpose, token_hash, created_at, expires_at) VALUES (:id, 'password_reset', :hash, UTC_TIMESTAMP(), UTC_TIMESTAMP() + INTERVAL 1 HOUR)",
+                ['id' => $userId, 'hash' => hash('sha256', $token)]);
+            return $token;
+        };
+        $old = $insert((int) $member['id']);
+        $unrelated = $insert((int) $bystander['id']);
+        self::assertNotNull($reset->userForToken($old));
+
+        $this->application->users()->changeEmail((int) $member['id'], 'new-address@example.test');
+        self::assertNull($reset->userForToken($old), 'a link sent to the previous address must stop working');
+        try {
+            $reset->complete($old, 'a brand new passphrase here', 'a brand new passphrase here');
+            self::fail('The old token must be unusable');
+        } catch (ValidationException) {
+        }
+        self::assertSame(0, (int) $this->db->value('SELECT COUNT(*) FROM account_tokens WHERE user_id = :id', ['id' => (int) $member['id']]));
+        self::assertNotNull($reset->userForToken($unrelated), 'other accounts are unaffected');
+        self::assertSame('new-address@example.test', $this->application->users()->find((int) $member['id'])['email']);
+
+        // A deliberate password change voids outstanding links too; a sign-in rehash does not.
+        $again = $insert((int) $member['id']);
+        $this->application->users()->updatePasswordHash((int) $member['id'], \Uvs\Auth\PasswordHasher::hash('x'), false);
+        self::assertNotNull($reset->userForToken($again));
+        $this->application->users()->updatePasswordHash((int) $member['id'], \Uvs\Auth\PasswordHasher::hash('y'), true);
+        self::assertNull($reset->userForToken($again));
+    }
 }

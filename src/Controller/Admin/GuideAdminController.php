@@ -112,14 +112,15 @@ final class GuideAdminController extends AdminController
             'body' => $this->request->input('body'), 'applies_to' => $this->request->input('applies_to'),
             'slug' => $this->request->input('slug'), 'note' => $this->request->input('note'),
         ];
-        if ((int) $this->request->input('lock_version') !== (int) $guide['lock_version']) {
+        $expected = $this->expectedVersion();
+        if ($expected === null || $expected !== (int) $guide['lock_version']) {
             return $this->edit($id, ['conflict' => 'The author or another administrator changed this guide while you were editing. Review the latest version before saving.'], $input, 409);
         }
         try {
             $workflow = $this->app->guideWorkflow();
-            $workflow->adminEdit($admin, $guide, $workflow->clean($input), $input['slug'], $input['note']);
+            $workflow->adminEdit($admin, $guide, $workflow->clean($input), $input['slug'], $input['note'], $expected);
         } catch (ValidationException $error) {
-            return $this->edit($id, $error->errors, $input, 422);
+            return $this->edit($id, $error->errors, $input, isset($error->errors['conflict']) ? 409 : 422);
         }
         $this->flash('success', 'Changes saved as a new revision. The published version changes only when you publish.');
         return $this->redirect('admin/guides/' . (int) $guide['id'] . '/');
@@ -136,20 +137,31 @@ final class GuideAdminController extends AdminController
         if (in_array($action, self::CONFIRM_REQUIRED, true) && $this->request->input('confirm') !== '1') {
             return $this->show($id, ['confirm' => 'Tick the confirmation box for “' . (GuideWorkflow::ADMIN_ACTIONS[$action] ?? $action) . '”.'], 422);
         }
+        // The form carries the version the administrator reviewed; a stale decision is refused.
+        $expected = $this->expectedVersion();
+        if ($expected === null) {
+            return $this->show($id, ['conflict' => 'This form is missing the guide version. Reload the page and try again.'], 409);
+        }
         try {
-            $message = $this->app->guideWorkflow()->adminAction($admin, $guide, $action,
-                $this->request->input('note'), $this->request->input('confirmation'));
+            $result = $this->app->guideWorkflow()->adminAction($admin, $guide, $action,
+                $this->request->input('note'), $this->request->input('confirmation'), $expected);
         } catch (ValidationException $error) {
-            return $this->show($id, $error->errors, 422);
+            return $this->show($id, $error->errors, isset($error->errors['conflict']) ? 409 : 422);
         }
         if ($action === 'purge') {
-            $this->app->media()->deleteAllForGuide((int) $guide['id']);
-            $this->app->guideWorkflow()->purgeRow((int) $guide['id']);
-            $this->flash('success', '“' . $guide['title'] . '” was permanently deleted.');
+            // Files are removed only after the deletion has committed.
+            $this->app->media()->deleteRows($result['media']);
+            $this->flash('success', $result['message']);
             return $this->redirect('admin/guides/?filter=deleted');
         }
-        $this->flash('success', $message);
+        $this->flash('success', $result['message']);
         return $this->redirect('admin/guides/' . (int) $guide['id'] . '/');
+    }
+
+    private function expectedVersion(): ?int
+    {
+        $value = filter_var($this->request->input('lock_version'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        return $value === false ? null : $value;
     }
 
     public function revision(string $id, string $revisionId): Response

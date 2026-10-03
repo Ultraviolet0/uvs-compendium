@@ -57,6 +57,7 @@ $noteActions = ['approve', 'approve_publish', 'publish', 'request_changes', 'rej
       <form class="form-stack action-form card" method="post" action="<?= $view->url('admin/guides/' . (int) $guide['id'] . '/action/') ?>">
         <?= $view->csrf() ?>
         <input type="hidden" name="action" value="<?= h($action) ?>">
+        <input type="hidden" name="lock_version" value="<?= (int) $guide['lock_version'] ?>">
         <h3><?= h($labels[$action]) ?></h3>
         <p class="field-help"><?= h(match ($action) {
           'approve' => 'Mark the current working copy as approved without publishing it yet.',

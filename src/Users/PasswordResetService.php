@@ -40,7 +40,13 @@ final class PasswordResetService
         }
         $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
         $now = time();
-        $this->db->transaction(function () use ($user, $token, $now): void {
+        $issued = $this->db->transaction(function () use ($user, $token, $now): bool {
+            // Lock the account and confirm the address is still its own, so a
+            // token cannot be issued to an address that was just changed away.
+            $current = $this->db->value('SELECT email_key FROM users WHERE id = :id FOR UPDATE', ['id' => (int) $user['id']]);
+            if (!is_string($current) || !hash_equals($current, (string) $user['email_key'])) {
+                return false;
+            }
             $this->db->execute("DELETE FROM account_tokens WHERE user_id = :id AND purpose = 'password_reset'", ['id' => (int) $user['id']]);
             $this->db->execute(
                 "INSERT INTO account_tokens (user_id, purpose, token_hash, created_at, expires_at)
@@ -52,7 +58,11 @@ final class PasswordResetService
                     'expires' => gmdate('Y-m-d H:i:s', $now + self::TTL),
                 ],
             );
+            return true;
         });
+        if (!$issued) {
+            return;
+        }
         $link = $resetBaseUrl . '?token=' . rawurlencode($token);
         $this->mailer->send((string) $user['email'], "Reset your UV's Compendium password",
             "Hello {$user['username']},\n\nSomeone asked to reset the password for your UV's Compendium account.\n"

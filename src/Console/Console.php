@@ -174,13 +174,18 @@ TEXT);
             throw new RuntimeException('Usage: user:set-role USERNAME member|admin');
         }
         $user = $this->app->users()->findByUsername($username) ?? throw new RuntimeException('No such user.');
-        if ($role === 'member' && $user['role'] === 'admin' && $this->app->users()->countAdmins() <= 1) {
-            throw new RuntimeException('Refusing to demote the last active administrator.');
-        }
-        $this->app->db()->execute('UPDATE users SET role = :role, auth_epoch = auth_epoch + 1, updated_at = UTC_TIMESTAMP() WHERE id = :id',
-            ['role' => $role, 'id' => (int) $user['id']]);
-        $this->app->audit()->record(null, 'user.role_changed', 'user', (int) $user['id'], (string) $user['username'],
-            ['from' => $user['role'], 'to' => $role, 'via' => 'cli']);
+        // Serialized with administrator changes made on the web, so the last active admin cannot be removed.
+        $this->app->accounts()->withAdminInvariant(function () use ($user, $role): void {
+            $updated = $this->app->db()->execute(
+                'UPDATE users SET role = :role, auth_epoch = auth_epoch + 1, updated_at = UTC_TIMESTAMP() WHERE id = :id AND role = :previous',
+                ['role' => $role, 'id' => (int) $user['id'], 'previous' => $user['role']],
+            );
+            if ($updated !== 1 && $user['role'] !== $role) {
+                throw new RuntimeException('The account changed while this command was running; run it again.');
+            }
+            $this->app->audit()->record(null, 'user.role_changed', 'user', (int) $user['id'], (string) $user['username'],
+                ['from' => $user['role'], 'to' => $role, 'via' => 'cli']);
+        });
         $this->line("{$user['username']} is now {$role}.");
         return 0;
     }
@@ -226,12 +231,14 @@ TEXT);
         if (($options['confirm'] ?? null) !== $user['username']) {
             throw new RuntimeException("Repeat the exact username with --confirm={$user['username']} to delete this account.");
         }
-        if ($user['role'] === 'admin' && $this->app->users()->countAdmins() <= 1) {
-            throw new RuntimeException('Refusing to delete the last active administrator.');
-        }
-        $this->app->media()->deleteAllForUser((int) $user['id']);
-        $this->app->db()->execute('DELETE FROM users WHERE id = :id', ['id' => (int) $user['id']]);
-        $this->app->audit()->record(null, 'user.deleted', 'user', (int) $user['id'], (string) $user['username']);
+        $media = $this->app->accounts()->withAdminInvariant(function () use ($user): array {
+            $rows = $this->app->db()->all('SELECT * FROM media WHERE owner_id = :id', ['id' => (int) $user['id']]);
+            $this->app->db()->execute('DELETE FROM users WHERE id = :id', ['id' => (int) $user['id']]);
+            $this->app->audit()->record(null, 'user.deleted', 'user', (int) $user['id'], (string) $user['username']);
+            return $rows;
+        });
+        // Files are removed only after the account deletion has committed.
+        $this->app->media()->deleteRows($media);
         $this->line("Deleted {$user['username']}. Their guides remain, credited to a former member, unless removed separately.");
         return 0;
     }

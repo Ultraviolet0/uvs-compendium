@@ -4,7 +4,8 @@
   can reach development or production data.
 */
 import { execFileSync } from 'node:child_process';
-import { createHmac } from 'node:crypto';
+import { createHmac, randomFillSync } from 'node:crypto';
+import { deflateSync } from 'node:zlib';
 
 export const appBase = process.env.APP_URL || process.env.SITE_URL || 'http://localhost:8082';
 const service = process.env.APP_SERVICE || 'web-test';
@@ -17,6 +18,18 @@ export function consoleCommand(args, input) {
 
 export function containerShell(script) {
   return execFileSync('docker', ['compose', 'exec', '-T', '-u', 'www-data', service, 'sh', '-c', script], { encoding: 'utf8' });
+}
+
+/**
+ * Reads one value from the isolated test database through the application's
+ * own connection (refuses to run outside the test environment).
+ */
+export function testDbValue(sql) {
+  const script = "$app = require 'src/bootstrap.php'; if (!$app->config->isTest()) { fwrite(STDERR, 'not a test environment'); exit(2); }"
+    + " echo json_encode($app->db()->value(getenv('UVS_TEST_SQL')));";
+  const output = execFileSync('docker', ['compose', 'exec', '-T', '-u', 'www-data', '-e', `UVS_TEST_SQL=${sql}`, service, 'php', '-r', script],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  return JSON.parse(output);
 }
 
 export const ADMIN = { username: 'TestAdmin', email: 'test-admin@example.test', password: 'test admin passphrase only' };
@@ -172,4 +185,37 @@ export async function waitForApp() {
     await sleep(500);
   }
   throw new Error(`Community application did not start at ${appBase}`);
+}
+
+const crcTable = Array.from({ length: 256 }, (_, n) => {
+  let c = n;
+  for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  return c >>> 0;
+});
+function crc32(buffer) {
+  let crc = 0xffffffff;
+  for (const byte of buffer) crc = crcTable[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+/** A valid RGB PNG of random noise: slow to process and large after compression. */
+export function noisePng(width, height) {
+  const stride = width * 3 + 1;
+  const raw = Buffer.alloc(stride * height);
+  for (let y = 0; y < height; y += 1) randomFillSync(raw, y * stride + 1, width * 3);
+  const chunk = (type, data) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, 'latin1'), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(body));
+    return Buffer.concat([length, body, crc]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8; // bit depth
+  header[9] = 2; // truecolour
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }

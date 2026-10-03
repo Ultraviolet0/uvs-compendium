@@ -87,7 +87,7 @@ final class GuideEditorController extends Controller
             ]);
         }
         if ($this->request->input('intent') === 'submit') {
-            return $this->submitGuide($user, $updated);
+            return $this->submitGuide($user, $updated, (int) $updated['lock_version']);
         }
         $this->flash('success', 'Draft saved.');
         return $this->redirect('account/guides/' . (int) $guide['id'] . '/edit/');
@@ -97,23 +97,24 @@ final class GuideEditorController extends Controller
     {
         $user = $this->authorize('guide.create');
         $guide = $this->ownGuide($user, $id);
-        return $this->submitGuide($user, $guide);
+        return $this->submitGuide($user, $guide, $this->expectedVersion());
     }
 
     /**
      * @param array<string, mixed> $user
      * @param array<string, mixed> $guide
      */
-    private function submitGuide(array $user, array $guide): Response
+    private function submitGuide(array $user, array $guide, ?int $expectedVersion): Response
     {
         $this->authorizeGuide($user, 'guide.submit', $guide);
         if (!$this->app->rateLimiter()->hit('guide.submit', (string) $user['id'])) {
             throw $this->tooManyRequests('You have submitted many guides today. Please try again tomorrow.');
         }
         try {
-            $this->workflow()->submit($user, $guide);
+            $this->workflow()->submit($user, $guide, $expectedVersion);
         } catch (ValidationException $error) {
-            return $this->editorPage($user, $guide, $error->errors, [], 422);
+            $fresh = $this->app->guides()->find((int) $guide['id']) ?? $guide;
+            return $this->editorPage($user, $fresh, $error->errors, [], isset($error->errors['conflict']) ? 409 : 422);
         }
         $this->flash('success', 'Submitted for review. An administrator will take a look soon.');
         return $this->redirect('account/guides/' . (int) $guide['id'] . '/edit/');
@@ -124,7 +125,7 @@ final class GuideEditorController extends Controller
         $user = $this->authorize('guide.create');
         $guide = $this->ownGuide($user, $id);
         try {
-            $this->workflow()->withdraw($guide);
+            $this->workflow()->withdraw($guide, $this->expectedVersion());
         } catch (ValidationException $error) {
             $this->flash('error', $error->first());
             return $this->redirect('account/guides/' . (int) $guide['id'] . '/edit/');
@@ -145,8 +146,13 @@ final class GuideEditorController extends Controller
             $this->flash('error', 'Tick the confirmation box to delete this guide.');
             return $this->redirect('account/guides/' . (int) $guide['id'] . '/edit/#delete-guide');
         }
-        $this->app->media()->deleteAllForGuide((int) $guide['id']);
-        $this->workflow()->purgeRow((int) $guide['id']);
+        try {
+            $media = $this->workflow()->deleteDraft($user, (int) $guide['id'], $this->expectedVersion());
+        } catch (ValidationException $error) {
+            $this->flash('error', $error->first());
+            return $this->redirect('account/guides/' . (int) $guide['id'] . '/edit/');
+        }
+        $this->app->media()->deleteRows($media);
         $this->flash('success', '“' . $guide['title'] . '” was deleted.');
         return $this->redirect('account/guides/');
     }
@@ -279,6 +285,13 @@ final class GuideEditorController extends Controller
             'styles' => ['guides/css/styles.css'],
             'scripts' => ['js/guide-editor.js'],
         ], $status);
+    }
+
+    /** The guide version a form was rendered from, when the form supplied one. */
+    private function expectedVersion(): ?int
+    {
+        $value = filter_var($this->request->input('lock_version'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        return $value === false ? null : $value;
     }
 
     /**

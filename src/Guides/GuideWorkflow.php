@@ -141,53 +141,127 @@ final class GuideWorkflow
     }
 
     /**
+     * Locks a guide row for the rest of the current transaction and returns its
+     * current state. Every state transition re-validates against this row, so
+     * decisions made from an older page load cannot overwrite newer ones.
+     *
+     * @return array<string, mixed>
+     */
+    private function lockGuide(int $guideId): array
+    {
+        $guide = $this->db->one('SELECT * FROM guides WHERE id = :id FOR UPDATE', ['id' => $guideId]);
+        if ($guide === null) {
+            throw new ValidationException(['conflict' => 'This guide no longer exists.']);
+        }
+        return $guide;
+    }
+
+    private static function assertVersion(array $current, ?int $expected): void
+    {
+        if ($expected !== null && (int) $current['lock_version'] !== $expected) {
+            throw new ValidationException(['conflict' => 'This guide changed since you opened it (another administrator or the author acted on it). Reload the page and review its current state before trying again.']);
+        }
+    }
+
+    /**
+     * Applies an UPDATE that must succeed only from the locked, expected version.
+     *
+     * @param array<string, mixed> $params
+     */
+    private function conditionalUpdate(string $assignments, array $params, int $guideId, int $version): void
+    {
+        $updated = $this->db->execute(
+            "UPDATE guides SET {$assignments}, lock_version = lock_version + 1 WHERE id = :guide_id AND lock_version = :expected_version",
+            $params + ['guide_id' => $guideId, 'expected_version' => $version],
+        );
+        if ($updated !== 1) {
+            throw new ValidationException(['conflict' => 'This guide changed while your request was being processed. Reload and try again.']);
+        }
+    }
+
+    /**
      * @param array<string, mixed> $author
      * @param array<string, mixed> $guide
      */
-    public function submit(array $author, array $guide): void
+    public function submit(array $author, array $guide, ?int $expectedVersion = null): void
     {
         if (!$this->settings->bool('guide_submissions_enabled')) {
             throw new ValidationException(['form' => 'Guide submissions are paused right now. Your draft is saved; please try again later.']);
         }
-        if (!GuideStatus::authorCanSubmit($guide)) {
-            throw new ValidationException(['form' => 'This guide cannot be submitted in its current state.']);
-        }
-        $errors = [];
-        if (mb_strlen((string) $guide['title']) < self::SUBMIT_TITLE_MIN) {
-            $errors['title'] = 'Use a title of at least ' . self::SUBMIT_TITLE_MIN . ' characters before submitting.';
-        }
-        if (mb_strlen((string) $guide['summary']) < self::SUBMIT_SUMMARY_MIN) {
-            $errors['summary'] = 'Add a summary of at least ' . self::SUBMIT_SUMMARY_MIN . ' characters before submitting.';
-        }
-        if (mb_strlen(trim((string) $guide['body'])) < self::SUBMIT_BODY_MIN) {
-            $errors['body'] = 'The guide body needs at least ' . self::SUBMIT_BODY_MIN . ' characters before it can be reviewed.';
-        }
-        if ($errors !== []) {
-            throw new ValidationException($errors);
-        }
-        $this->db->transaction(function () use ($author, $guide): void {
-            $kind = $guide['submitted_at'] === null ? 'submission' : 'resubmission';
-            $this->snapshot($guide, $kind, (int) $author['id'], null);
-            $this->db->execute(
-                "UPDATE guides SET review_status = 'in_review', submitted_at = :now, moderation_note = NULL,
-                                   lock_version = lock_version + 1, updated_at = :now WHERE id = :id",
-                ['now' => Database::now(), 'id' => (int) $guide['id']],
-            );
+        $this->db->transaction(function () use ($author, $guide, $expectedVersion): void {
+            $current = $this->lockGuide((int) $guide['id']);
+            self::assertVersion($current, $expectedVersion);
+            if ((int) $current['author_id'] !== (int) $author['id'] || !GuideStatus::authorCanSubmit($current)) {
+                throw new ValidationException(['form' => 'This guide cannot be submitted in its current state.']);
+            }
+            $errors = [];
+            if (mb_strlen((string) $current['title']) < self::SUBMIT_TITLE_MIN) {
+                $errors['title'] = 'Use a title of at least ' . self::SUBMIT_TITLE_MIN . ' characters before submitting.';
+            }
+            if (mb_strlen((string) $current['summary']) < self::SUBMIT_SUMMARY_MIN) {
+                $errors['summary'] = 'Add a summary of at least ' . self::SUBMIT_SUMMARY_MIN . ' characters before submitting.';
+            }
+            if (mb_strlen(trim((string) $current['body'])) < self::SUBMIT_BODY_MIN) {
+                $errors['body'] = 'The guide body needs at least ' . self::SUBMIT_BODY_MIN . ' characters before it can be reviewed.';
+            }
+            if ($errors !== []) {
+                throw new ValidationException($errors);
+            }
+            // The reviewed revision is a snapshot of the locked row, never of an older page load.
+            $kind = $current['submitted_at'] === null ? 'submission' : 'resubmission';
+            $this->snapshot($current, $kind, (int) $author['id'], null);
+            $now = Database::now();
+            $this->conditionalUpdate("review_status = 'in_review', submitted_at = :now, moderation_note = NULL, updated_at = :now",
+                ['now' => $now], (int) $current['id'], (int) $current['lock_version']);
         });
     }
 
     /**
      * @param array<string, mixed> $guide
      */
-    public function withdraw(array $guide): void
+    public function withdraw(array $guide, ?int $expectedVersion = null): void
     {
-        if (!GuideStatus::authorCanWithdraw($guide)) {
-            throw new ValidationException(['form' => 'Only guides waiting for review can be withdrawn.']);
-        }
-        $this->db->execute(
-            "UPDATE guides SET review_status = 'draft', lock_version = lock_version + 1, updated_at = :now WHERE id = :id",
-            ['now' => Database::now(), 'id' => (int) $guide['id']],
-        );
+        $this->db->transaction(function () use ($guide, $expectedVersion): void {
+            $current = $this->lockGuide((int) $guide['id']);
+            self::assertVersion($current, $expectedVersion);
+            if ((int) $current['author_id'] !== (int) $guide['author_id'] || !GuideStatus::authorCanWithdraw($current)) {
+                throw new ValidationException(['form' => 'Only guides waiting for review can be withdrawn. An administrator may have just acted on it; reload to see its current state.']);
+            }
+            $this->conditionalUpdate("review_status = 'draft', updated_at = :now", ['now' => Database::now()],
+                (int) $current['id'], (int) $current['lock_version']);
+        });
+    }
+
+    /**
+     * Permanently deletes an author's never-published guide. Returns the media
+     * rows that belonged to it so the caller can remove their files after commit.
+     *
+     * @param array<string, mixed> $author
+     * @return list<array<string, mixed>>
+     */
+    public function deleteDraft(array $author, int $guideId, ?int $expectedVersion = null): array
+    {
+        return $this->db->transaction(function () use ($author, $guideId, $expectedVersion): array {
+            $current = $this->lockGuide($guideId);
+            self::assertVersion($current, $expectedVersion);
+            if ((int) $current['author_id'] !== (int) $author['id'] || !GuideStatus::authorCanDelete($current)) {
+                throw new ValidationException(['form' => 'This guide can no longer be deleted by its author.']);
+            }
+            return $this->deleteGuideRow($guideId);
+        });
+    }
+
+    /**
+     * Deletes a locked guide row and its revisions; returns its media rows.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function deleteGuideRow(int $guideId): array
+    {
+        $media = $this->db->all('SELECT * FROM media WHERE guide_id = :id', ['id' => $guideId]);
+        $this->db->execute("UPDATE guides SET published_revision_id = NULL, visibility = 'private' WHERE id = :id", ['id' => $guideId]);
+        $this->db->execute('DELETE FROM guides WHERE id = :id', ['id' => $guideId]);
+        return $media;
     }
 
     // ---- Administrative actions -------------------------------------------------
@@ -235,123 +309,110 @@ final class GuideWorkflow
     }
 
     /**
+     * Applies a moderation action atomically. The guide row is locked and
+     * re-read; the action must still be valid for its current state and, when
+     * given, its version must equal the version the administrator reviewed.
+     *
      * @param array<string, mixed> $actor
-     * @param array<string, mixed> $guide
+     * @param array<string, mixed> $guide the guide as the administrator saw it
+     * @return array{message: string, media: list<array<string, mixed>>} media rows to clean up after a purge
      */
-    public function adminAction(array $actor, array $guide, string $action, string $note = '', string $confirmation = ''): string
+    public function adminAction(array $actor, array $guide, string $action, string $note = '', string $confirmation = '', ?int $expectedVersion = null): array
     {
-        if (!in_array($action, $this->availableActions($guide), true)) {
-            throw new ValidationException(['action' => 'That action is not available for this guide right now.']);
+        if (!isset(self::ADMIN_ACTIONS[$action])) {
+            throw new ValidationException(['action' => 'Unknown action.']);
         }
         $note = trim($note);
         if (mb_strlen($note) > 2000) {
             throw new ValidationException(['note' => 'Keep the note under 2,000 characters.']);
         }
-        $id = (int) $guide['id'];
-        $now = Database::now();
-        $label = (string) $guide['title'];
-        $actorId = (int) $actor['id'];
-        $message = '';
-
-        switch ($action) {
-            case 'approve':
-                $this->db->execute("UPDATE guides SET review_status = 'approved', reviewed_at = :now, reviewed_by = :actor,
-                    moderation_note = :note, lock_version = lock_version + 1, updated_at = :now WHERE id = :id",
-                    ['now' => $now, 'actor' => $actorId, 'note' => $note === '' ? null : $note, 'id' => $id]);
-                $this->audit->record($actor, 'guide.approved', 'guide', $id, $label);
-                $message = 'Guide approved. Publish it when you are ready.';
-                break;
-            case 'publish':
-            case 'approve_publish':
-                $this->publish($actor, $guide, $note);
-                if ($action === 'approve_publish') {
-                    $this->audit->record($actor, 'guide.approved', 'guide', $id, $label);
-                }
-                $this->audit->record($actor, 'guide.published', 'guide', $id, $label, ['slug' => $guide['slug']]);
-                $message = 'Guide published.';
-                break;
-            case 'request_changes':
-                if ($note === '') {
-                    throw new ValidationException(['note' => 'Explain what the author should change.']);
-                }
-                $this->db->execute("UPDATE guides SET review_status = 'needs_changes', reviewed_at = :now, reviewed_by = :actor,
-                    moderation_note = :note, lock_version = lock_version + 1, updated_at = :now WHERE id = :id",
-                    ['now' => $now, 'actor' => $actorId, 'note' => $note, 'id' => $id]);
-                $this->audit->record($actor, 'guide.changes_requested', 'guide', $id, $label, ['note' => $note]);
-                $message = 'Changes requested. The author can revise and resubmit.';
-                break;
-            case 'reject':
-                $this->db->execute("UPDATE guides SET review_status = 'rejected', reviewed_at = :now, reviewed_by = :actor,
-                    moderation_note = :note, lock_version = lock_version + 1, updated_at = :now WHERE id = :id",
-                    ['now' => $now, 'actor' => $actorId, 'note' => $note === '' ? null : $note, 'id' => $id]);
-                $this->audit->record($actor, 'guide.rejected', 'guide', $id, $label, $note === '' ? [] : ['note' => $note]);
-                $message = 'Guide rejected.';
-                break;
-            case 'hide':
-                $this->db->execute("UPDATE guides SET visibility = 'hidden', updated_at = :now WHERE id = :id", ['now' => $now, 'id' => $id]);
-                $this->audit->record($actor, 'guide.hidden', 'guide', $id, $label, $note === '' ? [] : ['note' => $note]);
-                $message = 'Guide hidden from readers. Restore it at any time.';
-                break;
-            case 'restore':
-                $this->db->execute("UPDATE guides SET visibility = 'published', updated_at = :now WHERE id = :id AND published_revision_id IS NOT NULL",
-                    ['now' => $now, 'id' => $id]);
-                $this->audit->record($actor, 'guide.restored', 'guide', $id, $label);
-                $message = 'Guide restored to public view.';
-                break;
-            case 'delete':
-                $this->db->execute('UPDATE guides SET deleted_at = :now, deleted_by = :actor, updated_at = :now WHERE id = :id',
-                    ['now' => $now, 'actor' => $actorId, 'id' => $id]);
-                $this->audit->record($actor, 'guide.deleted', 'guide', $id, $label);
-                $message = 'Guide moved to Deleted. It is no longer visible and can be recovered.';
-                break;
-            case 'undelete':
-                $this->db->execute('UPDATE guides SET deleted_at = NULL, deleted_by = NULL, updated_at = :now WHERE id = :id',
-                    ['now' => $now, 'id' => $id]);
-                $this->audit->record($actor, 'guide.undeleted', 'guide', $id, $label);
-                $message = 'Guide recovered with its previous state.';
-                break;
-            case 'purge':
-                if (!hash_equals((string) $guide['slug'], trim($confirmation))) {
-                    throw new ValidationException(['confirmation' => 'Type the guide’s slug exactly to confirm permanent deletion.']);
-                }
-                $this->audit->record($actor, 'guide.purged', 'guide', $id, $label, ['slug' => $guide['slug']]);
-                $message = 'purge';
-                break;
+        if ($action === 'request_changes' && $note === '') {
+            throw new ValidationException(['note' => 'Explain what the author should change.']);
         }
-        return $message;
-    }
+        $expectedVersion ??= (int) $guide['lock_version'];
 
-    /**
-     * Permanently removes a guide row after its media files are deleted by the caller.
-     */
-    public function purgeRow(int $guideId): void
-    {
-        $this->db->transaction(function () use ($guideId): void {
-            $this->db->execute("UPDATE guides SET published_revision_id = NULL, visibility = 'private' WHERE id = :id", ['id' => $guideId]);
-            $this->db->execute('DELETE FROM guides WHERE id = :id', ['id' => $guideId]);
-        });
-    }
-
-    /**
-     * @param array<string, mixed> $actor
-     * @param array<string, mixed> $guide
-     */
-    private function publish(array $actor, array $guide, string $note): void
-    {
-        $this->db->transaction(function () use ($actor, $guide, $note): void {
-            $latest = $this->guides->latestRevision((int) $guide['id']);
-            $revisionId = $latest !== null && hash_equals((string) $latest['content_hash'], self::contentHash($guide))
-                ? (int) $latest['id']
-                : $this->snapshot($guide, 'publication', (int) $actor['id'], $note === '' ? null : $note);
+        return $this->db->transaction(function () use ($actor, $guide, $action, $note, $confirmation, $expectedVersion): array {
+            $current = $this->lockGuide((int) $guide['id']);
+            self::assertVersion($current, $expectedVersion);
+            if (!in_array($action, $this->availableActions($current), true)) {
+                throw new ValidationException(['action' => 'That action is not available for this guide right now.']);
+            }
+            $id = (int) $current['id'];
+            $version = (int) $current['lock_version'];
             $now = Database::now();
-            $this->db->execute(
-                "UPDATE guides SET review_status = 'approved', visibility = 'published', published_revision_id = :revision,
-                    reviewed_at = :now, reviewed_by = :actor, moderation_note = :note, published_at = :now,
-                    first_published_at = COALESCE(first_published_at, :now), lock_version = lock_version + 1, updated_at = :now
-                 WHERE id = :id",
-                ['revision' => $revisionId, 'now' => $now, 'actor' => (int) $actor['id'],
-                 'note' => $note === '' ? null : $note, 'id' => (int) $guide['id']],
-            );
+            $label = (string) $current['title'];
+            $actorId = (int) $actor['id'];
+            $noteValue = $note === '' ? null : $note;
+            $media = [];
+
+            switch ($action) {
+                case 'approve':
+                    $this->conditionalUpdate("review_status = 'approved', reviewed_at = :now, reviewed_by = :actor, moderation_note = :note, updated_at = :now",
+                        ['now' => $now, 'actor' => $actorId, 'note' => $noteValue], $id, $version);
+                    $this->audit->record($actor, 'guide.approved', 'guide', $id, $label);
+                    $message = 'Guide approved. Publish it when you are ready.';
+                    break;
+                case 'publish':
+                case 'approve_publish':
+                    // Publish the locked working copy, which is exactly what the reviewed version shows.
+                    $latest = $this->guides->latestRevision($id);
+                    $revisionId = $latest !== null && hash_equals((string) $latest['content_hash'], self::contentHash($current))
+                        ? (int) $latest['id']
+                        : $this->snapshot($current, 'publication', $actorId, $noteValue);
+                    $this->conditionalUpdate(
+                        "review_status = 'approved', visibility = 'published', published_revision_id = :revision,
+                         reviewed_at = :now, reviewed_by = :actor, moderation_note = :note, published_at = :now,
+                         first_published_at = COALESCE(first_published_at, :now), updated_at = :now",
+                        ['revision' => $revisionId, 'now' => $now, 'actor' => $actorId, 'note' => $noteValue], $id, $version);
+                    if ($action === 'approve_publish') {
+                        $this->audit->record($actor, 'guide.approved', 'guide', $id, $label);
+                    }
+                    $this->audit->record($actor, 'guide.published', 'guide', $id, $label, ['slug' => $current['slug']]);
+                    $message = 'Guide published.';
+                    break;
+                case 'request_changes':
+                    $this->conditionalUpdate("review_status = 'needs_changes', reviewed_at = :now, reviewed_by = :actor, moderation_note = :note, updated_at = :now",
+                        ['now' => $now, 'actor' => $actorId, 'note' => $note], $id, $version);
+                    $this->audit->record($actor, 'guide.changes_requested', 'guide', $id, $label, ['note' => $note]);
+                    $message = 'Changes requested. The author can revise and resubmit.';
+                    break;
+                case 'reject':
+                    $this->conditionalUpdate("review_status = 'rejected', reviewed_at = :now, reviewed_by = :actor, moderation_note = :note, updated_at = :now",
+                        ['now' => $now, 'actor' => $actorId, 'note' => $noteValue], $id, $version);
+                    $this->audit->record($actor, 'guide.rejected', 'guide', $id, $label, $note === '' ? [] : ['note' => $note]);
+                    $message = 'Guide rejected.';
+                    break;
+                case 'hide':
+                    $this->conditionalUpdate("visibility = 'hidden', updated_at = :now", ['now' => $now], $id, $version);
+                    $this->audit->record($actor, 'guide.hidden', 'guide', $id, $label, $note === '' ? [] : ['note' => $note]);
+                    $message = 'Guide hidden from readers. Restore it at any time.';
+                    break;
+                case 'restore':
+                    $this->conditionalUpdate("visibility = 'published', updated_at = :now", ['now' => $now], $id, $version);
+                    $this->audit->record($actor, 'guide.restored', 'guide', $id, $label);
+                    $message = 'Guide restored to public view.';
+                    break;
+                case 'delete':
+                    $this->conditionalUpdate('deleted_at = :now, deleted_by = :actor, updated_at = :now', ['now' => $now, 'actor' => $actorId], $id, $version);
+                    $this->audit->record($actor, 'guide.deleted', 'guide', $id, $label);
+                    $message = 'Guide moved to Deleted. It is no longer visible and can be recovered.';
+                    break;
+                case 'undelete':
+                    $this->conditionalUpdate('deleted_at = NULL, deleted_by = NULL, updated_at = :now', ['now' => $now], $id, $version);
+                    $this->audit->record($actor, 'guide.undeleted', 'guide', $id, $label);
+                    $message = 'Guide recovered with its previous state.';
+                    break;
+                case 'purge':
+                default:
+                    if (!hash_equals((string) $current['slug'], trim($confirmation))) {
+                        throw new ValidationException(['confirmation' => 'Type the guide’s slug exactly to confirm permanent deletion.']);
+                    }
+                    $this->audit->record($actor, 'guide.purged', 'guide', $id, $label, ['slug' => $current['slug']]);
+                    $media = $this->deleteGuideRow($id);
+                    $message = '“' . $label . '” was permanently deleted.';
+                    break;
+            }
+            return ['message' => $message, 'media' => $media];
         });
     }
 
@@ -362,7 +423,7 @@ final class GuideWorkflow
      * @param array<string, mixed> $guide
      * @param array{title: string, summary: string, body: string, applies_to: ?string} $content
      */
-    public function adminEdit(array $actor, array $guide, array $content, string $slug, string $note): void
+    public function adminEdit(array $actor, array $guide, array $content, string $slug, string $note, ?int $expectedVersion = null): void
     {
         if (!empty($guide['deleted_at'])) {
             throw new ValidationException(['form' => 'Recover the guide before editing it.']);
@@ -380,27 +441,35 @@ final class GuideWorkflow
                 throw new ValidationException(['slug' => 'That URL is reserved or already in use.']);
             }
         }
-        $this->db->transaction(function () use ($actor, $guide, $content, $slug, $slugChanged, $note): void {
-            $this->db->execute(
-                'UPDATE guides SET title = :title, summary = :summary, body = :body, applies_to = :applies, slug = :slug,
-                                   lock_version = lock_version + 1, updated_at = :now WHERE id = :id',
+        $this->db->transaction(function () use ($actor, $guide, $content, $slug, $slugChanged, $note, $expectedVersion): void {
+            $current = $this->lockGuide((int) $guide['id']);
+            self::assertVersion($current, $expectedVersion ?? (int) $guide['lock_version']);
+            if (!empty($current['deleted_at'])) {
+                throw new ValidationException(['form' => 'Recover the guide before editing it.']);
+            }
+            if ($slugChanged && $current['first_published_at'] !== null) {
+                throw new ValidationException(['slug' => 'A guide’s URL is fixed once it has been published.']);
+            }
+            $this->conditionalUpdate(
+                'title = :title, summary = :summary, body = :body, applies_to = :applies, slug = :slug, updated_at = :now',
                 [
                     'title' => $content['title'], 'summary' => $content['summary'], 'body' => $content['body'],
-                    'applies' => $content['applies_to'], 'slug' => $slugChanged ? $slug : $guide['slug'],
-                    'now' => Database::now(), 'id' => (int) $guide['id'],
+                    'applies' => $content['applies_to'], 'slug' => $slugChanged ? $slug : $current['slug'],
+                    'now' => Database::now(),
                 ],
+                (int) $current['id'], (int) $current['lock_version'],
             );
-            $updated = array_merge($guide, $content);
-            $latest = $this->guides->latestRevision((int) $guide['id']);
+            $updated = array_merge($current, $content);
+            $latest = $this->guides->latestRevision((int) $current['id']);
             if ($latest === null || !hash_equals((string) $latest['content_hash'], self::contentHash($updated))) {
                 $this->snapshot($updated, 'admin_edit', (int) $actor['id'], trim($note) === '' ? null : mb_substr(trim($note), 0, 500));
             }
+            $this->audit->record($actor, 'guide.admin_edited', 'guide', (int) $current['id'], $content['title']);
+            if ($slugChanged) {
+                $this->audit->record($actor, 'guide.slug_changed', 'guide', (int) $current['id'], $content['title'],
+                    ['from' => $current['slug'], 'to' => $slug]);
+            }
         });
-        $this->audit->record($actor, 'guide.admin_edited', 'guide', (int) $guide['id'], $content['title']);
-        if ($slugChanged) {
-            $this->audit->record($actor, 'guide.slug_changed', 'guide', (int) $guide['id'], $content['title'],
-                ['from' => $guide['slug'], 'to' => $slug]);
-        }
     }
 
     /**

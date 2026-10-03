@@ -46,12 +46,18 @@ final class CloudflareVerifier implements Verifier
             $codes = is_array($data['error-codes'] ?? null) ? array_values(array_filter($data['error-codes'], 'is_string')) : [];
             return new Result(false, $codes === [] ? ['verification-failed'] : $codes);
         }
-        if (isset($data['action']) && $data['action'] !== '' && $data['action'] !== $action) {
+        // A token minted for another form, or on another site using the same
+        // keys, is refused: the action and hostname must be present and match.
+        $actual = $data['action'] ?? null;
+        if ($action === '' || !is_string($actual) || $actual === '' || !hash_equals($action, $actual)) {
             return new Result(false, ['action-mismatch']);
         }
-        if ($this->expectedHostname !== null && isset($data['hostname'])
-            && strcasecmp((string) $data['hostname'], $this->expectedHostname) !== 0) {
-            return new Result(false, ['hostname-mismatch']);
+        if ($this->expectedHostname !== null) {
+            $hostname = $data['hostname'] ?? null;
+            if (!is_string($hostname) || $hostname === ''
+                || !hash_equals(strtolower($this->expectedHostname), strtolower($hostname))) {
+                return new Result(false, ['hostname-mismatch']);
+            }
         }
         return new Result(true);
     }

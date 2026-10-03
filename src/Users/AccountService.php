@@ -32,6 +32,7 @@ final class AccountService
         private readonly Settings $settings,
         private readonly AuditLog $audit,
         private readonly PasswordPolicy $passwords,
+        private readonly int $adminLockTimeout = 10,
     ) {
     }
 
@@ -122,6 +123,54 @@ final class AccountService
         return $id;
     }
 
+    private const ADMIN_LOCK = 'uvs_compendium_admin_invariant';
+
+    /**
+     * Runs a change that could reduce the number of active administrators.
+     *
+     * Changes are serialized with a named database lock, run in one transaction,
+     * and verified afterwards with a locking read: if the change would leave no
+     * active administrator, it is rolled back. Two administrators acting on each
+     * other at the same moment therefore cannot both succeed.
+     *
+     * @template T
+     * @param callable(): T $change
+     * @return T
+     */
+    public function withAdminInvariant(callable $change): mixed
+    {
+        $acquired = $this->db->value('SELECT GET_LOCK(:name, :timeout)', ['name' => self::ADMIN_LOCK, 'timeout' => $this->adminLockTimeout]);
+        if ((int) $acquired !== 1) {
+            throw new ValidationException(['user' => 'Another administrative change is in progress. Please try again in a moment.']);
+        }
+        try {
+            return $this->db->transaction(function () use ($change): mixed {
+                $result = $change();
+                $remaining = $this->db->all("SELECT id FROM users WHERE role = 'admin' AND status = 'active' FOR UPDATE");
+                if (count($remaining) < 1) {
+                    throw new ValidationException(['user' => 'That change would leave the site without an active administrator.']);
+                }
+                return $result;
+            });
+        } finally {
+            $this->db->value('SELECT RELEASE_LOCK(:name)', ['name' => self::ADMIN_LOCK]);
+        }
+    }
+
+    /**
+     * Re-reads the acting administrator under lock; a demotion or suspension
+     * that committed while this request was running stops it here.
+     *
+     * @param array<string, mixed> $actor
+     */
+    private function assertActorStillAdmin(array $actor): void
+    {
+        $current = $this->db->one('SELECT role, status FROM users WHERE id = :id FOR UPDATE', ['id' => (int) $actor['id']]);
+        if ($current === null || $current['role'] !== 'admin' || $current['status'] !== 'active') {
+            throw new ValidationException(['user' => 'Your administrator access changed while this request was running.']);
+        }
+    }
+
     /**
      * @param array<string, mixed> $actor
      * @throws ValidationException
@@ -130,38 +179,43 @@ final class AccountService
     {
         $definition = self::STATUS_ACTIONS[$action] ?? throw new ValidationException(['action' => 'Unknown account action.']);
         [$from, $to, $auditAction] = $definition;
-        $user = $this->users->find($userId) ?? throw new ValidationException(['user' => 'That account no longer exists.']);
-        if ((int) $user['id'] === (int) $actor['id']) {
+        if ($userId === (int) $actor['id']) {
             throw new ValidationException(['user' => 'You cannot change the status of your own account.']);
-        }
-        if (!in_array($user['status'], $from, true)) {
-            throw new ValidationException(['user' => sprintf('A %s account cannot be changed with “%s”.', $user['status'], $action)]);
-        }
-        if ($user['role'] === 'admin' && $to !== 'active' && $user['status'] === 'active' && $this->users->countAdmins() <= 1) {
-            throw new ValidationException(['user' => 'The last active administrator cannot be suspended.']);
         }
         $reason = trim($reason);
         if (mb_strlen($reason) > 500) {
             throw new ValidationException(['reason' => 'Keep the member-facing message under 500 characters.']);
         }
-        // Losing access revokes every session at once; gaining access keeps the
-        // member signed in (their session identifier is rotated on their next request).
-        $revoke = $to !== 'active' ? ', auth_epoch = auth_epoch + 1' : '';
-        $this->db->execute(
-            'UPDATE users SET status = :status, status_reason = :reason, status_changed_at = :now, status_changed_by = :actor,
-                              updated_at = :now' . $revoke . ' WHERE id = :id AND status = :previous',
-            [
-                'status' => $to,
-                'reason' => $reason === '' ? null : $reason,
-                'now' => Database::now(),
-                'actor' => (int) $actor['id'],
-                'id' => $userId,
-                'previous' => $user['status'],
-            ],
-        );
-        $this->audit->record($actor, $auditAction, 'user', $userId, (string) $user['username'],
-            ['from' => $user['status'], 'to' => $to] + ($reason !== '' ? ['reason' => $reason] : []));
-        return $to;
+        return $this->withAdminInvariant(function () use ($actor, $userId, $action, $from, $to, $auditAction, $reason): string {
+            $this->assertActorStillAdmin($actor);
+            $user = $this->db->one('SELECT * FROM users WHERE id = :id FOR UPDATE', ['id' => $userId])
+                ?? throw new ValidationException(['user' => 'That account no longer exists.']);
+            if (!in_array($user['status'], $from, true)) {
+                throw new ValidationException(['user' => sprintf('A %s account cannot be changed with “%s”. It may have just been changed by another administrator.', $user['status'], $action)]);
+            }
+            // Losing access revokes every session at once; gaining access keeps the
+            // member signed in (their session identifier is rotated on their next request).
+            $revoke = $to !== 'active' ? ', auth_epoch = auth_epoch + 1' : '';
+            $updated = $this->db->execute(
+                'UPDATE users SET status = :status, status_reason = :reason, status_changed_at = :now, status_changed_by = :actor,
+                                  updated_at = :now' . $revoke . ' WHERE id = :id AND status = :previous AND role = :role',
+                [
+                    'status' => $to,
+                    'reason' => $reason === '' ? null : $reason,
+                    'now' => Database::now(),
+                    'actor' => (int) $actor['id'],
+                    'id' => $userId,
+                    'previous' => $user['status'],
+                    'role' => $user['role'],
+                ],
+            );
+            if ($updated !== 1) {
+                throw new ValidationException(['user' => 'That account changed while your request was running. Reload and try again.']);
+            }
+            $this->audit->record($actor, $auditAction, 'user', $userId, (string) $user['username'],
+                ['from' => $user['status'], 'to' => $to] + ($reason !== '' ? ['reason' => $reason] : []));
+            return $to;
+        });
     }
 
     /**
@@ -173,25 +227,30 @@ final class AccountService
         if (!in_array($role, ['member', 'admin'], true)) {
             throw new ValidationException(['role' => 'Choose Member or Administrator.']);
         }
-        $user = $this->users->find($userId) ?? throw new ValidationException(['user' => 'That account no longer exists.']);
-        if ($user['role'] === $role) {
-            return;
-        }
-        if ((int) $user['id'] === (int) $actor['id']) {
+        if ($userId === (int) $actor['id']) {
             throw new ValidationException(['role' => 'You cannot change your own role.']);
         }
-        if ($role === 'admin' && $user['status'] !== 'active') {
-            throw new ValidationException(['role' => 'Only active accounts can become administrators.']);
-        }
-        if ($user['role'] === 'admin' && $this->users->countAdmins() <= 1) {
-            throw new ValidationException(['role' => 'The last active administrator cannot be demoted.']);
-        }
-        $this->db->execute(
-            'UPDATE users SET role = :role, auth_epoch = auth_epoch + 1, updated_at = :now WHERE id = :id',
-            ['role' => $role, 'now' => Database::now(), 'id' => $userId],
-        );
-        $this->audit->record($actor, 'user.role_changed', 'user', $userId, (string) $user['username'],
-            ['from' => $user['role'], 'to' => $role]);
+        $this->withAdminInvariant(function () use ($actor, $userId, $role): void {
+            $this->assertActorStillAdmin($actor);
+            $user = $this->db->one('SELECT * FROM users WHERE id = :id FOR UPDATE', ['id' => $userId])
+                ?? throw new ValidationException(['user' => 'That account no longer exists.']);
+            if ($user['role'] === $role) {
+                return;
+            }
+            if ($role === 'admin' && $user['status'] !== 'active') {
+                throw new ValidationException(['role' => 'Only active accounts can become administrators.']);
+            }
+            $updated = $this->db->execute(
+                'UPDATE users SET role = :role, auth_epoch = auth_epoch + 1, updated_at = :now
+                 WHERE id = :id AND role = :previous AND status = :status',
+                ['role' => $role, 'now' => Database::now(), 'id' => $userId, 'previous' => $user['role'], 'status' => $user['status']],
+            );
+            if ($updated !== 1) {
+                throw new ValidationException(['role' => 'That account changed while your request was running. Reload and try again.']);
+            }
+            $this->audit->record($actor, 'user.role_changed', 'user', $userId, (string) $user['username'],
+                ['from' => $user['role'], 'to' => $role]);
+        });
     }
 
     /**

@@ -6,6 +6,7 @@ namespace Uvs\Controller;
 
 use Uvs\Http\HttpException;
 use Uvs\Http\Response;
+use Uvs\Media\MediaService;
 
 /**
  * Serves uploaded images from private storage. Files are never executed, are
@@ -19,9 +20,7 @@ final class MediaController extends Controller
         if ($media === null) {
             throw HttpException::notFound();
         }
-        $public = $media['purpose'] === 'avatar'
-            ? $media['owner_status'] === 'active'
-            : $media['guide_id'] !== null && $media['guide_visibility'] === 'published' && $media['guide_deleted_at'] === null;
+        $public = MediaService::isPublic($media);
         if (!$public) {
             $viewer = $this->user();
             $allowed = $viewer !== null && (

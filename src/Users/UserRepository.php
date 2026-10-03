@@ -104,13 +104,43 @@ final class UserRepository
         return $id;
     }
 
+    /**
+     * Stores a new password hash. A real credential change ($revokeSessions)
+     * also signs out other sessions and voids outstanding recovery links in the
+     * same transaction; a transparent rehash at sign-in does neither.
+     */
     public function updatePasswordHash(int $id, string $hash, bool $revokeSessions): void
     {
-        $this->db->execute(
-            'UPDATE users SET password_hash = :hash, updated_at = :now'
-            . ($revokeSessions ? ', auth_epoch = auth_epoch + 1' : '') . ' WHERE id = :id',
-            ['hash' => $hash, 'now' => Database::now(), 'id' => $id],
-        );
+        $this->db->transaction(function () use ($id, $hash, $revokeSessions): void {
+            $this->db->execute(
+                'UPDATE users SET password_hash = :hash, updated_at = :now'
+                . ($revokeSessions ? ', auth_epoch = auth_epoch + 1' : '') . ' WHERE id = :id',
+                ['hash' => $hash, 'now' => Database::now(), 'id' => $id],
+            );
+            if ($revokeSessions) {
+                $this->revokeAccountTokens($id);
+            }
+        });
+    }
+
+    /**
+     * Changes the account email and, atomically, voids every outstanding
+     * recovery token: a reset link already mailed to the previous address must
+     * not keep working once that address no longer belongs to the account.
+     */
+    public function changeEmail(int $id, string $email): void
+    {
+        $this->db->transaction(function () use ($id, $email): void {
+            $this->db->execute('UPDATE users SET email = :email, email_key = :key, updated_at = :now WHERE id = :id',
+                ['email' => $email, 'key' => EmailAddress::normalize($email), 'now' => Database::now(), 'id' => $id]);
+            $this->revokeAccountTokens($id);
+        });
+    }
+
+    /** Deletes every recovery token (all purposes) for an account. */
+    public function revokeAccountTokens(int $id): int
+    {
+        return $this->db->execute('DELETE FROM account_tokens WHERE user_id = :id', ['id' => $id]);
     }
 
     public function revokeSessions(int $id): void

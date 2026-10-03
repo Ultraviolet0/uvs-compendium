@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Uvs;
 
+use Uvs\Support\PathGuard;
+
 /**
  * Application configuration.
  *
@@ -26,7 +28,7 @@ final class Config
     /**
      * @param array<string, mixed> $values
      */
-    public function __construct(array $values, ?string $source = null)
+    public function __construct(array $values, ?string $source = null, private readonly ?string $documentRoot = null)
     {
         $this->values = self::merge(self::defaults(), $values);
         $this->source = $source;
@@ -49,19 +51,19 @@ final class Config
         foreach ($candidates as $index => $file) {
             if (!is_file($file)) {
                 if ($index === 0 && $file === $explicit) {
-                    return new self(['env' => 'production'], null);
+                    return new self(['env' => 'production'], null, $appRoot);
                 }
                 continue;
             }
             $values = (static fn (string $path): mixed => require $path)($file);
             if (!is_array($values)) {
-                return new self(['env' => 'production'], null);
+                return new self(['env' => 'production'], null, $appRoot);
             }
-            return new self($values, $file);
+            return new self($values, $file, $appRoot);
         }
 
         $fromEnvironment = self::fromEnvironment();
-        return new self($fromEnvironment, $fromEnvironment === [] ? null : 'environment');
+        return new self($fromEnvironment, $fromEnvironment === [] ? null : 'environment', $appRoot);
     }
 
     /**
@@ -123,7 +125,7 @@ final class Config
                 // Hard ceilings. Administrators may lower, but never raise, these in settings.
                 'max_upload_bytes' => 10 * 1024 * 1024,
                 'max_processed_bytes' => 2 * 1024 * 1024,
-                'max_source_pixels' => 40_000_000,
+                'max_source_pixels' => 16_000_000,
                 'max_guide_dimension' => 1600,
                 'avatar_dimension' => 256,
                 'max_quota_bytes' => 200 * 1024 * 1024,
@@ -245,6 +247,39 @@ final class Config
     }
 
     /**
+     * Private files (configuration, uploads, sessions, logs) must never be
+     * reachable over HTTP, so each one must resolve outside the document root,
+     * including through symbolic links. Checked whenever the document root is
+     * known (always, when loaded by the application).
+     *
+     * @return list<string>
+     */
+    private function privatePathProblems(): array
+    {
+        if ($this->documentRoot === null) {
+            return [];
+        }
+        $paths = [
+            'storage_path' => $this->get('storage_path'),
+            'session.save_path' => $this->get('session.save_path'),
+            'log_path' => $this->get('log_path'),
+        ];
+        if ($this->source !== null && $this->source !== 'environment') {
+            $paths['the configuration file'] = $this->source;
+        }
+        $problems = [];
+        foreach ($paths as $name => $path) {
+            if ($path === null) {
+                continue;
+            }
+            if (!is_string($path) || !PathGuard::isOutside($path, $this->documentRoot)) {
+                $problems[] = "{$name} must be an absolute path outside the web document root (symbolic links included).";
+            }
+        }
+        return $problems;
+    }
+
+    /**
      * @return list<string>
      */
     private function validate(): array
@@ -265,6 +300,7 @@ final class Config
         if (!is_string($storage) || !str_starts_with($storage, '/')) {
             $problems[] = 'storage_path must be an absolute path outside the document root.';
         }
+        $problems = array_merge($problems, $this->privatePathProblems());
         if ($this->isProduction()) {
             $baseUrl = $this->get('base_url');
             if (!is_string($baseUrl) || !preg_match('#^https://[^/\s]+(?:/[^\s]*)?$#', $baseUrl)) {

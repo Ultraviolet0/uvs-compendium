@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { test } from 'node:test';
 import { applicationFiles, buildRuntime, generatedFiles, privateDirectories, runtimeFiles } from '../scripts/build-runtime.mjs';
@@ -24,11 +24,24 @@ function fingerprint() {
   });
 }
 
+// Established independently of the builder: the committed PHP files of the
+// application directories, straight from Git.
+function committedApplicationPhp() {
+  return execFileSync('git', ['ls-files', '-z', '--', 'src', 'templates', 'migrations'], { encoding: 'utf8' })
+    .split('\0').filter((file) => file.endsWith('.php'));
+}
+
 test('runtime package contains only reviewed site files and cannot escape its root', () => {
   buildRuntime();
   const files = packageFiles();
-  const expected = [...new Set([...applicationFiles(), ...generatedFiles])].sort();
+  const expected = [...new Set([...runtimeFiles, ...committedApplicationPhp(), ...generatedFiles])].sort();
+  assert.deepEqual(applicationFiles(), [...new Set([...runtimeFiles, ...committedApplicationPhp()])].sort());
   assert.deepEqual(files.filter((file) => !file.startsWith('vendor/') || file === 'vendor/.htaccess'), expected);
+  const tracked = new Set(execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0'));
+  for (const file of files) {
+    if (file.startsWith('vendor/') || generatedFiles.includes(file)) continue;
+    assert.ok(tracked.has(file), `${file} is packaged but not tracked by Git`);
+  }
   const vendor = files.filter((file) => file.startsWith('vendor/'));
   assert.ok(vendor.includes('vendor/autoload.php'));
   assert.ok(vendor.some((file) => file.startsWith('vendor/league/commonmark/src/')));
@@ -136,4 +149,29 @@ test('a failed build removes the previous package', () => {
     runtimeFiles.pop();
     buildRuntime();
   }
+});
+
+test('an untracked PHP file in an application directory stops the build', () => {
+  const strays = ['src/ZzUntrackedRuntimeFixture.php', 'templates/zz-untracked-fixture/page.php'];
+  const notes = 'src/zz-untracked-notes.txt';
+  try {
+    for (const stray of strays) {
+      mkdirSync(dirname(resolve(stray)), { recursive: true });
+      writeFileSync(resolve(stray), '<?php // never reviewed, never committed\n');
+      assert.throws(() => buildRuntime(), (error) => /Untracked PHP file in application directory/.test(error.message)
+        && error.message.includes(stray), stray);
+      assert.ok(!existsSync(root), 'no deployable package is left behind');
+      rmSync(resolve(stray), { force: true });
+    }
+    // Untracked non-PHP files are not code and are never published either.
+    writeFileSync(resolve(notes), 'scratch');
+    buildRuntime();
+    assert.ok(!existsSync(join(root, notes)));
+  } finally {
+    for (const stray of strays) rmSync(resolve(stray), { force: true });
+    rmSync(resolve('templates/zz-untracked-fixture'), { recursive: true, force: true });
+    rmSync(resolve(notes), { force: true });
+    buildRuntime();
+  }
+  for (const stray of strays) assert.ok(!existsSync(join(root, stray)), `${stray} was packaged`);
 });

@@ -12,9 +12,30 @@ use Uvs\Support\ValidationException;
  * dimensions are capped before decoding, the image is fully decoded and drawn
  * onto a fresh canvas, and only that canvas is re-encoded. Metadata (EXIF, ICC,
  * comments) and any appended or polyglot payload cannot survive this process.
+ *
+ * Decoding is the expensive step on shared hosting: GD holds every source pixel
+ * as a 4-byte truecolour value, and the PNG and WebP decoders briefly keep a
+ * second full-size buffer while doing so. The pixel ceiling is therefore the
+ * lower of the configured maximum and what the remaining PHP memory budget can
+ * hold, so an upload is refused politely instead of exhausting memory. EXIF
+ * rotation is applied to the small resized canvas, never to the full source.
  */
 final class ImageProcessor
 {
+    /** Absolute edge limit, whatever the pixel budget. */
+    public const MAX_EDGE = 8192;
+
+    /** Conservative peak bytes per source pixel while decoding (pixel data plus decoder buffers and row overhead). */
+    private const BYTES_PER_PIXEL = [
+        'image/jpeg' => 5,
+        'image/png' => 9,
+        'image/webp' => 9,
+        'image/gif' => 6,
+    ];
+
+    /** Memory kept free for the framework, the request, and the encoder. */
+    private const HEADROOM = 16 * 1024 * 1024;
+
     public const ACCEPTED = [
         'image/jpeg' => IMAGETYPE_JPEG,
         'image/png' => IMAGETYPE_PNG,
@@ -26,7 +47,45 @@ final class ImageProcessor
         private readonly int $maxSourceBytes,
         private readonly int $maxProcessedBytes,
         private readonly int $maxSourcePixels,
+        private readonly ?int $memoryLimit = null,
+        private readonly ?int $memoryInUse = null,
     ) {
+    }
+
+    /**
+     * The largest source image, in pixels, that can be decoded safely for the
+     * given type and output size: the configured ceiling, lowered further when
+     * the PHP memory limit could not hold the decoded image.
+     */
+    public function pixelLimit(string $mime, int $maxDimension): int
+    {
+        $limit = min($this->maxSourcePixels, self::MAX_EDGE * self::MAX_EDGE);
+        $memory = $this->memoryLimit ?? self::parseBytes((string) ini_get('memory_limit'));
+        if ($memory <= 0) {
+            return $limit; // -1: no PHP memory limit; the configured ceiling applies.
+        }
+        $inUse = $this->memoryInUse ?? memory_get_usage(true);
+        // The resized canvas and its rotated copy, the encoder output, and general headroom.
+        $reserved = 2 * $maxDimension * $maxDimension * 4 + 2 * $this->maxProcessedBytes + self::HEADROOM;
+        $available = $memory - $inUse - $reserved;
+        $perPixel = self::BYTES_PER_PIXEL[$mime] ?? max(self::BYTES_PER_PIXEL);
+        return max(0, min($limit, intdiv(max(0, $available), $perPixel)));
+    }
+
+    /** Parses a php.ini byte value such as "128M", "1G", or "-1". */
+    public static function parseBytes(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '' || $value === '-1') {
+            return -1;
+        }
+        $number = (int) $value;
+        return match (strtolower(substr($value, -1))) {
+            'g' => $number * 1024 * 1024 * 1024,
+            'm' => $number * 1024 * 1024,
+            'k' => $number * 1024,
+            default => $number,
+        };
     }
 
     /**
@@ -56,9 +115,14 @@ final class ImageProcessor
             throw new ValidationException(['image' => 'The image could not be read. It may be damaged or mislabeled.']);
         }
         [$width, $height] = $info;
-        if ($width * $height > $this->maxSourcePixels || $width > 12000 || $height > 12000) {
-            throw new ValidationException(['image' => 'That image has too many pixels. Resize it below ' . number_format($this->maxSourcePixels / 1_000_000) . ' megapixels.']);
+        $pixelLimit = $this->pixelLimit($mime, $maxDimension);
+        if ($width * $height > $pixelLimit || $width > self::MAX_EDGE || $height > self::MAX_EDGE) {
+            $megapixels = rtrim(rtrim(number_format($pixelLimit / 1_000_000, 1), '0'), '.');
+            throw new ValidationException(['image' => 'That image has too many pixels. Resize it to at most ' . $megapixels
+                . ' megapixels and ' . number_format(self::MAX_EDGE) . ' pixels on its longest side.']);
         }
+        // Read before decoding so the rotation can be applied to the small canvas.
+        $orientation = $mime === 'image/jpeg' ? self::orientation($path) : 1;
         $source = match ($mime) {
             'image/jpeg' => @imagecreatefromjpeg($path),
             'image/png' => @imagecreatefrompng($path),
@@ -68,13 +132,13 @@ final class ImageProcessor
         if (!$source instanceof GdImage) {
             throw new ValidationException(['image' => 'The image could not be decoded.']);
         }
-        if ($mime === 'image/jpeg') {
-            $source = self::applyOrientation($source, $path);
-        }
+        // Fitting and centre-cropping are symmetric under quarter turns, so
+        // rotating afterwards gives the same result at a fraction of the memory.
         $canvas = $purpose === 'avatar'
             ? self::squareCrop($source, $maxDimension)
             : self::fit($source, $maxDimension);
         imagedestroy($source);
+        $canvas = self::applyOrientation($canvas, $orientation);
 
         $encoded = $this->encode($canvas);
         $result = [
@@ -151,13 +215,17 @@ final class ImageProcessor
         return $canvas;
     }
 
-    private static function applyOrientation(GdImage $image, string $path): GdImage
+    private static function orientation(string $path): int
     {
         if (!function_exists('exif_read_data')) {
-            return $image;
+            return 1;
         }
         $exif = @exif_read_data($path);
-        $orientation = is_array($exif) ? (int) ($exif['Orientation'] ?? 1) : 1;
+        return is_array($exif) ? (int) ($exif['Orientation'] ?? 1) : 1;
+    }
+
+    private static function applyOrientation(GdImage $image, int $orientation): GdImage
+    {
         $rotated = match ($orientation) {
             3 => imagerotate($image, 180, 0),
             6 => imagerotate($image, -90, 0),

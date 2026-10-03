@@ -114,6 +114,39 @@ final class SecurityTest extends TestCase
         self::assertFalse((new CloudflareVerifier('s', 5, null, fn () => '{}'))->verify('', '1.2.3.4', 'signup')->success);
     }
 
+    public function testTurnstileRequiresExactActionAndHostname(): void
+    {
+        $verify = static function (array $response, ?string $expectedHost = 'compendium.example', string $action = 'signup') {
+            return (new CloudflareVerifier('secret', 5, $expectedHost, fn () => json_encode(['success' => true] + $response)))
+                ->verify('token', '198.51.100.7', $action);
+        };
+        $valid = ['action' => 'signup', 'hostname' => 'compendium.example'];
+        self::assertTrue($verify($valid)->success, 'valid response');
+        self::assertTrue($verify(['hostname' => 'Compendium.Example'] + $valid)->success, 'hostnames compare case-insensitively');
+
+        $cases = [
+            'missing action' => [['hostname' => 'compendium.example'], 'action-mismatch'],
+            'empty action' => [['action' => ''] + $valid, 'action-mismatch'],
+            'non-string action' => [['action' => ['signup']] + $valid, 'action-mismatch'],
+            'mismatched action' => [['action' => 'login'] + $valid, 'action-mismatch'],
+            'action prefix' => [['action' => 'signup2'] + $valid, 'action-mismatch'],
+            'missing hostname' => [['action' => 'signup'], 'hostname-mismatch'],
+            'empty hostname' => [['hostname' => ''] + $valid, 'hostname-mismatch'],
+            'null hostname' => [['hostname' => null] + $valid, 'hostname-mismatch'],
+            'mismatched hostname' => [['hostname' => 'evil.example'] + $valid, 'hostname-mismatch'],
+            'subdomain hostname' => [['hostname' => 'compendium.example.evil.test'] + $valid, 'hostname-mismatch'],
+        ];
+        foreach ($cases as $name => [$response, $code]) {
+            $result = $verify($response);
+            self::assertFalse($result->success, $name);
+            self::assertSame([$code], $result->errors, $name);
+        }
+        self::assertFalse($verify($valid, 'compendium.example', '')->success, 'an empty expected action never matches');
+        // Without a configured hostname (no base_url host), only the action is enforced.
+        self::assertTrue($verify(['action' => 'signup'], null)->success);
+        self::assertFalse($verify(['hostname' => 'compendium.example'], null)->success);
+    }
+
     public function testProductionConfigurationRequiresSecureValues(): void
     {
         $missing = new Config(['env' => 'production']);

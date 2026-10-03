@@ -6,7 +6,6 @@ namespace Uvs\Controller;
 
 use Uvs\Auth\Mfa;
 use Uvs\Auth\PasswordHasher;
-use Uvs\Database;
 use Uvs\Http\Response;
 use Uvs\Support\Text;
 use Uvs\Users\EmailAddress;
@@ -75,8 +74,7 @@ final class SecurityController extends Controller
             return $this->page($user, ['email' => 'That email address cannot be used.'], 422);
         }
         $old = (string) $user['email'];
-        $this->app->db()->execute('UPDATE users SET email = :email, email_key = :key, updated_at = :now WHERE id = :id',
-            ['email' => $email, 'key' => EmailAddress::normalize($email), 'now' => Database::now(), 'id' => (int) $user['id']]);
+        $this->app->users()->changeEmail((int) $user['id'], $email);
         if (EmailAddress::normalize($old) !== EmailAddress::normalize($email)) {
             $this->app->mailer()->send($old, "Your UV's Compendium email address changed",
                 "Hello {$user['username']},\n\nThe email address on your UV's Compendium account was just changed. "

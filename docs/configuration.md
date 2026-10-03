@@ -48,7 +48,7 @@ If the hosting layout differs, set the environment variable `UVS_CONFIG_FILE` to
    php bin/console migrate:status
    ```
 
-   `config:check` reports problems without printing secret values. Run `migrate` after every deployment that adds a file under `migrations/`; it is safe to run repeatedly.
+   `config:check` reports problems without printing secret values. It (and the application itself) refuses a configuration file, `storage_path`, `session.save_path`, or `log_path` that resolves inside the document root, including through a symbolic link; the sibling `uvs-private/` layout above is accepted. Run `migrate` after every deployment that adds a file under `migrations/`; it is safe to run repeatedly.
 
 5. Create the first administrator (next section).
 6. Add cron jobs in hPanel (adjust the PHP path if Hostinger shows a different one):
@@ -95,7 +95,7 @@ Turnstile protects signup and password-reset requests. It is free and needs a Cl
 
 Behaviour:
 
-- Tokens are verified server-side against Cloudflare's Siteverify API with a 5-second timeout. A timeout, network error, unexpected response, wrong action, or wrong hostname counts as a failure.
+- Tokens are verified server-side against Cloudflare's Siteverify API with a 5-second timeout. A timeout, network error, unexpected response, or a missing, empty, or different action or hostname counts as a failure. The expected hostname is the host of `base_url`, so the Turnstile widget's hostname list must include it (Cloudflare's always-pass dummy keys report `example.com` and are therefore refused when `mode => 'enabled'`).
 - **Production fails closed.** If Turnstile is missing keys, disabled, or set to test mode while `env` is `production`, signup and password reset are shown as unavailable instead of running unprotected.
 - `mode => 'test'` (used by Docker development and the automated tests) swaps in an offline verifier that accepts only Cloudflare's documented dummy token. It is impossible to select in production.
 
@@ -120,7 +120,7 @@ Hard ceilings come from `config.php` (`media` section) and PHP's `upload_max_fil
 | Storage per member | 50 MB | 200 MB |
 | Images per guide | 20 | 40 |
 | Processed image size | — | 2 MB after compression |
-| Source pixels | — | 40 megapixels (checked before decoding) |
+| Source pixels | — | 16 megapixels and 8192 px per side, lowered automatically when PHP's `memory_limit` could not decode that much (checked before decoding) |
 | Guide image width/height | — | 1600 px (resized down) |
 | Avatar | — | 256 × 256, centre-cropped |
 

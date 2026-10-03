@@ -85,8 +85,11 @@ export const runtimeFiles = [
   'videos/warlord-of-blood.mp4',
 ].sort();
 
-// Reviewed application directories: every PHP file inside is server code that
-// the front controller loads. Nothing else in these directories is published.
+// Reviewed application directories: every PHP file committed inside is server
+// code that the front controller loads. Nothing else in them is published, and
+// only files tracked by Git are: a stray, untracked PHP file in one of these
+// directories (a local experiment, a merge leftover) stops the build instead
+// of being deployed.
 export const applicationDirectories = ['src', 'templates', 'migrations'];
 
 // Server-only directories receive a deny-all .htaccess as a second line of
@@ -94,19 +97,37 @@ export const applicationDirectories = ['src', 'templates', 'migrations'];
 export const privateDirectories = ['bin', 'includes', 'migrations', 'src', 'templates', 'vendor'];
 const denyAll = '# Server-side code only; never served over HTTP.\nRequire all denied\n';
 
-function phpFilesIn(directory) {
+/** Files Git tracks under the given paths (repository-relative, forward slashes). */
+export function trackedFiles(paths = []) {
+  const output = execFileSync('git', ['ls-files', '-z', '--', ...paths], { cwd: repositoryRoot, encoding: 'utf8' });
+  return output.split('\0').filter((file) => file !== '');
+}
+
+function filesOnDisk(directory) {
   const root = join(repositoryRoot, directory);
+  if (!existsSync(root)) return [];
   return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
     if (entry.isSymbolicLink()) throw new Error(`Refusing symlink in application directory: ${path}`);
-    if (entry.isDirectory()) return phpFilesIn(path);
-    return entry.name.endsWith('.php') ? [path.split(sep).join('/')] : [];
+    if (entry.isDirectory()) return filesOnDisk(path);
+    return [path.split(sep).join('/')];
   });
+}
+
+/** Refuses PHP files in the application directories that Git does not track. */
+export function assertNoUntrackedApplicationCode() {
+  const tracked = new Set(trackedFiles(applicationDirectories));
+  const untracked = applicationDirectories.flatMap(filesOnDisk)
+    .filter((file) => file.endsWith('.php') && !tracked.has(file));
+  if (untracked.length > 0) {
+    throw new Error(`Untracked PHP file in application directory (commit or remove it): ${untracked.join(', ')}`);
+  }
 }
 
 /** Every reviewed source file the package contains, excluding vendor/ and generated files. */
 export function applicationFiles() {
-  return [...runtimeFiles, ...applicationDirectories.flatMap(phpFilesIn)].sort();
+  const application = trackedFiles(applicationDirectories).filter((file) => file.endsWith('.php'));
+  return [...runtimeFiles, ...application].sort();
 }
 
 /** Files generated during the build rather than copied from the repository. */
@@ -217,7 +238,9 @@ export function buildRuntime() {
   removeBuildDirectory(runtimeRoot);
   removeBuildDirectory(stagingRoot);
   if (new Set(runtimeFiles).size !== runtimeFiles.length) throw new Error('Duplicate runtime file');
+  assertNoUntrackedApplicationCode();
   const sources = applicationFiles();
+  const tracked = new Set(trackedFiles());
   const realRepositoryRoot = realpathSync(repositoryRoot);
   for (const file of sources) {
     if (file === guideDatesFile) continue;
@@ -226,6 +249,13 @@ export function buildRuntime() {
       || !lstatSync(source).isFile() || !inside(realRepositoryRoot, realpathSync(source))) {
       throw new Error(`Missing or unsafe runtime file: ${file}`);
     }
+    if (!tracked.has(file)) throw new Error(`Runtime file is not tracked by Git: ${file}`);
+  }
+  // Release builds can additionally insist that the packaged files match the commit exactly.
+  if (process.env.RUNTIME_REQUIRE_CLEAN === '1') {
+    const changed = execFileSync('git', ['status', '--porcelain', '--', ...sources.filter((file) => file !== guideDatesFile)],
+      { cwd: repositoryRoot, encoding: 'utf8' }).trim();
+    if (changed !== '') throw new Error(`Runtime files have uncommitted changes:\n${changed}`);
   }
 
   try {

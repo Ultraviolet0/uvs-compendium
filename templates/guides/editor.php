@@ -63,6 +63,7 @@ $view->partial('breadcrumbs', ['trail' => [['Your account', 'account/'], ['Guide
     <?php if ($canWithdraw): ?>
       <form method="post" action="<?= $view->url('account/guides/' . $guideId . '/withdraw/') ?>" data-confirm="Withdraw this guide from review?">
         <?= $view->csrf() ?>
+        <input type="hidden" name="lock_version" value="<?= (int) $guide['lock_version'] ?>">
         <button class="button button-secondary" type="submit">Withdraw from review</button>
       </form>
     <?php endif; ?>
@@ -207,7 +208,7 @@ Optional caption
             <?php if ($canEdit): ?>
               <button class="button button-quiet button-small" type="button" data-insert-media hidden>Insert</button>
             <?php endif; ?>
-            <form method="post" action="<?= $view->url('account/media/' . $item['public_id'] . '/delete/') ?>" data-confirm="Delete this image? Remove it from the guide text too.">
+            <form method="post" action="<?= $view->url('account/media/' . $item['public_id'] . '/delete/') ?>" data-confirm="Delete this image? Remove it from the guide text too. Images shown in the published version, or in a version waiting for review, cannot be deleted.">
               <?= $view->csrf() ?>
               <button class="button button-danger button-small" type="submit">Delete<span class="sr-only"> image <?= h((string) ($item['alt_text'] ?? '')) ?></span></button>
             </form>
@@ -224,6 +225,7 @@ Optional caption
     <p>This permanently removes the draft, its history, and its images. It cannot be undone.</p>
     <form class="form-stack" method="post" action="<?= $view->url('account/guides/' . $guideId . '/delete/') ?>">
       <?= $view->csrf() ?>
+      <input type="hidden" name="lock_version" value="<?= (int) $guide['lock_version'] ?>">
       <div class="form-check">
         <input id="confirm-delete" name="confirm" type="checkbox" value="1" required>
         <label for="confirm-delete">I understand that “<?= h($title) ?>” will be deleted permanently.</label>

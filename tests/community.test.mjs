@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { before, beforeEach, test } from 'node:test';
 import {
   ADMIN, Client, activeMember, adminClient, appBase, capturedMail, clearRateLimits, resetDatabase,
-  signup, sleep, tinyPng, totp, userIdFor, waitForApp,
+  noisePng, signup, sleep, testDbValue, tinyPng, totp, userIdFor, waitForApp,
 } from './support/app.mjs';
 
 let admin;
@@ -17,6 +18,14 @@ before(async () => {
 beforeEach(() => clearRateLimits());
 
 const flat = (html) => html.replace(/\s+/g, ' ');
+
+/** Posts a moderation action carrying the guide version shown on the review page, as the form does. */
+async function moderate(id, fields, client = admin) {
+  const page = await client.get(`/admin/guides/${id}/`);
+  const csrf = page.text.match(/name="_csrf" value="([a-f0-9]{64})"/)[1];
+  const version = page.text.match(/name="lock_version" value="(\d+)"/)[1];
+  return client.post(`/admin/guides/${id}/action/`, { lock_version: version, ...fields }, { token: csrf });
+}
 
 test('signup creates a pending account, signs it in, and keeps the email private', async () => {
   clearRateLimits();
@@ -366,9 +375,9 @@ test('moderation: submit, request changes, resubmit, publish, hide, reject, and 
   assert.match(review.text, /&lt;script&gt;alert/);
   assert.doesNotMatch(review.text, /<script>alert\("xss"\)/);
 
-  const noNote = await admin.post(`/admin/guides/${guideId}/action/`, { action: 'request_changes', note: '' }, { page: `/admin/guides/${guideId}/` });
+  const noNote = await moderate(guideId, { action: 'request_changes', note: '' });
   assert.equal(noNote.status, 422);
-  await admin.post(`/admin/guides/${guideId}/action/`, { action: 'request_changes', note: 'Please add a Wirt section.' }, { page: `/admin/guides/${guideId}/` });
+  await moderate(guideId, { action: 'request_changes', note: 'Please add a Wirt section.' });
   const needsChanges = await author.get('/account/');
   assert.match(needsChanges.text, /Please add a Wirt section\./);
   assert.match((await author.get(`/account/guides/${guideId}/edit/`)).text, /status-badge[^>]*>Needs changes/);
@@ -381,7 +390,7 @@ test('moderation: submit, request changes, resubmit, publish, hide, reject, and 
   }, { page: `/account/guides/${guideId}/edit/` });
   assert.equal(resubmit.status, 303);
 
-  const published = await admin.post(`/admin/guides/${guideId}/action/`, { action: 'approve_publish', note: 'Thanks!' }, { page: `/admin/guides/${guideId}/` });
+  const published = await moderate(guideId, { action: 'approve_publish', note: 'Thanks!' });
   assert.equal(published.status, 303);
   const page = await new Client().get('/guides/premium-shopping-basics/');
   assert.equal(page.status, 200);
@@ -418,12 +427,12 @@ test('moderation: submit, request changes, resubmit, publish, hide, reject, and 
   }, { page: `/account/guides/${guideId}/edit/` });
   assert.doesNotMatch((await new Client().get('/guides/premium-shopping-basics/')).text, /UNREVIEWED UPDATE TEXT/);
 
-  const unconfirmedHide = await admin.post(`/admin/guides/${guideId}/action/`, { action: 'hide' }, { page: `/admin/guides/${guideId}/` });
+  const unconfirmedHide = await moderate(guideId, { action: 'hide' });
   assert.equal(unconfirmedHide.status, 422);
-  await admin.post(`/admin/guides/${guideId}/action/`, { action: 'hide', confirm: '1' }, { page: `/admin/guides/${guideId}/` });
+  await moderate(guideId, { action: 'hide', confirm: '1' });
   assert.equal((await new Client().get('/guides/premium-shopping-basics/')).status, 404);
   assert.equal((await new Client().get(new URL(globalThis.guideMedia.url, appBase).pathname)).status, 404, 'hidden guide images are private again');
-  await admin.post(`/admin/guides/${guideId}/action/`, { action: 'restore' }, { page: `/admin/guides/${guideId}/` });
+  await moderate(guideId, { action: 'restore' });
   assert.equal((await new Client().get('/guides/premium-shopping-basics/')).status, 200);
 
   // A separate submission is rejected outright.
@@ -432,7 +441,7 @@ test('moderation: submit, request changes, resubmit, publish, hide, reject, and 
   }, { page: '/account/guides/new/' });
   const rejectedId = rejectedDraft.location.match(/guides\/(\d+)\/edit/)[1];
   await author.post(`/account/guides/${rejectedId}/submit/`, {}, { page: `/account/guides/${rejectedId}/edit/` });
-  await admin.post(`/admin/guides/${rejectedId}/action/`, { action: 'reject', confirm: '1', note: 'Off topic.' }, { page: `/admin/guides/${rejectedId}/` });
+  await moderate(rejectedId, { action: 'reject', confirm: '1', note: 'Off topic.' });
   assert.equal((await new Client().get('/guides/rejected-idea/')).status, 404);
   const rejectedEditor = await author.get(`/account/guides/${rejectedId}/edit/`);
   assert.match(rejectedEditor.text, /status-badge[^>]*>Rejected/);
@@ -454,13 +463,13 @@ test('slug protection keeps curated guides and system routes first', async () =>
 test('admin guide deletion is soft first and permanent only with the exact slug', async () => {
   const draft = await author.post('/account/guides/new/', { title: 'Delete Me Later', summary: 'A guide that will be removed by an admin.', body: 'Text '.repeat(60) }, { page: '/account/guides/new/' });
   const id = draft.location.match(/guides\/(\d+)\/edit/)[1];
-  assert.equal((await admin.post(`/admin/guides/${id}/action/`, { action: 'delete' }, { page: `/admin/guides/${id}/` })).status, 422);
-  await admin.post(`/admin/guides/${id}/action/`, { action: 'delete', confirm: '1' }, { page: `/admin/guides/${id}/` });
+  assert.equal((await moderate(id, { action: 'delete' })).status, 422);
+  await moderate(id, { action: 'delete', confirm: '1' });
   assert.match((await admin.get('/admin/guides/?filter=deleted')).text, /Delete Me Later/);
   assert.equal((await author.get(`/account/guides/${id}/edit/`)).status, 404);
-  const wrong = await admin.post(`/admin/guides/${id}/action/`, { action: 'purge', confirm: '1', confirmation: 'nope' }, { page: `/admin/guides/${id}/` });
+  const wrong = await moderate(id, { action: 'purge', confirm: '1', confirmation: 'nope' });
   assert.equal(wrong.status, 422);
-  const purged = await admin.post(`/admin/guides/${id}/action/`, { action: 'purge', confirm: '1', confirmation: 'delete-me-later' }, { page: `/admin/guides/${id}/` });
+  const purged = await moderate(id, { action: 'purge', confirm: '1', confirmation: 'delete-me-later' });
   assert.equal(purged.status, 303);
   assert.equal((await admin.get(`/admin/guides/${id}/`)).status, 404);
   assert.match((await admin.get('/admin/audit/')).text, /Guide permanently deleted/);
@@ -602,4 +611,166 @@ test('admin dashboard shows queues and counts; audit log is readable', async () 
   assert.match(settings.text, /Test mode/);
   assert.doesNotMatch(settings.text, /local-test-only|local-test-key/);
   assert.equal(ADMIN.username, 'TestAdmin');
+});
+
+const MEDIA_DEFAULTS = { registrations_enabled: '1', guide_submissions_enabled: '1', media_max_upload_mb: '8', media_quota_mb: '50', media_max_images_per_guide: '20' };
+
+async function mediaSettings(overrides) {
+  const saved = await admin.post('/admin/settings/', { ...MEDIA_DEFAULTS, ...overrides }, { page: '/admin/settings/' });
+  assert.equal(saved.status, 303);
+}
+
+/** A new draft owned by a fresh member, plus several independent sessions for that member. */
+async function draftWithSessions(name, sessions) {
+  const { client, id: userId } = await activeMember(admin, name);
+  const created = await client.post('/account/guides/new/', {
+    title: `${name} Guide`, summary: 'A guide used for concurrency checks.', body: 'Words '.repeat(60),
+  }, { page: '/account/guides/new/' });
+  const guide = created.location.match(/guides\/(\d+)\/edit/)[1];
+  const clients = [client];
+  for (let index = 1; index < sessions; index += 1) {
+    const extra = new Client();
+    assert.equal((await extra.login(name, 'correct horse battery staple')).status, 303);
+    clients.push(extra);
+  }
+  // Every session loads the editor first; the uploads below then start together.
+  const tokens = await Promise.all(clients.map((session) => session.token(`/account/guides/${guide}/edit/`)));
+  return { clients, tokens, guide, userId };
+}
+
+function mediaFileCount() {
+  return Number(execFileSync('docker', ['compose', 'exec', '-T', '-u', 'www-data', 'web-test', 'sh', '-c',
+    'find /var/uvs/storage/media -type f | wc -l'], { encoding: 'utf8' }).trim());
+}
+
+function rawUpload(client, token, guide, bytes) {
+  const form = new FormData();
+  form.append('_csrf', token);
+  form.append('alt', 'noise');
+  form.append('image', new Blob([bytes], { type: 'image/png' }), 'noise.png');
+  return client.request(`/account/guides/${guide}/media/`, {
+    method: 'POST', body: form, headers: { Accept: 'application/json', 'X-Requested-With': 'fetch' },
+  });
+}
+
+test('parallel uploads cannot exceed the per-guide image limit', async () => {
+  clearRateLimits();
+  await mediaSettings({ media_max_images_per_guide: '2' });
+  try {
+    const { clients, tokens, guide } = await draftWithSessions('ParallelCounter', 6);
+    const images = clients.map(() => noisePng(500, 500));
+    const results = await Promise.all(clients.map((client, index) => rawUpload(client, tokens[index], guide, images[index])));
+    const accepted = results.filter((result) => result.status === 200);
+    assert.equal(accepted.length, 2, `statuses: ${results.map((result) => result.status).join(',')}`);
+    for (const result of results.filter((item) => item.status !== 200)) {
+      assert.equal(result.status, 422);
+      assert.match(JSON.parse(result.text).error, /maximum of 2 images/);
+    }
+    assert.equal(Number(testDbValue(`SELECT COUNT(*) FROM media WHERE guide_id = ${Number(guide)}`)), 2);
+  } finally {
+    await mediaSettings({});
+  }
+});
+
+test('parallel uploads cannot exceed the storage quota, and refused files are removed', async () => {
+  clearRateLimits();
+  await mediaSettings({ media_quota_mb: '1' });
+  try {
+    const { clients, tokens, guide, userId } = await draftWithSessions('ParallelQuota', 6);
+    // Each processed noise image is roughly 0.5 MB, so at most one fits in 1 MB.
+    const images = clients.map(() => noisePng(900, 900));
+    const filesBefore = mediaFileCount();
+    const results = await Promise.all(clients.map((client, index) => rawUpload(client, tokens[index], guide, images[index])));
+    const accepted = results.filter((result) => result.status === 200);
+    assert.ok(accepted.length >= 1, 'at least one upload fits');
+    assert.ok(results.some((result) => result.status === 422 && /storage quota/.test(JSON.parse(result.text).error)), 'the quota refused the rest');
+    const used = Number(testDbValue(`SELECT COALESCE(SUM(byte_size), 0) FROM media WHERE owner_id = ${Number(userId)}`));
+    assert.ok(used <= 1024 * 1024, `quota overshot: ${used} bytes`);
+    const rows = Number(testDbValue(`SELECT COUNT(*) FROM media WHERE owner_id = ${Number(userId)}`));
+    assert.equal(rows, accepted.length);
+    // Refused uploads leave no file behind: exactly one new file per accepted upload.
+    assert.equal(mediaFileCount() - filesBefore, accepted.length);
+  } finally {
+    await mediaSettings({});
+  }
+});
+
+test('draft images of a published guide stay private until a revision using them is published', async () => {
+  clearRateLimits();
+  const { client: writer } = await activeMember(admin, 'RevisionWriter');
+  const created = await writer.post('/account/guides/new/', {
+    title: 'Revision Image Check', summary: 'Checks which images readers can fetch.', body: 'Words '.repeat(60),
+  }, { page: '/account/guides/new/' });
+  const id = created.location.match(/guides\/(\d+)\/edit/)[1];
+  const edit = `/account/guides/${id}/edit/`;
+  const upload = async () => JSON.parse((await writer.upload(`/account/guides/${id}/media/`, 'image', 'a.png', 'image/png', tinyPng,
+    { alt: 'Shop' }, { page: edit, json: true })).text);
+  const save = async (body, extra = {}) => {
+    const lock = (await writer.get(edit)).text.match(/name="lock_version" value="(\d+)"/)[1];
+    return writer.post(`/account/guides/${id}/save/`, {
+      title: 'Revision Image Check', summary: 'Checks which images readers can fetch.', body, applies_to: 'hellfire', lock_version: lock, ...extra,
+    }, { page: edit });
+  };
+  const path = (media) => new URL(media.url, appBase).pathname;
+  const anonymous = async (media) => (await new Client().get(path(media))).status;
+
+  const first = await upload();
+  assert.equal((await save(`${'Words '.repeat(60)}\n\n${first.markdown}`, { intent: 'submit' })).status, 303);
+  assert.equal((await moderate(id, { action: 'approve_publish' })).status, 303);
+  assert.equal(await anonymous(first), 200, 'published image is public');
+
+  const second = await upload();
+  await save(`${'Words '.repeat(60)}\n\n${first.markdown}\n\n${second.markdown}`);
+  assert.equal(await anonymous(second), 404, 'a draft image of a published guide is not public');
+  assert.equal((await writer.get(path(second))).status, 200, 'the author can preview it');
+  assert.equal((await admin.get(path(second))).status, 200, 'moderators can preview it');
+  assert.equal(await anonymous(first), 200);
+
+  assert.equal((await writer.post(`/account/guides/${id}/submit/`, {}, { page: edit })).status, 303);
+  assert.equal(await anonymous(second), 404, 'still private while in review');
+  const deleteSubmitted = await writer.post(`/account/media/${second.public_id}/delete/`, {}, { page: edit, headers: { Accept: 'application/json', 'X-Requested-With': 'fetch' } });
+  assert.equal(deleteSubmitted.status, 422, 'images in the submitted version cannot be deleted');
+  assert.match(JSON.parse(deleteSubmitted.text).error, /waiting for review/);
+
+  assert.equal((await moderate(id, { action: 'approve_publish' })).status, 303);
+  assert.equal(await anonymous(second), 200, 'public once a revision using it is published');
+  assert.equal(await anonymous(first), 200, 'earlier images remain available');
+});
+
+test('competing administrators can never remove the last active administrator', async () => {
+  const adminId = await userIdFor(admin, ADMIN.username);
+  const activeAdmins = () => Number(testDbValue("SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'"));
+  const moves = [['demote', 'demote'], ['suspend', 'suspend'], ['demote', 'suspend'], ['suspend', 'demote'], ['demote', 'demote'], ['suspend', 'suspend']];
+  for (const [round, [mine, theirs]] of moves.entries()) {
+    clearRateLimits();
+    const name = `Rival${round}`;
+    const { id: rivalId } = await activeMember(admin, name);
+    assert.equal((await admin.post(`/admin/users/${rivalId}/role/`, { role: 'admin', confirm: '1' }, { page: `/admin/users/${rivalId}/` })).status, 303);
+    const rival = new Client();
+    assert.equal((await rival.login(name, 'correct horse battery staple')).status, 303);
+    assert.equal(activeAdmins(), 2);
+
+    // Each opened the other's page while both were administrators; both submit at once.
+    const [mineToken, theirToken] = await Promise.all([admin.token(`/admin/users/${rivalId}/`), rival.token(`/admin/users/${adminId}/`)]);
+    const act = (client, target, token, how) => (how === 'demote'
+      ? client.post(`/admin/users/${target}/role/`, { role: 'member', confirm: '1' }, { token })
+      : client.post(`/admin/users/${target}/status/`, { action: 'suspend', confirm: '1' }, { token }));
+    await Promise.all([act(admin, rivalId, mineToken, mine), act(rival, adminId, theirToken, theirs)]);
+    assert.equal(activeAdmins(), 1, `round ${round}: exactly one administrator remains`);
+
+    // Put TestAdmin back in charge for the next round and retire the rival.
+    const survivor = testDbValue("SELECT username FROM users WHERE role = 'admin' AND status = 'active'");
+    if (survivor !== ADMIN.username) {
+      assert.equal(survivor, name);
+      const restore = testDbValue(`SELECT status FROM users WHERE id = ${Number(adminId)}`) === 'suspended'
+        ? await rival.post(`/admin/users/${adminId}/status/`, { action: 'reactivate' }, { page: `/admin/users/${adminId}/` })
+        : await rival.post(`/admin/users/${adminId}/role/`, { role: 'admin', confirm: '1' }, { page: `/admin/users/${adminId}/` });
+      assert.equal(restore.status, 303);
+      admin = await adminClient();
+      const retire = await admin.post(`/admin/users/${rivalId}/status/`, { action: 'suspend', confirm: '1' }, { page: `/admin/users/${rivalId}/` });
+      assert.equal(retire.status, 303, (retire.text.match(/class="(?:form-error|alert)[^"]*"[^>]*>([^<]+)/g) || []).join(" | "));
+    }
+    assert.equal(activeAdmins(), 1);
+  }
+  assert.equal((await admin.get('/admin/')).status, 200, 'TestAdmin is still an administrator');
 });
