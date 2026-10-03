@@ -207,6 +207,7 @@ final class GuideWorkflow
             if ($errors !== []) {
                 throw new ValidationException($errors);
             }
+            $this->assertMediaReferencesExist($current);
             // The reviewed revision is a snapshot of the locked row, never of an older page load.
             $kind = $current['submitted_at'] === null ? 'submission' : 'resubmission';
             $this->snapshot($current, $kind, (int) $author['id'], null);
@@ -355,6 +356,7 @@ final class GuideWorkflow
                 case 'publish':
                 case 'approve_publish':
                     // Publish the locked working copy, which is exactly what the reviewed version shows.
+                    $this->assertMediaReferencesExist($current);
                     $latest = $this->guides->latestRevision($id);
                     $revisionId = $latest !== null && hash_equals((string) $latest['content_hash'], self::contentHash($current))
                         ? (int) $latest['id']
@@ -492,6 +494,17 @@ final class GuideWorkflow
             ],
         );
         return $this->db->lastInsertId();
+    }
+
+    /** A submission or publication must not refer to an image already removed from this guide. */
+    private function assertMediaReferencesExist(array $guide): void
+    {
+        $available = $this->guides->mediaMap((int) $guide['id']);
+        foreach (MarkdownRenderer::mediaReferences((string) $guide['body']) as $publicId) {
+            if (!isset($available[$publicId])) {
+                throw new ValidationException(['body' => 'This guide references an image that is no longer available. Remove or replace it before submitting.']);
+            }
+        }
     }
 
     /**

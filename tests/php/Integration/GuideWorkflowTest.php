@@ -401,6 +401,41 @@ final class GuideWorkflowTest extends DatabaseTestCase
         $workflow->withdraw($repo->find($id));
         $this->application->media()->deleteGuideImage($author, $image, false);
         self::assertNull($this->db->one('SELECT id FROM media WHERE public_id = :id', ['id' => $image]));
+        $withdrawn = $repo->find($id);
+        try {
+            $workflow->submit($author, $withdrawn, (int) $withdrawn['lock_version']);
+            self::fail('A deleted image must not be accepted in a new submission');
+        } catch (ValidationException $error) {
+            self::assertArrayHasKey('body', $error->errors);
+        }
+        $revised = $workflow->saveDraft($withdrawn,
+            $this->content('Shopping in Hellfire', "## Start\n\n" . str_repeat('revised ', 40)),
+            (int) $withdrawn['lock_version']);
+        $workflow->submit($author, $revised, (int) $revised['lock_version']);
+        self::assertSame('in_review', $repo->find($id)['review_status']);
+    }
+
+    public function testRequestedChangesCannotDeleteAnImageStillInTheWorkingCopy(): void
+    {
+        $workflow = $this->application->guideWorkflow();
+        $repo = $this->application->guides();
+        $author = $this->user('Author');
+        $admin = $this->user('Boss', 'active', 'admin');
+        $id = $workflow->createDraft($author, $this->content(), 25);
+        $image = $this->attachImage($id, (int) $author['id']);
+        $draft = $repo->find($id);
+        $body = "## Start\n\n![Shop](media:{$image}) " . str_repeat('z ', 120);
+        $draft = $workflow->saveDraft($draft, $this->content('Shopping in Hellfire', $body), (int) $draft['lock_version']);
+        $workflow->submit($author, $draft, (int) $draft['lock_version']);
+        $submitted = $repo->find($id);
+        $workflow->adminAction($admin, $submitted, 'request_changes', 'Revise the text.', '', (int) $submitted['lock_version']);
+
+        $this->expectDeletionRefused($author, $image);
+        $changes = $repo->find($id);
+        $workflow->saveDraft($changes, $this->content('Shopping in Hellfire', "## Start\n\n" . str_repeat('revised ', 40)),
+            (int) $changes['lock_version']);
+        $this->application->media()->deleteGuideImage($author, $image, false);
+        self::assertNull($this->db->one('SELECT id FROM media WHERE public_id = :id', ['id' => $image]));
     }
 
     public function testDraftImagesOfAPublishedGuideAreNotPublic(): void

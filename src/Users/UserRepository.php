@@ -131,7 +131,7 @@ final class UserRepository
     public function changeEmail(int $id, string $email): void
     {
         $this->db->transaction(function () use ($id, $email): void {
-            $this->db->execute('UPDATE users SET email = :email, email_key = :key, updated_at = :now WHERE id = :id',
+            $this->db->execute('UPDATE users SET email = :email, email_key = :key, auth_epoch = auth_epoch + 1, updated_at = :now WHERE id = :id',
                 ['email' => $email, 'key' => EmailAddress::normalize($email), 'now' => Database::now(), 'id' => $id]);
             $this->revokeAccountTokens($id);
         });

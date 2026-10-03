@@ -202,11 +202,12 @@ final class MediaService
                 throw new ValidationException(['image' => 'This image appears in the published version of the guide, so it cannot be deleted yet.']);
             }
         }
-        // While a version is under review (or approved but not yet published) the
-        // working copy is that submitted version and the author cannot edit it.
-        $submitted = in_array($guide['review_status'], ['in_review', 'approved'], true);
+        // A request for changes leaves the submitted working copy in place. The
+        // author must remove the reference before deleting its image, otherwise
+        // the unchanged copy could be resubmitted with a broken image.
+        $submitted = in_array($guide['review_status'], ['in_review', 'approved', 'needs_changes'], true);
         if ($submitted && in_array($publicId, MarkdownRenderer::mediaReferences((string) $guide['body']), true)) {
-            throw new ValidationException(['image' => 'This image is part of the version waiting for review, so it cannot be deleted. Withdraw the submission first.']);
+            throw new ValidationException(['image' => 'This image is part of the version waiting for review, so it cannot be deleted. Remove it from the guide text first.']);
         }
     }
 

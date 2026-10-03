@@ -256,6 +256,9 @@ final class AccountServiceTest extends DatabaseTestCase
         self::assertNotNull($reset->userForToken($old));
 
         $this->application->users()->changeEmail((int) $member['id'], 'new-address@example.test');
+        self::assertSame((int) $member['auth_epoch'] + 1,
+            (int) $this->application->users()->find((int) $member['id'])['auth_epoch'],
+            'email changes revoke other sessions');
         self::assertNull($reset->userForToken($old), 'a link sent to the previous address must stop working');
         try {
             $reset->complete($old, 'a brand new passphrase here', 'a brand new passphrase here');

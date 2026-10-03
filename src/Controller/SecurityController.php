@@ -75,6 +75,7 @@ final class SecurityController extends Controller
         }
         $old = (string) $user['email'];
         $this->app->users()->changeEmail((int) $user['id'], $email);
+        $this->app->auth()->rebindCurrentSession();
         if (EmailAddress::normalize($old) !== EmailAddress::normalize($email)) {
             $this->app->mailer()->send($old, "Your UV's Compendium email address changed",
                 "Hello {$user['username']},\n\nThe email address on your UV's Compendium account was just changed. "

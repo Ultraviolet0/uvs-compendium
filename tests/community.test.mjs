@@ -525,6 +525,20 @@ test('password reset via captured email is single use and revokes sessions', asy
   assert.match((await reuse.get('/account/password/reset/')).text, /invalid, has expired, or was already used/);
 });
 
+test('changing email revokes other sessions but keeps the current browser signed in', async () => {
+  clearRateLimits();
+  const { client: current } = await activeMember(admin, 'EmailMover');
+  const other = new Client();
+  assert.equal((await other.login('EmailMover', 'correct horse battery staple')).status, 303);
+  assert.equal((await other.get('/account/')).status, 200);
+  const changed = await current.post('/account/security/email/', {
+    email_password: 'correct horse battery staple', email: 'new-emailmover@example.test',
+  }, { page: '/account/security/' });
+  assert.equal(changed.status, 303);
+  assert.equal((await current.get('/account/')).status, 200);
+  assert.equal((await other.get('/account/')).status, 303);
+});
+
 test('two-factor authentication enrolment, sign-in, replay protection, and recovery codes', async () => {
   clearRateLimits();
   const { client } = await activeMember(admin, 'Guarded');
