@@ -1,4 +1,4 @@
-import { prefixx, suffixx, basee, uniq, premiumIndex } from "./data.mjs";
+import { prefixx, suffixx, basee, uniq, premiumIndex, isChargedSpellSuffix } from "./data.mjs";
 import { calculateAvailability } from "./availability.mjs";
 import { formatDetailedPrice } from "./price.mjs";
 
@@ -87,8 +87,12 @@ function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false,
     }
   }
 
-  if (((SelSuff >= premiumIndex.firstChargedSpellSuffix) &&
-    (SelSuff <= premiumIndex.lastChargedSpellSuffix)) || (slvlmax >= 50)) {
+  if (isChargedSpellSuffix(SelSuff)) {
+    // Staff spells use floor(ilvl / 2), except ilvl 1 still permits qlvl 1.
+    // Their prefix is selected independently up to ilvl.
+    slvlmin = Math.max(prelvl, suflvl === 1 ? 1 : suflvl * 2);
+    slvlmax = 60;
+  } else if (slvlmax >= 50) {
     slvlmax = 60;
   }
 
@@ -168,8 +172,7 @@ function calculatePremiumItem(SelBasee, SelPref, SelSuff, detailedPrice = false,
         dspbase = basee[SelBasee].name;
       }
       baseefc = "\n    " + basee[SelBasee].effect + "\n";
-      if ((SelSuff >= premiumIndex.firstChargedSpellSuffix) &&
-        (SelSuff <= premiumIndex.lastChargedSpellSuffix)) {
+      if (isChargedSpellSuffix(SelSuff)) {
         pricemin = multi_sign * Math.floor((basee[SelBasee].price + sufaddmin) * psmulti) + preaddmin;
         pricemax = multi_sign * Math.floor((basee[SelBasee].price + sufaddmax) * psmulti) + preaddmax;
       } else {

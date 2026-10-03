@@ -123,7 +123,7 @@ test('quest items cannot expose ordinary magic affixes', () => {
 
 test('index-sensitive item categories retain their expected boundaries', () => {
   assert.equal(prefixx.length, 87);
-  assert.equal(suffixx.length, 125);
+  assert.equal(suffixx.length, 135);
   assert.equal(basee.length, 169);
   assert.equal(uniq.length, 99);
   assert.equal(basee[premiumIndex.lastGriswoldBase].name, 'Long War Bow');
@@ -145,6 +145,41 @@ test('index-sensitive item categories retain their expected boundaries', () => {
     assert.equal(suffixx[index].equip.parm, 0x08, `charged-spell suffix index ${index}`);
   }
   assert.equal(suffixx[premiumIndex.lastChargedSpellSuffix + 1].name, 'Decay');
+  assert.equal(suffixx[premiumIndex.firstHellfireChargedSpellSuffix].name, 'Mana');
+  assert.equal(suffixx[premiumIndex.lastHellfireChargedSpellSuffix].name, 'Search');
+});
+
+test('Hellfire staff-spell catalog and charged-staff prices match Jarulf and DevilutionX', () => {
+  const expected = [
+    ['Mana', 5, 12, 24, 120, 240],
+    ['the Magi', 20, 15, 30, 600, 1200],
+    ['the Jester', 4, 15, 30, 600, 1200],
+    ['Lightning Wall', 2, 8, 16, 640, 1280],
+    ['Immolation', 10, 16, 32, 4160, 8320],
+    ['Warp', 3, 8, 12, 320, 480],
+    ['Reflect', 3, 8, 12, 320, 480],
+    ['Berserk', 3, 8, 12, 320, 480],
+    ['Ring of Fire', 5, 8, 16, 640, 1280],
+    ['Search', 3, 8, 12, 320, 480]
+  ];
+  for (const [offset, [name, qlvl, minimumCharges, maximumCharges, minimumValue, maximumValue]]
+    of expected.entries()) {
+    const entry = suffixx[125 + offset];
+    assert.equal(entry.name, name);
+    assert.equal(entry.level, qlvl);
+    assert.equal(entry.min, minimumCharges);
+    assert.equal(entry.min + entry.step, maximumCharges);
+    assert.equal(entry.addmin, minimumValue);
+    assert.equal(entry.addmax, maximumValue);
+    assert.equal(entry.equip.parm, 0x08);
+  }
+  for (const [index, minimumValue, maximumValue] of [
+    [96, 400, 800], [99, 200, 400], [103, 640, 1280],
+    [105, 600, 1800], [114, 3000, 9000], [118, 4160, 8320]
+  ]) {
+    assert.equal(suffixx[index].addmin, minimumValue);
+    assert.equal(suffixx[index].addmax, maximumValue);
+  }
 });
 
 test('plain Griswold bases identify the basic inventory without changing availability', () => {

@@ -1,5 +1,5 @@
 import { baseQlvlInRange, getGriswoldMagicCharacterLevels, formatCharacterLevels } from './rules.mjs';
-import { premiumIndex } from './data.mjs';
+import { premiumIndex, isChargedSpellSuffix } from './data.mjs';
 import { townItemLevel } from '../../town-level.mjs';
 
 // Max's Hellfire shopping differences and DevilutionX items.h agree on these
@@ -17,6 +17,17 @@ function getWirtCharacterLevels(baseQlvls, prefixQlvl, suffixQlvl) {
       (qlvl >= minimumAffixQlvl && qlvl <= maximumAffixQlvl);
     if (baseQlvlInRange(baseQlvls, 1, Math.min(level, 25)) && validAffix(prefixQlvl) &&
         validAffix(suffixQlvl)) levels.push(level);
+  }
+  return levels;
+}
+
+function getWirtChargedStaffCharacterLevels(baseQlvls, prefixQlvl, spellQlvl) {
+  const levels = [];
+  for (let level = 1; level <= 50; level++) {
+    // SpawnBoy passes 2*clvl to GetStaffSpell: spell qlvl <= clvl,
+    // while GetStaffPrefix checks qlvl from 0 through 2*clvl.
+    if (baseQlvlInRange(baseQlvls, 1, Math.min(level, 25)) &&
+      prefixQlvl <= level * 2 && spellQlvl <= level) levels.push(level);
   }
   return levels;
 }
@@ -56,8 +67,7 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baseQlvls, prelvl, 
     (!staff || hellfire) && (!jewelry || singlePlayer);
   const griswoldPriceLimit = hellfire ? hellfireVendorPriceLimit : diabloGriswoldPriceLimit;
   const wirtPriceLimit = hellfire ? hellfireVendorPriceLimit : diabloWirtPriceLimit;
-  const chargedStaff = SelSuff >= premiumIndex.firstChargedSpellSuffix &&
-    SelSuff <= premiumIndex.lastChargedSpellSuffix;
+  const chargedStaff = isChargedSpellSuffix(SelSuff);
   //-- Minus Item Check ------
   if ((premulti < 0) || (sufmulti < 0) || (SelSuff == 94) || (SelPref == 57)) {
     minusitem = true;
@@ -112,7 +122,9 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baseQlvls, prelvl, 
   if (premiumVendorBase && (!staff || chargedStaff) &&
       (SelPref + SelSuff > 0) && (minusitem == false) &&
       (hellfire || pricemin <= wirtPriceLimit)) {
-    const wirtLevels = getWirtCharacterLevels(baseQlvls, prelvl, suflvl);
+    const wirtLevels = chargedStaff
+      ? getWirtChargedStaffCharacterLevels(baseQlvls, prelvl, suflvl)
+      : getWirtCharacterLevels(baseQlvls, prelvl, suflvl);
     if (wirtLevels.length) {
       clvl_dsp = formatCharacterLevels(wirtLevels);
       const source = pricemin <= wirtPriceLimit ? 'Wirt' : 'Wirt (rare retry fallback)';
@@ -161,4 +173,4 @@ function calculateAvailability({ SelBasee, SelPref, SelSuff, baseQlvls, prelvl, 
   };
 }
 
-export { calculateAvailability, getWirtCharacterLevels, getAdriaLevels };
+export { calculateAvailability, getWirtCharacterLevels, getWirtChargedStaffCharacterLevels, getAdriaLevels };

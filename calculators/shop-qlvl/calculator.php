@@ -49,8 +49,10 @@ if (!in_array($shop_qlvl_heading_level, ['h1', 'h2', 'h3'], true)) {
 15:     7-25    15-30</pre>
 
       <h3 class="result-heading">Wirt</h3>
-      <pre id="wirtresult" class="qlvl-output" aria-label="Wirt qlvl results">Base items:  1-25
-Affixes:     25-60</pre>
+      <pre id="wirtresult" class="qlvl-output qlvl-output-wrap" aria-label="Wirt qlvl results">Base items:  1-25
+Affixes:     25-60
+Prefixes on staves with spell:  1-100
+Spells on staves:  1-20</pre>
 
       <h3 class="result-heading">Adria <span id="shop-mode-label" class="text-muted">(MP)</span></h3>
       <pre id="adriaresult" class="qlvl-output qlvl-output-wrap" aria-label="Adria qlvl results">Base items and spells (of staves or books):  1-16
