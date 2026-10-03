@@ -160,7 +160,9 @@ function installVendor() {
     execFileSync(process.env.COMPOSER_BIN || 'composer', [...args, `--working-dir=${stagingRoot}`], { stdio: ['ignore', 'ignore', 'inherit'] });
   } else {
     const workdir = `/app/${relative(repositoryRoot, stagingRoot).split(sep).join('/')}`;
-    execFileSync('docker', ['compose', 'run', '--rm', '--no-deps', '-T', '-w', workdir, 'composer', ...args],
+    // Run as the invoking user so the build can later stamp and delete the files.
+    const user = typeof process.getuid === 'function' ? ['--user', `${process.getuid()}:${process.getgid()}`] : [];
+    execFileSync('docker', ['compose', 'run', '--rm', '--no-deps', '-T', ...user, '-w', workdir, 'composer', ...args],
       { cwd: repositoryRoot, stdio: ['ignore', 'ignore', 'inherit'] });
   }
   for (const file of ['composer.json', 'composer.lock']) {

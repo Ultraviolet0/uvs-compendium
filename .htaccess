@@ -8,10 +8,6 @@ Options -Indexes
   <FilesMatch "(?i)\.mjs$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
-  # PHP responses set their own security headers; these fill gaps for static files.
-  Header setifempty X-Content-Type-Options "nosniff"
-  Header setifempty Referrer-Policy "strict-origin-when-cross-origin"
-  Header setifempty X-Frame-Options "SAMEORIGIN"
 </IfModule>
 
 <IfModule mod_rewrite.c>

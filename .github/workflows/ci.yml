@@ -30,10 +30,10 @@ jobs:
         run: docker compose build web
       - name: Validate Composer metadata and install locked dependencies
         run: |
-          docker compose run --rm --no-deps composer validate --strict
-          docker compose run --rm --no-deps composer install --no-interaction --no-progress --prefer-dist
+          docker compose run --rm --no-deps --user "$(id -u):$(id -g)" composer validate --strict
+          docker compose run --rm --no-deps --user "$(id -u):$(id -g)" composer install --no-interaction --no-progress --prefer-dist
       - name: Audit Composer dependencies for known vulnerabilities
-        run: docker compose run --rm --no-deps composer audit --locked --no-interaction
+        run: docker compose run --rm --no-deps --user "$(id -u):$(id -g)" composer audit --locked --no-interaction
       - name: Start the site, test service, and disposable MariaDB
         run: docker compose up -d --wait
       - name: Apply migrations to the development database
