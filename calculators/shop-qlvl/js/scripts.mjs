@@ -9,7 +9,11 @@ function calculateShopQlvls(characterLevel, { gameVersion = 'hellfire', gameMode
     ? getHellfirePremiumItemLevels(level) : getDiabloPremiumItemLevels(level);
   const griswold = ['Slot:   Base:   Affixes:', '', ...slots.map((itemLevel, index) =>
     `${String(index + 1).padEnd(2, ' ')}:     ${`${Math.max(1, Math.floor(itemLevel / 4))}-${Math.min(25, itemLevel)}`.padEnd(7, ' ')} ${Math.max(1, Math.floor(itemLevel / 2))}-${itemLevel}`)].join('\n');
-  const wirt = `Base items:  1-${Math.min(level, 25)}\nAffixes:     ${Math.min(level, 25)}-${Math.min(level * 2, 60)}`;
+  // Jarulf 3.13.2: Magi has the highest Hellfire staff-spell qlvl, 20.
+  const wirt = `Base items:  1-${Math.min(level, 25)}\nAffixes:     ${Math.min(level, 25)}-${Math.min(level * 2, 60)}` +
+    (gameVersion === 'hellfire'
+      ? `\nPrefixes on staves with spell:  1-${level * 2}\nSpells on staves:  1-${Math.min(level, 20)}`
+      : '');
   const townLevel = townItemLevel({ gameMode, characterLevel: level, dungeonLevel });
   const adria = gameVersion === 'hellfire'
     ? `Base items and spells (of staves or books):  1-${townLevel}\nPrefixes on staves with spell:    1-${townLevel * 2}`

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { calculatePremiumItem } from '../calculators/premium-item-checker/js/calculate.mjs';
 import { getAvailableOptions, getDiabloPremiumItemLevels } from '../calculators/premium-item-checker/js/rules.mjs';
-import { getWirtCharacterLevels } from '../calculators/premium-item-checker/js/availability.mjs';
+import { getWirtCharacterLevels, getWirtChargedStaffCharacterLevels } from '../calculators/premium-item-checker/js/availability.mjs';
 import { townItemLevel } from '../calculators/town-level.mjs';
 import { calculateShopQlvls } from '../calculators/shop-qlvl/js/scripts.mjs';
 
@@ -30,6 +30,41 @@ test('town stock uses character level in multiplayer and dungeon depth in single
   assert.match(singlePlayer.adria, /Prefixes on staves with spell:\s+1-14/);
   assert.doesNotMatch(multiplayer.adria, /without spell/);
   assert.match(calculateShopQlvls(25, context('diablo', 'multiplayer')).adria, /without spell/);
+});
+
+test('Hellfire Wirt staff spells follow character level, capped by the spell catalog', () => {
+  for (const [characterLevel, upper] of [[1, 1], [19, 19], [20, 20], [50, 20]]) {
+    const wirt = calculateShopQlvls(characterLevel, context('hellfire', 'multiplayer')).wirt;
+    assert.match(wirt, new RegExp(`Prefixes on staves with spell:\\s+1-${characterLevel * 2}\\b`));
+    assert.match(wirt, new RegExp(`Spells on staves:\\s+1-${upper}\\b`));
+  }
+  assert.doesNotMatch(calculateShopQlvls(50, context('diablo', 'multiplayer')).wirt,
+    /staves/);
+  assert.deepEqual(getWirtChargedStaffCharacterLevels([1], 0, 20),
+    Array.from({ length: 31 }, (_, index) => index + 20));
+  assert.deepEqual(getWirtChargedStaffCharacterLevels([1], 25, 1),
+    Array.from({ length: 38 }, (_, index) => index + 13));
+});
+
+test('Hellfire-only charged staves use spell qlvl for Wirt and dungeon boundaries', () => {
+  const magi = calculatePremiumItem(63, 0, 126, false, context('hellfire', 'multiplayer'));
+  assert.match(magi.itemSummary, /Staff of the Magi/);
+  assert.match(magi.display2, /Short Staff/);
+  assert.match(magi.itemSummary, /G\/A Price:\s+630 - 1230/);
+  assert.match(magi.itemSummary, /Source Level:\s+40 - 60/);
+  assert.deepEqual(vendors(magi),
+    [{ source: 'Wirt', levelType: 'Character level', range: '20 - 50' }]);
+  assert.equal(magi.availability.some(({ source }) => /Normal|Nightmare|Hell/.test(source)), false);
+  assert.deepEqual(vendors(calculatePremiumItem(63, 0, 96, false,
+    context('hellfire', 'multiplayer'))).filter(({ source }) => source === 'Wirt'),
+    [{ source: 'Wirt', levelType: 'Character level', range: '1 - 50' }]);
+  assert.deepEqual(vendors(calculatePremiumItem(63, 81, 96, false,
+    context('hellfire', 'multiplayer'))).filter(({ source }) => source === 'Wirt'),
+    [{ source: 'Wirt', levelType: 'Character level', range: '13 - 50' }]);
+  assert.equal(getAvailableOptions({ baseIndex: 63, prefixIndex: 0, suffixIndex: 0,
+    ...context('diablo', 'multiplayer') }).suffixes.includes(126), false);
+  assert.throws(() => calculatePremiumItem(63, 0, 126, false,
+    context('diablo', 'multiplayer')), RangeError);
 });
 
 test('Hellfire-only content is unavailable to Diablo selections and calculations', () => {

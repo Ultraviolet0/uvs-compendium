@@ -170,6 +170,50 @@ test('shop qlvl: known character-level outputs', async () => {
   await page.close();
 });
 
+test('Hellfire Wirt staff spell ranges and Magi results work on standalone and combined pages', async () => {
+  for (const [route, width] of [['/calculators/shop-qlvl/', 390], ['/calculators/', 1440]]) {
+    const page = await context.newPage({ viewport: { width, height: 844 } });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.goto(new URL(route, base).href);
+    for (const [level, prefixMax, spellMax] of [[19, 38, 19], [20, 40, 20], [50, 100, 20]]) {
+      await page.locator('#clvl').fill(String(level));
+      const wirt = await page.locator('#wirtresult').textContent();
+      assert.match(wirt, new RegExp(`Prefixes on staves with spell:\\s+1-${prefixMax}\\b`));
+      assert.match(wirt, new RegExp(`Spells on staves:\\s+1-${spellMax}\\b`));
+    }
+    await page.locator('#shop-game').selectOption('diablo');
+    assert.doesNotMatch(await page.locator('#wirtresult').textContent(), /staves/);
+    await assertNoHorizontalOverflow(page, route, `${width}px Wirt ranges`);
+    assert.deepEqual(errors, [], route);
+    await page.close();
+  }
+
+  for (const [route, width] of [['/calculators/premium-item-checker/', 1440], ['/calculators/', 390]]) {
+    const page = await context.newPage({ viewport: { width, height: 844 } });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.goto(new URL(route, base).href);
+    await page.locator('#premium-base-item').selectOption({ label: 'Short Staff' });
+    assert.equal(await page.locator('#premium-suffix option').filter({ hasText: 'the Magi' }).count(), 1);
+    await page.locator('#premium-suffix').selectOption({ label: 'the Magi' });
+    assert.match(await page.locator('#display1').textContent(), /Staff of the Magi.*630 - 1230.*Source Level: 40 - 60/s);
+    assert.match(await page.locator('#premium-availability').textContent(), /Wirt.*20 - 50/s);
+    assert.doesNotMatch(await page.locator('#premium-availability').textContent(), /Adria|Griswold/);
+    await page.locator('#premium-price-mode').selectOption({ label: 'On' });
+    assert.match(await page.locator('#display3').textContent(), /the Magi[\s\S]*15 : 630[\s\S]*30 : 1230/);
+    await assertNoHorizontalOverflow(page, route, `${width}px Magi detailed prices`);
+    await page.locator('#premium-game').selectOption('diablo');
+    assert.equal(await page.locator('#premium-suffix').inputValue(), '0');
+    assert.equal(await page.locator('#premium-suffix option').filter({ hasText: 'the Magi' }).count(), 0);
+    await assertNoHorizontalOverflow(page, route, `${width}px Magi selection`);
+    assert.deepEqual(errors, [], route);
+    await page.close();
+  }
+});
+
 test('Warrior repair: documented deterministic path', async () => {
   const page = await context.newPage();
   await page.goto(new URL('/calculators/warrior-repair/', base).href);
