@@ -50,7 +50,7 @@ function GetKind(parm1, parm2) {
 
 
 const premax = 86;
-const sufmax = 124;
+const sufmax = 134;
 const basmaxx = 168;
 const unqmax = 98;
 // Boundaries used by the index-based rules; keep these in sync with the tables below.
@@ -61,8 +61,16 @@ const premiumIndex = Object.freeze({
   lastNormalBase: 69,
   firstUniqueBase: 70,
   firstChargedSpellSuffix: 96,
-  lastChargedSpellSuffix: 121
+  lastChargedSpellSuffix: 121,
+  firstHellfireChargedSpellSuffix: 125,
+  lastHellfireChargedSpellSuffix: 134
 });
+function isChargedSpellSuffix(index) {
+  return (index >= premiumIndex.firstChargedSpellSuffix &&
+    index <= premiumIndex.lastChargedSpellSuffix) ||
+    (index >= premiumIndex.firstHellfireChargedSpellSuffix &&
+      index <= premiumIndex.lastHellfireChargedSpellSuffix);
+}
 const prefixx = Array(premax + 1);
 const suffixx = Array(sufmax + 1);
 const basee = Array(basmaxx + 1);
@@ -296,16 +304,16 @@ suffixx[94] = new MakePremium("Corruption", "User Loses All Mana", 5, new GetEqu
 suffixx[95] = new MakePremium("Thorns", "Attacker Takes Damage: 1-3", 1, new GetEquip(0x06), 2, 500, 500, 0, 0);
 
 
-suffixx[96] = new MakePremium("Firebolt", "Firebolt Charges: 40 - 80", 1, new GetEquip(0x08), 0, 200, 400, 40, 40);
+suffixx[96] = new MakePremium("Firebolt", "Firebolt Charges: 40 - 80", 1, new GetEquip(0x08), 0, 400, 800, 40, 40);
 suffixx[97] = new MakePremium("Charged Bolt", "Charged Bolt Charges: 40 - 80", 1, new GetEquip(0x08), 0, 400, 800, 40, 40);
 suffixx[98] = new MakePremium("Holy Bolt", "Holy Bolt Charges: 40 - 80", 1, new GetEquip(0x08), 0, 400, 800, 40, 40);
-suffixx[99] = new MakePremium("Healing", "Healing Charges: 20 - 40", 1, new GetEquip(0x08), 0, 100, 200, 20, 20);
+suffixx[99] = new MakePremium("Healing", "Healing Charges: 20 - 40", 1, new GetEquip(0x08), 0, 200, 400, 20, 20);
 suffixx[100] = new MakePremium("Heal Other", "Heal Other Charges: 20 - 40", 1, new GetEquip(0x08), 0, 200, 400, 20, 20);
 suffixx[101] = new MakePremium("Inferno", "Inferno Charges: 20 - 40", 2, new GetEquip(0x08), 0, 400, 800, 20, 20);
 suffixx[102] = new MakePremium("Resurrect", "Resurrect Charges:  4 - 10", 5, new GetEquip(0x08), 0, 200, 500, 4, 6);
-suffixx[103] = new MakePremium("Fire Wall", "Fire Wall Charges:  8 - 16", 2, new GetEquip(0x08), 0, 640, 960, 8, 8);
+suffixx[103] = new MakePremium("Fire Wall", "Fire Wall Charges:  8 - 16", 2, new GetEquip(0x08), 0, 640, 1280, 8, 8);
 suffixx[104] = new MakePremium("Telekinesis", "Telekinesis Charges: 20 - 40", 2, new GetEquip(0x08), 0, 800, 1600, 20, 20);
-suffixx[105] = new MakePremium("Lightning", "Lightning Charges: 20 - 60", 3, new GetEquip(0x08), 0, 600, 3600, 20, 40);
+suffixx[105] = new MakePremium("Lightning", "Lightning Charges: 20 - 60", 3, new GetEquip(0x08), 0, 600, 1800, 20, 40);
 suffixx[106] = new MakePremium("Town Portal", "Town Portal Charges:  8 - 12", 3, new GetEquip(0x08), 0, 320, 480, 8, 4);
 suffixx[107] = new MakePremium("Flash", "Flash Charges: 20 - 40", 4, new GetEquip(0x08), 0, 2000, 4000, 20, 20);
 suffixx[108] = new MakePremium("Stone Curse", "Stone Curse Charges:  8 - 16", 5, new GetEquip(0x08), 0, 1280, 2560, 8, 8);
@@ -314,11 +322,11 @@ suffixx[110] = new MakePremium("Mana Shield", "Mana Shield Charges:  4 - 10", 5,
 suffixx[111] = new MakePremium("Elemental", "Elemental Charges: 20 - 60", 6, new GetEquip(0x08), 0, 2800, 8400, 20, 40);
 suffixx[112] = new MakePremium("Fireball", "Fireball Charges: 40 - 80", 7, new GetEquip(0x08), 0, 2400, 4800, 40, 40);
 suffixx[113] = new MakePremium("Flame Wave", "Flame Wave Charges: 20 - 40", 8, new GetEquip(0x08), 0, 2600, 5200, 20, 20);
-suffixx[114] = new MakePremium("Chain Lightning", "Chain Lightning Charges: 20 - 60", 7, new GetEquip(0x08), 0, 3000, 6000, 20, 40);
+suffixx[114] = new MakePremium("Chain Lightning", "Chain Lightning Charges: 20 - 60", 7, new GetEquip(0x08), 0, 3000, 9000, 20, 40);
 suffixx[115] = new MakePremium("Guardian", "Guardian Charges: 16 - 32", 8, new GetEquip(0x08), 0, 3040, 6080, 16, 16);
 suffixx[116] = new MakePremium("Golem", "Golem Charges: 16 - 32", 9, new GetEquip(0x08), 0, 3520, 7040, 16, 16);
 suffixx[117] = new MakePremium("Teleport", "Teleport Charges: 16 - 32", 12, new GetEquip(0x08), 0, 4000, 8000, 16, 16);
-suffixx[118] = new MakePremium("Nova", "Nova Charges: 16 - 32", 10, new GetEquip(0x08), 0, 4160, 8230, 16, 16);
+suffixx[118] = new MakePremium("Nova", "Nova Charges: 16 - 32", 10, new GetEquip(0x08), 0, 4160, 8320, 16, 16);
 suffixx[119] = new MakePremium("Bone Spirit", "Bone Spirit Charges: 20 - 60", 7, new GetEquip(0x08), 0, 3200, 9600, 20, 40);
 suffixx[120] = new MakePremium("Blood Star", "Blood Star Charges: 20 - 60", 13, new GetEquip(0x08), 0, 7200, 21600, 20, 40);
 suffixx[121] = new MakePremium("Apocalypse", "Apocalypse Charges:  8 - 12", 15, new GetEquip(0x08), 0, 3200, 4800, 8, 4);
@@ -327,6 +335,20 @@ suffixx[121] = new MakePremium("Apocalypse", "Apocalypse Charges:  8 - 12", 15, 
 suffixx[122] = new MakePremium("Decay", "Damage: +150% - +250%   Bonus decays by 5% each weapon hit; item is destroyed at -100%", 1, new GetEquip(0x38), 2, 200, 200, 150, 100);
 suffixx[123] = new MakePremium("Devastation", "5% chance to do x3 total damage", 1, new GetEquip(0x38), 3, 1200, 1200, 3, 0);
 suffixx[124] = new MakePremium("Peril", "x2 damage to monster and x1 damage to the user", 5, new GetEquip(0x38), 1, 500, 500, 2, 0);
+
+// Hellfire-only staff spells. These follow the existing affix rows so their
+// published numeric selections remain stable. Values are charge count times
+// the spell's staff-price multiplier (Jarulf 3.2.3; DevilutionX spelldat.tsv).
+suffixx[125] = new MakePremium("Mana", "Mana Charges: 12 - 24", 5, new GetEquip(0x08), 0, 120, 240, 12, 12);
+suffixx[126] = new MakePremium("the Magi", "Magi Charges: 15 - 30", 20, new GetEquip(0x08), 0, 600, 1200, 15, 15);
+suffixx[127] = new MakePremium("the Jester", "Jester Charges: 15 - 30", 4, new GetEquip(0x08), 0, 600, 1200, 15, 15);
+suffixx[128] = new MakePremium("Lightning Wall", "Lightning Wall Charges: 8 - 16", 2, new GetEquip(0x08), 0, 640, 1280, 8, 8);
+suffixx[129] = new MakePremium("Immolation", "Immolation Charges: 16 - 32", 10, new GetEquip(0x08), 0, 4160, 8320, 16, 16);
+suffixx[130] = new MakePremium("Warp", "Warp Charges: 8 - 12", 3, new GetEquip(0x08), 0, 320, 480, 8, 4);
+suffixx[131] = new MakePremium("Reflect", "Reflect Charges: 8 - 12", 3, new GetEquip(0x08), 0, 320, 480, 8, 4);
+suffixx[132] = new MakePremium("Berserk", "Berserk Charges: 8 - 12", 3, new GetEquip(0x08), 0, 320, 480, 8, 4);
+suffixx[133] = new MakePremium("Ring of Fire", "Ring of Fire Charges: 8 - 16", 5, new GetEquip(0x08), 0, 640, 1280, 8, 8);
+suffixx[134] = new MakePremium("Search", "Search Charges: 8 - 12", 3, new GetEquip(0x08), 0, 320, 480, 8, 4);
 
 
 //-- BASE ITEM ------
@@ -612,4 +634,4 @@ uniq[98] = new MakeUniq("Full Plate Mail", 25, 60, "qlvl: 25   Armor Class: 80  
 
 
 
-export { prefixx, suffixx, basee, uniq, premiumIndex };
+export { prefixx, suffixx, basee, uniq, premiumIndex, isChargedSpellSuffix };
