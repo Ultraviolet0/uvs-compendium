@@ -1,10 +1,88 @@
+# Local development only. Every credential below is a public placeholder for a
+# disposable local container; production configuration lives outside the repository.
+x-web: &web
+  image: uvs-compendium-php:local
+  build:
+    context: .
+    args:
+      PHP_VERSION: ${PHP_VERSION:-8.3}
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+
+x-web-env: &web-env
+  UVS_DB_HOST: db
+  UVS_DB_PORT: '3306'
+  UVS_STORAGE_PATH: /var/uvs/storage
+  UVS_TURNSTILE_MODE: test
+  UVS_MAIL_TRANSPORT: log
+
 services:
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_ROOT_PASSWORD: local-root-only
+      MARIADB_AUTO_UPGRADE: '1'
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./docker/mariadb:/docker-entrypoint-initdb.d:ro
+    # No published port: use `docker compose exec db mariadb -uroot -plocal-root-only`.
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+    restart: unless-stopped
+
   web:
-    build:
-      context: .
-      args:
-        PHP_VERSION: ${PHP_VERSION:-8.3}
+    <<: *web
     ports:
       - "127.0.0.1:${SITE_PORT:-8080}:80"
     volumes:
       - ${SITE_ROOT:-.}:/var/www/html:ro
+      - web-storage:/var/uvs/storage
+    environment:
+      <<: *web-env
+      UVS_ENV: development
+      UVS_DB_NAME: uvs_dev
+      UVS_DB_USER: uvs_dev
+      UVS_DB_PASSWORD: local-dev-only
+      UVS_APP_KEY: local-development-key-not-secret-0000000000000000
+
+  # Isolated application used by automated tests: its own database and storage.
+  web-test:
+    <<: *web
+    ports:
+      - "127.0.0.1:${TEST_SITE_PORT:-8082}:80"
+    volumes:
+      - ${SITE_ROOT:-.}:/var/www/html:ro
+      - test-storage:/var/uvs/storage
+    environment:
+      <<: *web-env
+      UVS_ENV: test
+      UVS_DB_NAME: uvs_test
+      UVS_DB_USER: uvs_test
+      UVS_DB_PASSWORD: local-test-only
+      UVS_APP_KEY: local-test-key-not-secret-000000000000000000000000
+      UVS_SIGNUP_MIN_SECONDS: '1'
+
+  # Dependency installation: `docker compose run --rm composer install`.
+  composer:
+    profiles: [tools]
+    image: uvs-compendium-php:local
+    build:
+      context: .
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.3}
+    working_dir: /app
+    entrypoint: ["composer"]
+    environment:
+      COMPOSER_HOME: /tmp/composer
+    volumes:
+      - .:/app
+
+volumes:
+  db-data:
+  web-storage:
+  test-storage:

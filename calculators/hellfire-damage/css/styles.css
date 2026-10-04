@@ -16,7 +16,7 @@
 }
 
 .damage-section + .damage-section {
-  border-top: 1px solid rgb(188 168 108 / 0.18);
+  border-top: 1px solid rgb(var(--rgb-gold) / 0.18);
   padding-top: var(--space-lg);
 }
 
@@ -49,7 +49,7 @@
 
 .damage-checkline {
   align-items: center;
-  border: 1px solid rgb(188 168 108 / 0.28);
+  border: 1px solid rgb(var(--rgb-gold) / 0.28);
   border-radius: var(--radius-sm);
   color: var(--color-text-soft);
   display: flex;
@@ -70,7 +70,7 @@
 }
 
 .damage-checkline.disabled {
-  color: #5f5f5f;
+  color: var(--color-disabled-soft);
   cursor: not-allowed;
   font-style: italic;
 }
@@ -88,8 +88,8 @@
 }
 
 .damage-summary-grid > div {
-  border-left: 3px solid rgb(255 128 0 / 0.55);
-  background: rgb(255 128 0 / 0.06);
+  border-left: 3px solid rgb(var(--rgb-accent) / 0.55);
+  background: rgb(var(--rgb-accent) / 0.06);
   border-radius: var(--radius-sm);
   min-width: 0;
   padding: 0.65rem 0.75rem;
@@ -116,8 +116,8 @@
 }
 
 .damage-spell-meta {
-  border-left: 3px solid rgb(160 165 200 / 0.75);
-  background: rgb(93 62 249 / 0.1);
+  border-left: 3px solid rgb(var(--rgb-magic) / 0.75);
+  background: rgb(var(--rgb-ultraviolet) / 0.1);
   border-radius: var(--radius-sm);
   color: var(--color-text-soft);
   padding: 0.65rem 0.75rem;
@@ -140,7 +140,7 @@
 
 .damage-table th,
 .damage-table td {
-  border-bottom: 1px solid rgb(188 168 108 / 0.22);
+  border-bottom: 1px solid rgb(var(--rgb-gold) / 0.22);
   padding: 0.55rem 0.6rem;
   text-align: left;
   vertical-align: top;
@@ -195,8 +195,8 @@
 }
 
 .damage-note {
-  border-left: 3px solid rgb(255 128 0 / 0.55);
-  background: rgb(255 128 0 / 0.06);
+  border-left: 3px solid rgb(var(--rgb-accent) / 0.55);
+  background: rgb(var(--rgb-accent) / 0.06);
   border-radius: var(--radius-sm);
   padding: 0.55rem 0.7rem;
 }
@@ -273,7 +273,7 @@
   }
 
   .damage-table tr {
-    border-bottom: 1px solid rgb(188 168 108 / 0.26);
+    border-bottom: 1px solid rgb(var(--rgb-gold) / 0.26);
     padding-block: 0.45rem;
   }
 

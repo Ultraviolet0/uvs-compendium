@@ -25,14 +25,14 @@
 }
 
 .calculator-breadcrumb-list li:not(:last-child)::after {
-  color: rgb(188 168 108 / 0.55);
+  color: rgb(var(--rgb-gold) / 0.55);
   content: "/";
 }
 
 .calculator-breadcrumb-list a {
   color: var(--color-text-soft);
   text-decoration: underline;
-  text-decoration-color: rgb(188 168 108 / 0.35);
+  text-decoration-color: rgb(var(--rgb-gold) / 0.35);
   text-underline-offset: 0.2em;
 }
 
@@ -127,7 +127,7 @@
 }
 
 .calculator-source-group {
-  border: 1px solid rgb(188 168 108 / 0.28);
+  border: 1px solid rgb(var(--rgb-gold) / 0.28);
   border-radius: var(--radius-md);
   margin: 0;
   padding: 0.55rem 0.8rem 0.7rem;
@@ -153,7 +153,7 @@
 }
 
 .choice-option.is-disabled {
-  color: #4c4c4c;
+  color: var(--color-disabled);
   font-style: italic;
 }
 
