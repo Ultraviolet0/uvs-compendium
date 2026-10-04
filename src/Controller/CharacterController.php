@@ -16,7 +16,6 @@ final class CharacterController extends Controller
         'warrior' => 'Warrior', 'rogue' => 'Rogue', 'sorcerer' => 'Sorcerer',
         'monk' => 'Monk', 'bard' => 'Bard', 'barbarian' => 'Barbarian',
     ];
-    public const DIABLO_CLASSES = ['warrior', 'rogue', 'sorcerer'];
     public const GAMES = ['diablo' => 'Diablo', 'hellfire' => 'Hellfire'];
     public const MODES = ['single' => 'Single player', 'multi' => 'Multiplayer'];
     public const PLATFORMS = ['devilutionx' => 'DevilutionX', 'original' => 'Original release', 'other' => 'Other'];
@@ -105,8 +104,6 @@ final class CharacterController extends Controller
         }
         if (!isset(self::CLASSES[$input['class']])) {
             $errors['class'] = 'Choose a class.';
-        } elseif ($input['game'] === 'diablo' && !in_array($input['class'], self::DIABLO_CLASSES, true)) {
-            $errors['class'] = 'Monk, Bard, and Barbarian are Hellfire classes.';
         }
         if ($input['play_mode'] !== '' && !isset(self::MODES[$input['play_mode']])) {
             $errors['play_mode'] = 'Choose single player or multiplayer.';

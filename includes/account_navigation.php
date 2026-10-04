@@ -56,10 +56,4 @@ $account_queue = (int) ($account_counts['users'] ?? 0) + (int) ($account_counts[
     </ul>
   <?php endif; ?>
 
-  <div class="theme-toggle-row">
-    <button class="theme-toggle" type="button" aria-pressed="false" data-theme-toggle<?php if ($account_user !== null): ?> data-theme-endpoint="<?= site_url('account/theme/') ?>"<?php endif; ?> hidden>
-      <span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-thumb"></span></span>
-      <span class="theme-toggle-label">Light theme</span>
-    </button>
-  </div>
 </section>

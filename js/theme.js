@@ -2,6 +2,11 @@
   Theme selection. Loaded synchronously in <head> so the saved theme is applied
   before first paint. Dark is the default; a signed-in member's saved preference
   wins, otherwise the choice stored in this browser is used.
+
+  The header button shows a sun in dark mode and a moon in light mode; the icon
+  follows html[data-theme] in CSS, so it is correct before first paint. The
+  button needs this script, so it is revealed by html[data-theme-script] rather
+  than rendered and then hidden.
 */
 (() => {
   const root = document.documentElement;
@@ -18,17 +23,22 @@
 
   const initial = valid(root.dataset.themePreference) ? root.dataset.themePreference : stored();
   root.dataset.theme = valid(initial) ? initial : 'dark';
+  root.dataset.themeScript = 'ready';
 
-  const apply = (theme, toggle) => {
+  const label = (theme) => (theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme');
+  const describe = (toggle, theme) => {
+    toggle.setAttribute('aria-label', label(theme));
+    toggle.setAttribute('title', label(theme));
+  };
+
+  const apply = (theme) => {
     root.dataset.theme = theme;
     try {
       localStorage.setItem(storageKey, theme);
     } catch {
       // Storage can be unavailable (private mode); the choice then lasts for this page.
     }
-    if (toggle) {
-      toggle.setAttribute('aria-pressed', String(theme === 'light'));
-    }
+    document.querySelectorAll('[data-theme-toggle]').forEach((button) => describe(button, theme));
     document.querySelectorAll('.cf-turnstile').forEach((widget) => { widget.dataset.theme = theme; });
   };
 
@@ -46,11 +56,10 @@
 
   const init = () => {
     document.querySelectorAll('[data-theme-toggle]').forEach((toggle) => {
-      toggle.hidden = false;
-      toggle.setAttribute('aria-pressed', String(root.dataset.theme === 'light'));
+      describe(toggle, root.dataset.theme);
       toggle.addEventListener('click', () => {
         const next = root.dataset.theme === 'light' ? 'dark' : 'light';
-        apply(next, toggle);
+        apply(next);
         persistToAccount(next, toggle.dataset.themeEndpoint);
       });
     });

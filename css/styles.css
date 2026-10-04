@@ -806,6 +806,16 @@ button,
     padding: var(--space-lg) var(--space-sm);
   }
 
+  .site-sidebar .header-actions {
+    right: var(--space-xs);
+    top: calc(var(--space-lg) - 0.35rem);
+  }
+
+  .theme-button {
+    height: 2rem;
+    width: 2rem;
+  }
+
   .brand-link {
     padding-bottom: var(--space-lg);
   }
@@ -896,6 +906,16 @@ button,
   .mobile-nav-toggle {
     display: inline-flex;
     flex: 0 0 auto;
+  }
+
+  .site-sidebar .header-actions {
+    flex: 0 0 auto;
+    position: static;
+  }
+
+  .theme-button {
+    height: 2.45rem;
+    width: 2.45rem;
   }
 
   .site-nav {
@@ -1039,63 +1059,62 @@ button,
   font: inherit;
 }
 
-.theme-toggle-row {
-  padding-top: var(--space-xs);
+/* Icon-only theme button in the header: a sun offers light mode while dark is
+   active, a moon offers dark mode while light is active. The icon follows
+   html[data-theme], which theme.js sets before first paint. The button needs
+   JavaScript, so it is shown only once theme.js has run. */
+.header-actions {
+  align-items: center;
+  display: flex;
+  gap: var(--space-xs);
 }
 
-.theme-toggle {
+.site-sidebar .header-actions {
+  position: absolute;
+  right: var(--space-md);
+  top: calc(var(--space-xl) - 0.45rem);
+}
+
+.theme-button {
   align-items: center;
   background: transparent;
   border: 1px solid rgb(var(--rgb-gold) / 0.3);
-  border-radius: 999px;
-  color: var(--color-text-soft);
-  display: inline-flex;
-  gap: var(--space-sm);
-  min-height: 2.5rem;
-  padding: 0.35rem 0.85rem 0.35rem 0.45rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: none;
+  flex: 0 0 auto;
+  height: 2.25rem;
+  justify-content: center;
+  padding: 0;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast);
+  width: 2.25rem;
 }
 
-.theme-toggle:hover,
-.theme-toggle:focus-visible {
+html[data-theme-script] .theme-button {
+  display: inline-flex;
+}
+
+.theme-button:hover,
+.theme-button:focus-visible {
+  background-color: rgb(var(--rgb-accent) / 0.12);
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
 
-.theme-toggle-track {
-  background: rgb(var(--rgb-gold) / 0.2);
-  border: 1px solid rgb(var(--rgb-gold) / 0.45);
-  border-radius: 999px;
-  display: inline-block;
-  height: 1.3rem;
-  position: relative;
-  transition: background-color var(--transition-fast);
-  width: 2.4rem;
+.theme-icon {
+  display: block;
+  height: 1.1rem;
+  width: 1.1rem;
 }
 
-.theme-toggle-thumb {
-  background: var(--color-text-muted);
-  border-radius: 50%;
-  height: 0.95rem;
-  left: 0.15rem;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  transition: left var(--transition-fast), background-color var(--transition-fast);
-  width: 0.95rem;
+.theme-icon-moon,
+html[data-theme="light"] .theme-icon-sun {
+  display: none;
 }
 
-.theme-toggle[aria-pressed="true"] .theme-toggle-track {
-  background: rgb(var(--rgb-accent) / 0.3);
-}
-
-.theme-toggle[aria-pressed="true"] .theme-toggle-thumb {
-  background: var(--color-accent);
-  left: calc(100% - 1.1rem);
-}
-
-.theme-toggle-label {
-  font-size: 0.86rem;
-  font-weight: 700;
+html[data-theme="light"] .theme-icon-moon {
+  display: block;
 }
 
 .avatar {

@@ -223,9 +223,14 @@ test('profiles: optional fields, validation, privacy, and characters', async () 
   }, { page: '/account/profile/' });
   assert.equal(saved.status, 303);
 
-  const badClass = await client.post('/account/characters/', { name: 'Zealot', class: 'monk', game: 'diablo' }, { page: '/account/characters/' });
+  // Classes and games are descriptive profile data: unknown values are refused, combinations are not.
+  const badClass = await client.post('/account/characters/', { name: 'Zealot', class: 'necromancer', game: 'diablo' }, { page: '/account/characters/' });
   assert.equal(badClass.status, 422);
-  assert.match(badClass.text, /Hellfire classes/);
+  assert.match(badClass.text, /Choose a class/);
+  const badGame = await client.post('/account/characters/', { name: 'Zealot', class: 'bard', game: 'diablo2' }, { page: '/account/characters/' });
+  assert.equal(badGame.status, 422);
+  const form = await client.get('/account/characters/');
+  assert.doesNotMatch(form.text, /Hellfire-only|Hellfire classes/);
   for (const [name, cls, game, level] of [['Aldric', 'warrior', 'diablo', '30'], ['Shade', 'monk', 'hellfire', '45']]) {
     const added = await client.post('/account/characters/', { name, class: cls, game, level, play_mode: 'multi', platform: 'devilutionx', notes: 'Main' }, { page: '/account/characters/' });
     assert.equal(added.status, 303, name);
@@ -262,6 +267,24 @@ test('profiles: optional fields, validation, privacy, and characters', async () 
   const directory = await new Client().get('/members/?q=profiled');
   assert.match(directory.text, /Profiled/);
   assert.doesNotMatch(directory.text, /@example\.test/);
+});
+
+test('characters accept any listed class with either game', async () => {
+  const { client } = await activeMember(admin, 'AnyClass');
+  for (const [name, cls, game] of [['Lyra', 'bard', 'diablo'], ['Krag', 'barbarian', 'diablo'], ['Zealot', 'monk', 'diablo'], ['Vexa', 'sorcerer', 'hellfire']]) {
+    const added = await client.post('/account/characters/', { name, class: cls, game }, { page: '/account/characters/' });
+    assert.equal(added.status, 303, `${cls} with ${game}`);
+  }
+  const list = await client.get('/account/characters/');
+  const ids = [...list.text.matchAll(/id="character-(\d+)"/g)].map((match) => match[1]);
+  assert.equal(ids.length, 4);
+  // Editing keeps working for a Diablo Barbarian, and the public profile lists them all.
+  const edited = await client.post(`/account/characters/${ids[1]}/`, { name: 'Krag', class: 'barbarian', game: 'diablo', level: '12' }, { page: `/account/characters/${ids[1]}/edit/` });
+  assert.equal(edited.status, 303);
+  const page = flat((await new Client().get('/members/AnyClass/')).text);
+  for (const name of ['Lyra', 'Krag', 'Zealot', 'Vexa']) assert.match(page, new RegExp(name));
+  assert.match(page, /Bard/);
+  assert.match(page, /Barbarian/);
 });
 
 const guideBody = [
@@ -787,4 +810,58 @@ test('competing administrators can never remove the last active administrator', 
     assert.equal(activeAdmins(), 1);
   }
   assert.equal((await admin.get('/admin/')).status, 200, 'TestAdmin is still an administrator');
+});
+
+test('guide applicability includes DevilutionX across editing, autosave, review, and the published page', async () => {
+  clearRateLimits();
+  const { client: writer } = await activeMember(admin, 'PortWriter');
+  const editorPage = await writer.get('/account/guides/new/');
+  const options = [...editorPage.text.matchAll(/<option value="([^"]*)"[^>]*>([^<]+)<\/option>/g)]
+    .map((match) => [match[1], match[2]])
+    .filter(([value]) => ['', 'diablo', 'hellfire', 'devilutionx', 'both', 'diablo_devilutionx', 'hellfire_devilutionx', 'diablo_hellfire_devilutionx'].includes(value));
+  assert.deepEqual(options.map(([, label]) => label), [
+    'Not specified', 'Diablo', 'Hellfire', 'DevilutionX', 'Diablo and Hellfire',
+    'Diablo and DevilutionX', 'Hellfire and DevilutionX', 'Diablo, Hellfire, and DevilutionX',
+  ]);
+  assert.doesNotMatch(editorPage.text, /DevX/);
+
+  const body = `## Options\n\n${'DevilutionX settings change how a game behaves. '.repeat(8)}`;
+  const created = await writer.post('/account/guides/new/', {
+    title: 'Port Options Overview', summary: 'Which DevilutionX options matter and when.', body, applies_to: 'devilutionx',
+  }, { page: '/account/guides/new/' });
+  const id = created.location.match(/guides\/(\d+)\/edit/)[1];
+  const edit = `/account/guides/${id}/edit/`;
+  const selected = async () => (await writer.get(edit)).text.match(/<option value="([^"]+)" selected>/)?.[1];
+  assert.equal(await selected(), 'devilutionx');
+
+  // Autosave (JSON) changes it, and the editor reloads the new value.
+  let lock = (await writer.get(edit)).text.match(/name="lock_version" value="(\d+)"/)[1];
+  const autosave = await writer.post(`/account/guides/${id}/save/`, {
+    title: 'Port Options Overview', summary: 'Which DevilutionX options matter and when.', body, applies_to: 'hellfire_devilutionx', lock_version: lock,
+  }, { page: edit, headers: { Accept: 'application/json', 'X-Requested-With': 'fetch' } });
+  assert.equal(autosave.status, 200);
+  assert.equal(await selected(), 'hellfire_devilutionx');
+
+  // Submit with a mixed value; the review page and the public page show its full name.
+  lock = (await writer.get(edit)).text.match(/name="lock_version" value="(\d+)"/)[1];
+  await writer.post(`/account/guides/${id}/save/`, {
+    title: 'Port Options Overview', summary: 'Which DevilutionX options matter and when.', body,
+    applies_to: 'diablo_hellfire_devilutionx', lock_version: lock, intent: 'submit',
+  }, { page: edit });
+  assert.match(flat((await admin.get(`/admin/guides/${id}/`)).text), /<dt>Applies to<\/dt><dd>Diablo, Hellfire, and DevilutionX<\/dd>/);
+  assert.equal((await moderate(id, { action: 'approve_publish' })).status, 303);
+  const published = flat((await new Client().get('/guides/port-options-overview/')).text);
+  assert.match(published, /<dt>Applies to<\/dt><dd>Diablo, Hellfire, and DevilutionX<\/dd>/);
+
+  // The administrator editor offers and keeps the same values.
+  const adminEdit = await admin.get(`/admin/guides/${id}/edit/`);
+  assert.match(adminEdit.text, /<option value="diablo_hellfire_devilutionx" selected>Diablo, Hellfire, and DevilutionX<\/option>/);
+  assert.match(adminEdit.text, /<option value="devilutionx">DevilutionX<\/option>/);
+  // Unknown values are stored as "not specified" rather than rejected or kept.
+  lock = (await writer.get(edit)).text.match(/name="lock_version" value="(\d+)"/)[1];
+  await writer.post(`/account/guides/${id}/save/`, {
+    title: 'Port Options Overview', summary: 'Which DevilutionX options matter and when.', body, applies_to: 'devx', lock_version: lock,
+  }, { page: edit });
+  assert.equal(await selected(), undefined);
+  assert.match(flat((await new Client().get('/guides/port-options-overview/')).text), /Diablo, Hellfire, and DevilutionX/, 'published snapshot unchanged');
 });

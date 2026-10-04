@@ -32,6 +32,6 @@ $select = static function (string $name, string $label, array $choices, bool $op
 <div class="form-field">
   <label for="notes">Notes <span class="optional">(optional)</span></label>
   <input id="notes" name="notes" type="text" maxlength="280" value="<?= h($view->old('notes')) ?>"<?= $view->invalid('notes', 'notes-help') ?>>
-  <p class="field-help" id="notes-help">For example a build, a goal, or the server you play on. Monk, Bard, and Barbarian are Hellfire-only.</p>
+  <p class="field-help" id="notes-help">For example a build, a goal, or the server you play on.</p>
   <?= $view->fieldError('notes') ?>
 </div>

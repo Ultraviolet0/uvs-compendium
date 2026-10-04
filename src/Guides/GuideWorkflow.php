@@ -18,7 +18,16 @@ use Uvs\Support\ValidationException;
  */
 final class GuideWorkflow
 {
-    public const APPLIES_TO = ['diablo' => 'Diablo', 'hellfire' => 'Hellfire', 'both' => 'Diablo and Hellfire'];
+    /** Stored value => label, in menu order. 'both' predates DevilutionX and keeps meaning Diablo and Hellfire. */
+    public const APPLIES_TO = [
+        'diablo' => 'Diablo',
+        'hellfire' => 'Hellfire',
+        'devilutionx' => 'DevilutionX',
+        'both' => 'Diablo and Hellfire',
+        'diablo_devilutionx' => 'Diablo and DevilutionX',
+        'hellfire_devilutionx' => 'Hellfire and DevilutionX',
+        'diablo_hellfire_devilutionx' => 'Diablo, Hellfire, and DevilutionX',
+    ];
     public const TITLE_MAX = 140;
     public const SUMMARY_MAX = 400;
     public const SUBMIT_TITLE_MIN = 5;

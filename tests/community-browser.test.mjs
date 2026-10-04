@@ -32,31 +32,117 @@ function collectErrors(page) {
   return errors;
 }
 
-test('dark is the default theme and the toggle switches, persists, and is accessible', async () => {
+/** Which theme icon is visible, and the button's accessible name. */
+async function themeButtonState(page) {
+  const toggle = page.locator('[data-theme-toggle]');
+  return {
+    visible: await toggle.isVisible(),
+    sun: await toggle.locator('.theme-icon-sun').isVisible(),
+    moon: await toggle.locator('.theme-icon-moon').isVisible(),
+    label: await toggle.getAttribute('aria-label'),
+    title: await toggle.getAttribute('title'),
+    text: (await toggle.textContent()).trim(),
+    box: await toggle.boundingBox(),
+  };
+}
+
+test('dark is the default theme and the icon button switches, persists, and is accessible', async () => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(url('/'));
   assert.equal(await page.getAttribute('html', 'data-theme'), 'dark');
   const toggle = page.locator('[data-theme-toggle]');
-  assert.equal(await toggle.isVisible(), true);
-  assert.equal(await toggle.getAttribute('aria-pressed'), 'false');
-  assert.match(await toggle.textContent(), /Light theme/);
+  assert.equal(await toggle.count(), 1, 'one theme button on the page');
+  assert.equal(await toggle.evaluate((node) => node.tagName), 'BUTTON');
+  let state = await themeButtonState(page);
+  assert.equal(state.visible, true);
+  assert.deepEqual([state.sun, state.moon], [true, false], 'dark mode offers the sun');
+  assert.equal(state.label, 'Switch to light theme');
+  assert.equal(state.title, 'Switch to light theme');
+  assert.equal(state.text, '', 'icon only: no visible text');
+  assert.equal(await page.locator('.theme-toggle-track, .theme-toggle-label').count(), 0, 'no switch track');
+  assert.ok(state.box.width >= 32 && state.box.height >= 32, `usable target: ${JSON.stringify(state.box)}`);
+
+  // Keyboard: focusable, visibly focused, and operable with Enter and Space.
+  await page.keyboard.press('Tab');
   await toggle.focus();
+  const outline = await toggle.evaluate((node) => getComputedStyle(node).outlineStyle);
+  assert.notEqual(outline, 'none', 'visible focus indicator');
   await page.keyboard.press('Enter');
   assert.equal(await page.getAttribute('html', 'data-theme'), 'light');
-  assert.equal(await toggle.getAttribute('aria-pressed'), 'true');
+  state = await themeButtonState(page);
+  assert.deepEqual([state.sun, state.moon], [false, true], 'light mode offers the moon');
+  assert.equal(state.label, 'Switch to dark theme');
+  assert.equal(state.title, 'Switch to dark theme');
   const background = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   assert.notEqual(background, 'rgb(5, 5, 5)');
+  await page.keyboard.press('Space');
+  assert.equal(await page.getAttribute('html', 'data-theme'), 'dark');
+  await page.keyboard.press('Space');
+  assert.equal(await page.getAttribute('html', 'data-theme'), 'light');
 
   for (const path of ['/calculators/', '/guides/shopping/', '/account/signup/', '/members/']) {
     await page.goto(url(path));
     assert.equal(await page.getAttribute('html', 'data-theme'), 'light', `${path} keeps the stored theme`);
+    state = await themeButtonState(page);
+    assert.deepEqual([state.sun, state.moon, state.label], [false, true, 'Switch to dark theme'], `${path} button state`);
   }
   await page.reload();
   assert.equal(await page.getAttribute('html', 'data-theme'), 'light');
   await page.locator('[data-theme-toggle]').click();
   assert.equal(await page.getAttribute('html', 'data-theme'), 'dark');
   await context.close();
+});
+
+test('primary navigation omits Members; the footer, directory, and profiles keep it', async () => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(url('/'));
+  const primary = page.locator('#site-navigation .nav-section').first();
+  assert.equal(await primary.locator('a', { hasText: /^Members$/ }).count(), 0, 'no Members link in the primary navigation');
+  assert.equal(await page.locator('#site-navigation a[href$="/members/"]').count(), 0);
+  assert.equal(await page.locator('.site-footer a[href$="members/"]', { hasText: 'Members' }).count(), 1, 'footer keeps Members');
+  for (const label of ['Home', 'Reference', 'Calculators', 'Guides']) {
+    assert.equal(await primary.getByText(label, { exact: true }).count(), 1, label);
+  }
+  const directory = await page.goto(url('/members/'));
+  assert.equal(directory.status(), 200);
+  await context.close();
+});
+
+test('the theme button works in the mobile header, signed out and signed in, without overflow', async () => {
+  clearRateLimits();
+  await activeMember(admin, 'MobileTheme');
+  for (const signedIn of [false, true]) {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    const page = await context.newPage();
+    if (signedIn) await signIn(page, 'MobileTheme', 'correct horse battery staple');
+    await page.goto(url('/'));
+    // Visible in the header bar without opening the menu, beside the Menu button.
+    let state = await themeButtonState(page);
+    assert.equal(state.visible, true, `visible on mobile (signed in: ${signedIn})`);
+    assert.ok(state.box.width >= 36 && state.box.height >= 36, `touch target ${JSON.stringify(state.box)}`);
+    const menu = await page.locator('.mobile-nav-toggle').boundingBox();
+    assert.ok(Math.abs((state.box.y + state.box.height / 2) - (menu.y + menu.height / 2)) < 2, 'aligned with Menu');
+    assert.ok(state.box.x + state.box.width <= menu.x, 'sits before Menu');
+    await page.locator('[data-theme-toggle]').tap();
+    assert.equal(await page.getAttribute('html', 'data-theme'), 'light');
+    state = await themeButtonState(page);
+    assert.deepEqual([state.sun, state.moon, state.label], [false, true, 'Switch to dark theme']);
+    for (const theme of ['light', 'dark']) {
+      await assertNoHorizontalOverflow(assert, page, `/ @390 ${theme} signed in: ${signedIn}`);
+      await page.locator('.mobile-nav-toggle').tap();
+      await page.locator('#site-navigation .nav-link').first().waitFor({ state: 'visible' });
+      assert.equal(await page.locator('.mobile-nav-toggle').getAttribute('aria-expanded'), 'true');
+      assert.equal(await page.locator('#site-navigation a[href$="/members/"]').count(), 0, 'no Members in the mobile menu');
+      if (signedIn) assert.equal(await page.locator('#site-navigation a', { hasText: 'Public profile' }).count(), 1);
+      await assertNoHorizontalOverflow(assert, page, `menu open @390 ${theme}`);
+      await page.locator('.mobile-nav-toggle').tap();
+      assert.equal(await page.locator('.mobile-nav-toggle').getAttribute('aria-expanded'), 'false');
+      await page.locator('[data-theme-toggle]').tap();
+    }
+    await context.close();
+  }
 });
 
 test('the theme is applied before first paint to avoid a flash', async () => {

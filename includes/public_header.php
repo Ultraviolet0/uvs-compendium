@@ -79,18 +79,37 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
           </a>
         </div>
 
-        <button
-          class="mobile-nav-toggle"
-          type="button"
-          aria-expanded="false"
-          aria-controls="site-navigation">
-          <span class="mobile-nav-toggle-text">Menu</span>
-          <span class="hamburger-icon" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </span>
-        </button>
+        <div class="header-actions">
+          <?php $theme_label = $viewer_theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'; ?>
+          <button
+            class="theme-button"
+            type="button"
+            data-theme-toggle
+            <?php if ($viewer !== null): ?>data-theme-endpoint="<?= site_url('account/theme/') ?>"<?php endif; ?>
+            aria-label="<?= h($theme_label) ?>"
+            title="<?= h($theme_label) ?>">
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 2.5v2.3M12 19.2v2.3M2.5 12h2.3M19.2 12h2.3M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+              <path d="M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a8.4 8.4 0 1 0 10.8 10.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <button
+            class="mobile-nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="site-navigation">
+            <span class="mobile-nav-toggle-text">Menu</span>
+            <span class="hamburger-icon" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </button>
+        </div>
       </div>
 
       <nav id="site-navigation" class="site-nav" aria-label="Primary navigation">
@@ -160,9 +179,6 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
               </ul>
             </li>
 
-            <li class="nav-item">
-              <a class="nav-link nav-page-link" href="<?= site_url('members/') ?>">Members</a>
-            </li>
           </ul>
         </section>
 

@@ -62,7 +62,7 @@ Members can now contribute guides alongside the curated ones, without changing h
 - **Guide editor:** Markdown with a formatting toolbar, live server-rendered preview, autosave, image uploads, privacy-enhanced YouTube embeds, and callouts. Raw HTML is never rendered.
 - **Moderation:** drafts are private; submissions go to an admin review queue where guides can be approved, published, sent back for changes, rejected, hidden, restored, or deleted, with immutable revision history and diffs. Published community guides appear at `/guides/<slug>/` and in a Community Guides section of `/guides/`; curated guide URLs always take precedence.
 - **Administration:** dashboard, user management, guide moderation, site settings, and an audit log at `/admin/`.
-- **Themes:** the dark theme remains the default; a parchment light theme is available from the sidebar toggle on every page.
+- **Themes:** the dark theme remains the default; a parchment light theme is available from the sun/moon button in the header on every page.
 
 See [architecture](docs/architecture.md), [publishing and administration](docs/publishing.md), [configuration and deployment](docs/configuration.md) (including creating the first administrator), and the [security model](docs/security.md).
 
@@ -187,7 +187,7 @@ css/
 js/
   scripts.js
   in-page-navigation.js
-  theme.js               # theme selection before first paint and the toggle
+  theme.js               # theme selection before first paint and the theme button
   app.js                 # community form enhancements
   guide-editor.js
   turnstile.js

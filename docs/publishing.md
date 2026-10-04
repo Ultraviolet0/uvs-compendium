@@ -97,4 +97,4 @@ The page also shows the state of Turnstile, email, and storage without revealing
 
 ## Members and profiles
 
-`/members/` lists active members; `/members/<username>/` shows the avatar, join date, optional bio, preferred game, website, Discord name, characters, and published guides. Email addresses are never shown publicly.
+`/members/` (linked from the footer) lists active members; `/members/<username>/` shows the avatar, join date, optional bio, preferred game, website, Discord name, characters, and published guides. Email addresses are never shown publicly. Characters are descriptive: any listed class may be paired with either game, since DevilutionX options and personal setups vary.
