@@ -346,6 +346,7 @@ test('guide images: upload, privacy before publication, validation, and ownershi
   const ownView = await author.get(new URL(media.url, appBase).pathname);
   assert.equal(ownView.status, 200);
   assert.match(ownView.headers.get('content-type'), /^image\/(webp|jpeg)$/);
+  assert.equal(ownView.headers.get('cache-control'), 'private, no-store');
   assert.equal(ownView.headers.get('x-content-type-options'), 'nosniff');
   assert.match(ownView.headers.get('content-security-policy'), /sandbox/);
   assert.equal((await new Client().get(new URL(media.url, appBase).pathname)).status, 404, 'draft images are private');
@@ -508,7 +509,15 @@ test('avatars are processed, public only for active members, and removable', asy
   const path = new URL(src, new URL('/members/Avatarist/', appBase)).pathname;
   const image = await new Client().get(path);
   assert.equal(image.status, 200);
-  assert.match(image.headers.get('cache-control'), /public/);
+  assert.equal(image.headers.get('cache-control'), 'public, no-cache', 'public media must be revalidated so moderation takes effect');
+  const etag = image.headers.get('etag');
+  assert.match(etag, /^"[a-f0-9]{32}"$/);
+  const revalidated = await new Client().get(path, { 'If-None-Match': etag });
+  assert.equal(revalidated.status, 304);
+  assert.equal(revalidated.text, '');
+  assert.equal(revalidated.headers.get('cache-control'), 'public, no-cache');
+  assert.equal(revalidated.headers.get('etag'), etag);
+  assert.equal((await new Client().get(path, { 'If-None-Match': '"stale"' })).status, 200, 'a mismatched ETag returns the full image');
   const svg = await client.upload('/account/profile/avatar/', 'avatar', 'me.svg', 'image/svg+xml', Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'), {}, { page: '/account/profile/' });
   assert.equal(svg.status, 422);
   await client.post('/account/profile/avatar/delete/', {}, { page: '/account/profile/' });

@@ -43,7 +43,7 @@ final class MediaController extends Controller
             'Content-Length' => (string) filesize($path),
             'Content-Disposition' => 'inline; filename="' . $publicId . '.' . $extension . '"',
             'Content-Security-Policy' => "default-src 'none'; sandbox",
-            'Cache-Control' => $public ? 'public, max-age=86400' : 'private, no-store',
+            'Cache-Control' => $public ? 'public, no-cache' : 'private, no-store',
             'ETag' => $etag,
         ];
         if (!$public) {
