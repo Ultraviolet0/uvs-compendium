@@ -12,14 +12,20 @@ Options -Indexes
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteRule ^(?:\.git|\.github|docs|tests|scripts|includes|node_modules|vendor|test-results|playwright-report|coverage)(?:/|$) - [F,NC]
-  RewriteRule ^(?:AGENTS\.md|README\.md|Dockerfile|compose\.ya?ml|package(?:-lock)?\.json|\.env(?:\..*)?|\.gitignore|\.htaccess)$ - [F,NC]
+  RewriteRule ^(?:\.git|\.github|docs|tests|scripts|includes|src|templates|migrations|bin|docker|storage|config|node_modules|vendor|test-results|playwright-report|coverage)(?:/|$) - [F,NC]
+  RewriteRule ^(?:AGENTS\.md|README\.md|Dockerfile|compose\.ya?ml|package(?:-lock)?\.json|composer\.(?:json|lock)|phpunit\.xml(?:\.dist)?|\.env(?:\..*)?|\.gitignore|\.htaccess)$ - [F,NC]
+
+  # Community pages: physical files and directories always win, so existing
+  # calculators, guides, and references can never be shadowed by a dynamic route.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ router.php [L,QSA]
 </IfModule>
 
-<FilesMatch "(?i)(?:^\.|\.local\.|\.(?:bak|cache|env|ini|key|log|pem|pfx|p12|sql|tmp)$|credentials|secret)">
+<FilesMatch "(?i)(?:^\.|\.local\.|\.(?:bak|cache|env|ini|key|log|pem|pfx|p12|sql|tmp|eml)$|credentials|secret)">
   Require all denied
 </FilesMatch>
 
-<FilesMatch "(?i)^(?:breadcrumbs|calculator)\.php$">
+<FilesMatch "(?i)^(?:breadcrumbs|calculator|account_navigation|helpers)\.php$">
   Require all denied
 </FilesMatch>

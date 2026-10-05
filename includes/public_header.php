@@ -8,46 +8,20 @@ $base_path = $base_path ?? '';
 $current_page = $current_page ?? '';
 $page_styles = $page_styles ?? [];
 $page_scripts = $page_scripts ?? [];
+$page_robots = $page_robots ?? null;
 
-function h(string $value): string
-{
-  return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-}
+require_once __DIR__ . '/helpers.php';
 
-function site_url(string $path = ''): string
-{
-  global $base_path;
-
-  if ($path === '') {
-    return h($base_path !== '' ? $base_path : './');
+$viewer_context = uvs_page_context();
+$viewer = $viewer_context['user'];
+$viewer_theme = $viewer !== null && in_array($viewer['theme'] ?? null, ['dark', 'light'], true) ? $viewer['theme'] : '';
+uvs_security_headers();
+if (!headers_sent()) {
+  header('Vary: Cookie');
+  if ($viewer !== null || (session_status() === PHP_SESSION_ACTIVE)) {
+    // Personalised pages must never be stored by shared caches.
+    header('Cache-Control: private, no-store');
   }
-
-  return h($base_path . ltrim($path, '/'));
-}
-
-function asset_version(string $path): int
-{
-  $full_path = dirname(__DIR__) . '/' . ltrim($path, '/');
-
-  return is_file($full_path) ? filemtime($full_path) : time();
-}
-
-function guide_updated_date(string $guide_path, string $source_file): string
-{
-  $manifest = __DIR__ . '/guide-update-dates.php';
-  if (is_file($manifest)) {
-    $dates = require $manifest;
-    if (is_array($dates) && isset($dates[$guide_path])) {
-      return $dates[$guide_path];
-    }
-  }
-
-  // The source checkout has no build manifest; show its local file date.
-  $modified = filemtime($source_file);
-  if ($modified === false) {
-    throw new RuntimeException('Cannot read guide modification time');
-  }
-  return date('Y-m-d', $modified);
 }
 
 $css_version = asset_version('css/styles.css');
@@ -65,13 +39,20 @@ $page_styles = array_values(array_unique(array_filter($page_styles, 'is_string')
 $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string')));
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="<?= h($viewer_theme !== '' ? $viewer_theme : 'dark') ?>"<?php if ($viewer_theme !== ''): ?> data-theme-preference="<?= h($viewer_theme) ?>"<?php endif; ?>>
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="<?= h($page_description) ?>">
   <title><?= h($page_title) ?></title>
+  <?php if (is_string($page_robots) && $page_robots !== ''): ?>
+    <meta name="robots" content="<?= h($page_robots) ?>">
+  <?php endif; ?>
+  <?php if ($viewer_context['csrf'] !== null): ?>
+    <meta name="csrf-token" content="<?= h($viewer_context['csrf']) ?>">
+  <?php endif; ?>
+  <script src="<?= site_url('js/theme.js') ?>?v=<?= asset_version('js/theme.js') ?>"></script>
 
   <link rel="icon" href="<?php echo site_url('/favicon.ico'); ?>" sizes="any">
   <link rel="stylesheet" href="<?= site_url('css/styles.css') ?>?v=<?= $css_version ?>">
@@ -98,18 +79,37 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
           </a>
         </div>
 
-        <button
-          class="mobile-nav-toggle"
-          type="button"
-          aria-expanded="false"
-          aria-controls="site-navigation">
-          <span class="mobile-nav-toggle-text">Menu</span>
-          <span class="hamburger-icon" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </span>
-        </button>
+        <div class="header-actions">
+          <?php $theme_label = $viewer_theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'; ?>
+          <button
+            class="theme-button"
+            type="button"
+            data-theme-toggle
+            <?php if ($viewer !== null): ?>data-theme-endpoint="<?= site_url('account/theme/') ?>"<?php endif; ?>
+            aria-label="<?= h($theme_label) ?>"
+            title="<?= h($theme_label) ?>">
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 2.5v2.3M12 19.2v2.3M2.5 12h2.3M19.2 12h2.3M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+              <path d="M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a8.4 8.4 0 1 0 10.8 10.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <button
+            class="mobile-nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="site-navigation">
+            <span class="mobile-nav-toggle-text">Menu</span>
+            <span class="hamburger-icon" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </button>
+        </div>
       </div>
 
       <nav id="site-navigation" class="site-nav" aria-label="Primary navigation">
@@ -175,11 +175,16 @@ $page_scripts = array_values(array_unique(array_filter($page_scripts, 'is_string
                 <li><a class="nav-submenu-link" href="<?= site_url('guides/fast-character-development/') ?>">Fast Character Development</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('guides/shopping/') ?>">UV's Shopping &amp; Affixes</a></li>
                 <li><a class="nav-submenu-link" href="<?= site_url('guides/max-shopping-video/') ?>">Max's Hellfire Shopping Video</a></li>
+                <li><a class="nav-submenu-link" href="<?= site_url('guides/') ?>#community-guides">Community Guides</a></li>
               </ul>
             </li>
+
           </ul>
         </section>
+
+        <?php require __DIR__ . '/account_navigation.php'; ?>
       </nav>
     </header>
 
     <main id="main-content" class="site-main">
+      <?php uvs_render_flashes(); ?>

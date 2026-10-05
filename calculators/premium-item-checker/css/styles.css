@@ -24,7 +24,7 @@
 }
 
 .premium-checker-controls {
-  border: 1px solid rgb(188 168 108 / 0.28);
+  border: 1px solid rgb(var(--rgb-gold) / 0.28);
   border-radius: var(--radius-md);
   display: grid;
   gap: var(--space-md);
@@ -63,8 +63,8 @@
 }
 
 .premium-result-section {
-  background: rgb(255 255 255 / 0.025);
-  border: 1px solid rgb(188 168 108 / 0.22);
+  background: rgb(var(--rgb-highlight) / 0.025);
+  border: 1px solid rgb(var(--rgb-gold) / 0.22);
   border-radius: var(--radius-md);
   gap: var(--space-sm);
   padding: var(--space-md);
@@ -116,7 +116,7 @@
 
 .premium-availability li:not(.premium-availability-empty) {
   align-items: baseline;
-  border-bottom: 1px solid rgb(188 168 108 / 0.14);
+  border-bottom: 1px solid rgb(var(--rgb-gold) / 0.14);
   display: grid;
   gap: var(--space-xs);
   grid-template-columns: minmax(7.5rem, 1fr) minmax(8rem, 1.2fr) auto;
