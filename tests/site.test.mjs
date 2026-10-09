@@ -195,7 +195,7 @@ test('Hellfire Wirt staff spell ranges and Magi results work on standalone and c
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
     await page.goto(new URL(route, base).href);
-    for (const [level, prefixMax, spellMax] of [[19, 38, 19], [20, 40, 20], [50, 100, 20]]) {
+    for (const [level, prefixMax, spellMax] of [[19, 38, 19], [20, 40, 20], [29, 58, 20], [30, 60, 20], [50, 60, 20]]) {
       await page.locator('#clvl').fill(String(level));
       const wirt = await page.locator('#wirtresult').textContent();
       assert.match(wirt, new RegExp(`Prefixes on staves with spell:\\s+1-${prefixMax}\\b`));
