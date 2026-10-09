@@ -32,10 +32,18 @@ test('town stock uses character level in multiplayer and dungeon depth in single
   assert.match(calculateShopQlvls(25, context('diablo', 'multiplayer')).adria, /without spell/);
 });
 
+test('Hellfire Wirt staff prefix qlvl is capped at the highest prefix qlvl, 60', () => {
+  for (const [characterLevel, upper] of [[20, 40], [29, 58], [30, 60], [40, 60], [50, 60]]) {
+    const wirt = calculateShopQlvls(characterLevel, context('hellfire', 'multiplayer')).wirt;
+    assert.match(wirt, new RegExp(`Prefixes on staves with spell:\\s+1-${upper}\\n`));
+    assert.match(wirt, new RegExp(`Affixes:\\s+${Math.min(characterLevel, 25)}-${Math.min(characterLevel * 2, 60)}\\n`));
+  }
+});
+
 test('Hellfire Wirt staff spells follow character level, capped by the spell catalog', () => {
   for (const [characterLevel, upper] of [[1, 1], [19, 19], [20, 20], [50, 20]]) {
     const wirt = calculateShopQlvls(characterLevel, context('hellfire', 'multiplayer')).wirt;
-    assert.match(wirt, new RegExp(`Prefixes on staves with spell:\\s+1-${characterLevel * 2}\\b`));
+    assert.match(wirt, new RegExp(`Prefixes on staves with spell:\\s+1-${Math.min(characterLevel * 2, 60)}\\b`));
     assert.match(wirt, new RegExp(`Spells on staves:\\s+1-${upper}\\b`));
   }
   assert.doesNotMatch(calculateShopQlvls(50, context('diablo', 'multiplayer')).wirt,

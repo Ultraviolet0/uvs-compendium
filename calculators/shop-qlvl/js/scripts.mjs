@@ -12,7 +12,7 @@ function calculateShopQlvls(characterLevel, { gameVersion = 'hellfire', gameMode
   // Jarulf 3.13.2: Magi has the highest Hellfire staff-spell qlvl, 20.
   const wirt = `Base items:  1-${Math.min(level, 25)}\nAffixes:     ${Math.min(level, 25)}-${Math.min(level * 2, 60)}` +
     (gameVersion === 'hellfire'
-      ? `\nPrefixes on staves with spell:  1-${level * 2}\nSpells on staves:  1-${Math.min(level, 20)}`
+      ? `\nPrefixes on staves with spell:  1-${Math.min(level * 2, 60)}\nSpells on staves:  1-${Math.min(level, 20)}`
       : '');
   const townLevel = townItemLevel({ gameMode, characterLevel: level, dungeonLevel });
   const adria = gameVersion === 'hellfire'
