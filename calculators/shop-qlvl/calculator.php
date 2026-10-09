@@ -51,7 +51,7 @@ if (!in_array($shop_qlvl_heading_level, ['h1', 'h2', 'h3'], true)) {
       <h3 class="result-heading">Wirt</h3>
       <pre id="wirtresult" class="qlvl-output qlvl-output-wrap" aria-label="Wirt qlvl results">Base items:  1-25
 Affixes:     25-60
-Prefixes on staves with spell:  1-100
+Prefixes on staves with spell:  1-60
 Spells on staves:  1-20</pre>
 
       <h3 class="result-heading">Adria <span id="shop-mode-label" class="text-muted">(MP)</span></h3>
