@@ -586,6 +586,23 @@ test('damage calculator: class preset changes deterministic output', async () =>
   await page.close();
 });
 
+test('damage calculator: weapon +% accepts a dual Crystalline Bard total of 560', async () => {
+  // Crystalline rolls +200% to +280% damage, and a Bard's two equipped weapons add their +% together.
+  const page = await context.newPage();
+  await page.goto(new URL('/calculators/damage/', base).href);
+  await page.locator('#characterClass').selectOption('bard');
+  await page.locator('#weaponMin').fill('10');
+  await page.locator('#weaponMax').fill('20');
+  await page.locator('#weaponPercent').fill('560');
+  await page.locator('#weaponPercent').press('Enter');
+  assert.equal(await page.locator('#weaponPercent').inputValue(), '560');
+  assert.equal((await page.locator('#weaponDamageOut').textContent()).trim(), '66 – 132');
+  await page.locator('#weaponPercent').fill('600');
+  await page.locator('#weaponPercent').press('Enter');
+  assert.equal(await page.locator('#weaponPercent').inputValue(), '560');
+  await page.close();
+});
+
 test('DevilutionX Bard and Barbarian remain selectable in Diablo with explicit labels', async () => {
   for (const route of ['/calculators/damage/', '/calculators/']) {
     for (const width of [390, 1440]) {
