@@ -284,7 +284,7 @@
     vitality: { min: 0, max: 999, integer: true, fallback: 100 },
     weaponMin: { min: 0, max: 999, integer: false, fallback: 6 },
     weaponMax: { min: 0, max: 999, integer: false, fallback: 15 },
-    weaponPercent: { min: 0, max: 500, integer: false, fallback: 0 },
+    weaponPercent: { min: 0, max: 560, integer: false, fallback: 0 },
     flatDamage: { min: 0, max: 999, integer: false, fallback: 0 },
     targetHp: { min: 1, max: 99999, integer: true, fallback: 1000 }
   };

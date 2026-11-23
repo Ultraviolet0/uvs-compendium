@@ -97,7 +97,7 @@ $hellfire_damage_section_heading_level = $hellfire_damage_heading_level === 'h1'
         </div>
         <div class="form-field calculator-field">
           <label for="weaponPercent">Weapon +% damage</label>
-          <input id="weaponPercent" type="text" inputmode="decimal" min="0" max="500" step="1" value="0">
+          <input id="weaponPercent" type="text" inputmode="decimal" min="0" max="560" step="1" value="0">
         </div>
       </div>
 
